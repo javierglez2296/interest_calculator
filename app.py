@@ -954,7 +954,7 @@ clientside_callback(
 
         const el = document.getElementById("simulador");
         if (el) {
-            const yOffset = -85;
+            const yOffset = 20;
             const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
             window.scrollTo({ top: y, behavior: "smooth" });
         }
