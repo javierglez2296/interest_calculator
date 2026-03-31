@@ -52,11 +52,8 @@ app.index_string = """
         {%metas%}
 
         <meta name="google-site-verification" content="T-JtHON5w3hyTmxz5G0_uuQmrESyzYM0H3Io-KORWAQ" />
-
         <title>{%title%}</title>
-        <!-- 🔥 VERIFICATION TAG -->
         <meta name="impact-site-verification" content="2d5539a7-7c67-4e61-8a9d-b7c396a48dc9" />
-
 
         <!-- Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJS7ZLKTBX"></script>
@@ -84,6 +81,31 @@ app.index_string = """
 
         {%favicon%}
         {%css%}
+
+        <style>
+            html {
+                scroll-behavior: smooth;
+            }
+
+            @keyframes resultadoGlow {
+                0% {
+                    box-shadow: 0 0 0 rgba(37, 99, 235, 0.00);
+                    transform: translateY(0);
+                }
+                30% {
+                    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.10);
+                    transform: translateY(-2px);
+                }
+                100% {
+                    box-shadow: 0 0 0 rgba(37, 99, 235, 0.00);
+                    transform: translateY(0);
+                }
+            }
+
+            .resultado-highlight {
+                animation: resultadoGlow 1.2s ease;
+            }
+        </style>
     </head>
     <body>
         {%app_entry%}
@@ -204,23 +226,20 @@ def formatear_euros_es(valor):
         return "0,00 €"
 
     try:
-        # Si ya es número → no tocar
         if isinstance(valor, (int, float)):
             numero = float(valor)
         else:
             s = str(valor).strip()
 
-            # Caso español: 1.234,56
             if "," in s:
                 s = s.replace(".", "").replace(",", ".")
             else:
-                # Caso 1.000 (miles) → quitar puntos
                 if s.count(".") > 0 and len(s.split(".")[-1]) == 3:
                     s = s.replace(".", "")
 
             numero = float(s)
 
-    except:
+    except Exception:
         return "0,00 €"
 
     s = f"{numero:,.2f}"
@@ -750,6 +769,7 @@ def seo_block():
 app.layout = html.Div([
     navbar(),
     dcc.Store(id="scroll-trigger"),
+    dcc.Store(id="resultado-scroll-trigger"),
     structured_data_block(),
     dbc.Container([
         html.Br(),
@@ -904,6 +924,7 @@ app.layout = html.Div([
             ], md=4),
 
             dbc.Col([
+                html.Div(id="resultado-anchor", style={"scrollMarginTop": "90px"}),
                 html.Div(id="resultado-principal")
             ], md=8)
         ]),
@@ -911,7 +932,7 @@ app.layout = html.Div([
         seo_block(),
         html.Br()
     ], fluid=True)
-], style={"backgroundColor": COLOR_BG, "minHeight": "100vh", "scrollBehavior": "smooth"})
+], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
 
 # =========================================================
 # CALLBACK SCROLL HERO
@@ -943,6 +964,56 @@ clientside_callback(
     """,
     Output("hero-scroll-btn", "title"),
     Input("scroll-trigger", "data")
+)
+
+# =========================================================
+# CALLBACK SCROLL RESULTADO + HIGHLIGHT
+# =========================================================
+@app.callback(
+    Output("resultado-scroll-trigger", "data"),
+    Input("calcular-boton", "n_clicks"),
+    State("monto-inicial", "value"),
+    State("deposito", "value"),
+    State("tasa", "value"),
+    State("anos", "value"),
+    State("inflacion", "value"),
+    State("impuestos", "value"),
+    State("comision", "value"),
+    State("crec-aporte", "value"),
+    prevent_initial_call=True
+)
+def trigger_resultado_scroll(n_clicks, monto, deposito, tasa, anos, inflacion, impuestos, comision, crec_aporte):
+    errores = validar_inputs(monto, deposito, tasa, anos, inflacion, impuestos, comision, crec_aporte)
+    if errores:
+        return None
+    return {"scroll_to_resultado": n_clicks}
+
+clientside_callback(
+    """
+    function(data) {
+        if (!data) {
+            return window.dash_clientside.no_update;
+        }
+
+        const el = document.getElementById("resultado-anchor");
+        if (el) {
+            const yOffset = -85;
+            const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: "smooth" });
+
+            const resultadoPrincipal = document.getElementById("resultado-principal");
+            if (resultadoPrincipal) {
+                resultadoPrincipal.classList.remove("resultado-highlight");
+                void resultadoPrincipal.offsetWidth;
+                resultadoPrincipal.classList.add("resultado-highlight");
+            }
+        }
+
+        return "";
+    }
+    """,
+    Output("calcular-boton", "title"),
+    Input("resultado-scroll-trigger", "data")
 )
 
 # =========================================================
