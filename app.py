@@ -601,9 +601,13 @@ def hero_section():
                         }
                     ),
                     html.Div([
-                        dbc.Button("Calcular mi inversión", id="hero-scroll-btn", color="primary", className="me-2"),
-                        dbc.Button("Ver opciones para invertir", href="#cta-afiliacion", color="success")
-                    ], className="mt-3"),
+    dbc.Button("Calcular mi inversión", id="hero-scroll-btn", color="primary", className="me-2"),
+    html.A(
+        dbc.Button("Ver opciones para invertir", color="success"),
+        href="#cta-afiliacion",
+        style={"textDecoration": "none"}
+        )
+    ], className="mt-3"),
                     html.Div([
                         dbc.Badge("Interés compuesto", color="light", text_color="dark", className="me-2"),
                         dbc.Badge("Aportaciones mensuales", color="light", text_color="dark", className="me-2"),
@@ -678,17 +682,56 @@ def cta_card():
         dbc.CardBody([
             html.Div(id="cta-afiliacion", style={"scrollMarginTop": "90px"}),
 
-            html.H3("¿Quieres pasar a la acción?", style={"fontWeight": "800"}),
+            html.H3("¿Quieres empezar a invertir?", style={"fontWeight": "800"}),
             html.P(
-                "Este es el mejor punto para colocar tus enlaces de afiliado a brokers, cuentas remuneradas o carteras indexadas. "
-                "El usuario ya ha visto su potencial de crecimiento y está más predispuesto a clicar.",
+                "Si quieres empezar hoy mismo, puedes abrir cuenta en MyInvestor y dar el primer paso hacia una estrategia de inversión a largo plazo. "
+                "Es una opción muy conocida en España para fondos indexados y ahorro invertido.",
                 style={"color": COLOR_MUTED}
             ),
-            html.Div([
-                dbc.Button("Ver brokers recomendados", color="primary", href="#", className="me-2"),
-                dbc.Button("Abrir cuenta remunerada", color="success", href="#", className="me-2"),
-                dbc.Button("Empezar con cartera indexada", color="dark", href="#")
-            ])
+
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.H4("MyInvestor", style={"fontWeight": "800", "marginBottom": "10px"}),
+                            html.P(
+                                "Banco español orientado a inversión y ahorro a largo plazo.",
+                                style={"color": COLOR_MUTED, "marginBottom": "10px"}
+                            ),
+                            html.Ul([
+                                html.Li("Fondos indexados y cartera a largo plazo"),
+                                html.Li("Opción interesante para empezar a invertir"),
+                                html.Li("Proceso de alta online")
+                            ], style={"paddingLeft": "18px", "marginBottom": "16px"}),
+
+                            html.A(
+                                dbc.Button(
+                                    "Abrir cuenta en MyInvestor",
+                                    color="success",
+                                    size="lg",
+                                    className="w-100"
+                                ),
+                                href="https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ",
+                                target="_blank",
+                                rel="noopener noreferrer nofollow sponsored"
+                            ),
+
+                            html.Div(
+                                "Enlace promocional. Puede generar una comisión o beneficio promocional.",
+                                style={
+                                    "fontSize": "0.82rem",
+                                    "color": COLOR_MUTED,
+                                    "marginTop": "10px"
+                                }
+                            )
+                        ]),
+                        style={
+                            **CARD_STYLE,
+                            "background": "linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)"
+                        }
+                    )
+                ], md=12)
+            ], className="g-3")
         ]),
         style={**CARD_STYLE, "marginTop": "18px"}
     )
