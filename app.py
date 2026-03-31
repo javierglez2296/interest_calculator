@@ -676,17 +676,17 @@ def email_capture_block():
 def cta_card():
     return dbc.Card(
         dbc.CardBody([
-            html.H3("¿Quieres pasar a la acción?", style={"fontWeight": "800"}),
-            html.P(
-                "Este es el mejor punto para colocar tus enlaces de afiliado a brokers, cuentas remuneradas o carteras indexadas. "
-                "El usuario ya ha visto su potencial de crecimiento y está más predispuesto a clicar.",
-                style={"color": COLOR_MUTED}
-            ),
+            html.H3("Empieza a invertir y consigue estos resultados", style={"fontWeight": "800"}),
+
+            html.P("Estas son algunas de las mejores opciones para empezar a invertir en España:", style={"color": COLOR_MUTED}),
+
             html.Div([
-                dbc.Button("Ver brokers recomendados", color="primary", href="#", className="me-2"),
-                dbc.Button("Abrir cuenta remunerada", color="success", href="#", className="me-2"),
-                dbc.Button("Empezar con cartera indexada", color="dark", href="#")
-            ], id="cta-afiliacion")
+                dbc.Button("⭐ Trade Republic (Recomendado)", color="primary", href="TU_LINK_AFILIADO", target="_blank", className="me-2 mb-2"),
+
+                dbc.Button("MyInvestor (Fondos indexados)", color="success", href="#", target="_blank", className="me-2 mb-2"),
+
+                dbc.Button("Revolut (Fácil para empezar)", color="dark", href="#", target="_blank", className="mb-2"),
+            ])
         ]),
         style={**CARD_STYLE, "marginTop": "18px"}
     )
