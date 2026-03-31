@@ -54,6 +54,9 @@ app.index_string = """
         <meta name="google-site-verification" content="T-JtHON5w3hyTmxz5G0_uuQmrESyzYM0H3Io-KORWAQ" />
 
         <title>{%title%}</title>
+        <!-- 🔥 VERIFICATION TAG -->
+        <meta name='impact-site-verification' value='2d5539a7-7c67-4e61-8a9d-b7c396a48dc9' />
+
 
         <!-- Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJS7ZLKTBX"></script>
