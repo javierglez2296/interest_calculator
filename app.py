@@ -200,7 +200,30 @@ def safe_int(value, default=0):
         return default
 
 def formatear_euros_es(valor):
-    s = f"{float(valor):,.2f}"
+    if valor is None or valor == "":
+        return "0,00 €"
+
+    try:
+        # Si ya es número → no tocar
+        if isinstance(valor, (int, float)):
+            numero = float(valor)
+        else:
+            s = str(valor).strip()
+
+            # Caso español: 1.234,56
+            if "," in s:
+                s = s.replace(".", "").replace(",", ".")
+            else:
+                # Caso 1.000 (miles) → quitar puntos
+                if s.count(".") > 0 and len(s.split(".")[-1]) == 3:
+                    s = s.replace(".", "")
+
+            numero = float(s)
+
+    except:
+        return "0,00 €"
+
+    s = f"{numero:,.2f}"
     s = s.replace(",", "X").replace(".", ",").replace("X", ".")
     return f"{s} €"
 
