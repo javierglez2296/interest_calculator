@@ -2,21 +2,103 @@ import io
 from datetime import datetime
 
 import pandas as pd
-from dash import Dash, dcc, html, Input, Output, State, dash_table, callback_context
+from dash import Dash, dcc, html, Input, Output, State, dash_table, callback_context, clientside_callback
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 
 # =========================================================
 # APP
 # =========================================================
-app = Dash(__name__, external_stylesheets=[dbc.themes.LUX], suppress_callback_exceptions=True)
+app = Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.LUX],
+    suppress_callback_exceptions=True,
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {
+            "name": "description",
+            "content": "Calcula cuánto puede crecer tu dinero con esta calculadora de interés compuesto gratis. Simula inversión inicial, aportaciones mensuales, rentabilidad anual, inflación, impuestos y comisiones."
+        },
+        {"name": "robots", "content": "index, follow"},
+        {"name": "theme-color", "content": "#2563eb"},
+        {"property": "og:type", "content": "website"},
+        {
+            "property": "og:title",
+            "content": "Calculadora de interés compuesto gratis | Con aportaciones mensuales"
+        },
+        {
+            "property": "og:description",
+            "content": "Simula cuánto podría crecer tu inversión con aportaciones periódicas, inflación, impuestos y comisiones."
+        },
+        {"property": "og:locale", "content": "es_ES"},
+        {"name": "twitter:card", "content": "summary_large_image"},
+        {
+            "name": "twitter:title",
+            "content": "Calculadora de interés compuesto gratis"
+        },
+        {
+            "name": "twitter:description",
+            "content": "Calcula tu patrimonio futuro estimado con aportaciones mensuales, inflación, impuestos y comisiones."
+        }
+    ]
+)
 server = app.server
-app.title = "Calculadora de interés compuesto"
+app.title = "Calculadora de interés compuesto gratis | Con aportaciones mensuales"
+
+app.index_string = """
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        {%metas%}
+
+        <meta name="google-site-verification" content="T-JtHON5w3hyTmxz5G0_uuQmrESyzYM0H3Io-KORWAQ" />
+
+        <title>{%title%}</title>
+
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJS7ZLKTBX"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-VJS7ZLKTBX', {
+            'anonymize_ip': true
+          });
+        </script>
+
+        <meta name="description" content="Calcula cuánto puede crecer tu dinero con esta calculadora de interés compuesto gratis. Simula inversión inicial, aportaciones mensuales, rentabilidad anual, inflación, impuestos y comisiones.">
+        <meta name="robots" content="index, follow">
+        <meta name="theme-color" content="#2563eb">
+
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="Calculadora de interés compuesto gratis | Con aportaciones mensuales">
+        <meta property="og:description" content="Simula cuánto podría crecer tu inversión con aportaciones periódicas, inflación, impuestos y comisiones.">
+        <meta property="og:locale" content="es_ES">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="Calculadora de interés compuesto gratis">
+        <meta name="twitter:description" content="Calcula tu patrimonio futuro estimado con aportaciones mensuales, inflación, impuestos y comisiones.">
+
+        {%favicon%}
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+"""
+server = app.server
+app.title = "Calculadora de interés compuesto gratis | Con aportaciones mensuales"
 
 # =========================================================
 # ESTILO
 # =========================================================
-BRAND_NAME = "Calculadora de interés compuesto"
+BRAND_NAME = "Calculadora de interés compuesto gratis"
 
 COLOR_BG = "#f5f7fb"
 COLOR_CARD = "#ffffff"
@@ -57,22 +139,60 @@ LABEL_STYLE = {
     "color": COLOR_TEXT
 }
 
+INPUT_STYLE = {
+    "fontSize": "16px"
+}
+
 # =========================================================
 # UTILIDADES
 # =========================================================
-def safe_float(value, default=0.0):
-    try:
-        if value is None or value == "":
-            return default
+def parse_number(value, default=0.0):
+    if value is None:
+        return default
+
+    if isinstance(value, (int, float)):
         return float(value)
+
+    s = str(value).strip()
+    if s == "":
+        return default
+
+    s = s.replace("€", "").replace("%", "").replace(" ", "")
+
+    if "." in s and "," in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "")
+            s = s.replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    else:
+        if "," in s:
+            partes = s.split(",")
+            if len(partes) > 1 and len(partes[-1]) in (1, 2):
+                s = s.replace(".", "")
+                s = s.replace(",", ".")
+            else:
+                s = s.replace(",", "")
+        elif "." in s:
+            partes = s.split(".")
+            if len(partes) > 1 and all(len(p) == 3 for p in partes[1:]):
+                s = s.replace(".", "")
+            elif len(partes) == 2 and len(partes[-1]) in (1, 2):
+                pass
+            else:
+                s = s.replace(".", "")
+
+    try:
+        return float(s)
     except Exception:
         return default
 
+def safe_float(value, default=0.0):
+    return parse_number(value, default)
+
 def safe_int(value, default=0):
     try:
-        if value is None or value == "":
-            return default
-        return int(value)
+        return int(round(parse_number(value, default)))
     except Exception:
         return default
 
@@ -336,6 +456,24 @@ def crear_tabla(df):
 # =========================================================
 # COMPONENTES UI
 # =========================================================
+def structured_data_block():
+    json_ld = """
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Calculadora de interés compuesto gratis",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "description": "Calculadora de interés compuesto con aportaciones mensuales, inflación, impuestos y comisiones.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    """
+    return html.Script(json_ld, type="application/ld+json")
+
 def navbar():
     return html.Div(
         dbc.Container([
@@ -352,7 +490,7 @@ def navbar():
                         html.A("Simulador", href="#simulador", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
                         html.A("Comparativa", href="#comparativa", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
                         html.A("FAQ", href="#faq", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
-                    ], style={"display": "flex", "justifyContent": "flex-end", "gap": "18px"}),
+                    ], style={"display": "flex", "justifyContent": "flex-end", "gap": "18px", "flexWrap": "wrap"}),
                     md=6
                 )
             ], align="center")
@@ -372,7 +510,7 @@ def metric_card(title, value, subtitle=None, accent=COLOR_PRIMARY, soft_bg="#fff
     return dbc.Card(
         dbc.CardBody([
             html.Div(title, style={"fontSize": "0.9rem", "color": COLOR_MUTED, "fontWeight": "600"}),
-            html.Div(value, style={"fontSize": "1.55rem", "fontWeight": "800", "color": accent, "marginTop": "6px"}),
+            html.Div(value, style={"fontSize": "clamp(1.2rem, 4vw, 1.55rem)", "fontWeight": "800", "color": accent, "marginTop": "6px"}),
             html.Div(subtitle or "", style={"fontSize": "0.85rem", "color": COLOR_MUTED, "marginTop": "4px"})
         ]),
         style={**CARD_STYLE, "height": "100%", "backgroundColor": soft_bg}
@@ -389,24 +527,42 @@ def hero_section():
         dbc.CardBody([
             dbc.Row([
                 dbc.Col([
-                    dbc.Badge("Simulador de inversión a largo plazo", color="light", text_color="dark", className="mb-3"),
+                    dbc.Badge("Calculadora financiera gratis", color="light", text_color="dark", className="mb-3"),
                     html.H1(
-                        "Descubre cuánto podría crecer tu dinero con el interés compuesto",
-                        style={"fontWeight": "800", "lineHeight": "1.1", "marginBottom": "14px", "fontSize": "2.6rem", "color": COLOR_TEXT}
+                        "Calculadora de interés compuesto con aportaciones mensuales",
+                        style={
+                            "fontWeight": "800",
+                            "lineHeight": "1.1",
+                            "marginBottom": "14px",
+                            "fontSize": "clamp(1.7rem, 5vw, 2.6rem)",
+                            "color": COLOR_TEXT
+                        }
                     ),
                     html.P(
-                        "Calcula tu patrimonio futuro estimado con aportaciones periódicas, inflación, comisiones e impuestos. "
-                        "Pensado para ahorro, ETF, fondos indexados y planificación financiera personal.",
-                        style={"fontSize": "1.08rem", "color": COLOR_MUTED, "maxWidth": "780px"}
+                        "Usa esta calculadora de interés compuesto gratis para simular cuánto podría crecer tu inversión con una aportación inicial, aportaciones mensuales, rentabilidad anual, inflación, comisiones e impuestos.",
+                        style={
+                            "fontSize": "clamp(0.98rem, 2.8vw, 1.08rem)",
+                            "color": COLOR_MUTED,
+                            "maxWidth": "780px"
+                        }
+                    ),
+                    html.P(
+                        "Ideal para estimar escenarios de ahorro e inversión en ETF, fondos indexados, cuentas remuneradas o carteras a largo plazo.",
+                        style={
+                            "fontSize": "0.98rem",
+                            "color": COLOR_MUTED,
+                            "maxWidth": "780px",
+                            "marginBottom": "0"
+                        }
                     ),
                     html.Div([
-                        dbc.Button("Calcular mi inversión", href="#simulador", color="primary", className="me-2"),
+                        dbc.Button("Calcular mi inversión", id="hero-scroll-btn", color="primary", className="me-2"),
                         dbc.Button("Ver opciones para invertir", href="#cta-afiliacion", color="success")
                     ], className="mt-3"),
                     html.Div([
-                        dbc.Badge("En euros", color="light", text_color="dark", className="me-2"),
-                        dbc.Badge("Comparativas rápidas", color="light", text_color="dark", className="me-2"),
-                        dbc.Badge("Preparada para afiliación", color="light", text_color="dark")
+                        dbc.Badge("Interés compuesto", color="light", text_color="dark", className="me-2"),
+                        dbc.Badge("Aportaciones mensuales", color="light", text_color="dark", className="me-2"),
+                        dbc.Badge("ETF y fondos indexados", color="light", text_color="dark")
                     ], className="mt-4")
                 ], md=8),
                 dbc.Col([
@@ -418,7 +574,7 @@ def hero_section():
                             html.Hr(),
                             html.Div("Resultado estimado", style={"color": COLOR_MUTED}),
                             html.H2("≈ 181.000 €", style={"fontWeight": "800", "color": COLOR_PRIMARY, "marginTop": "8px"}),
-                            html.Div("Solo como simulación orientativa", style={"color": COLOR_MUTED, "fontSize": "0.82rem"})
+                            html.Div("Simulación orientativa no garantizada", style={"color": COLOR_MUTED, "fontSize": "0.82rem"})
                         ]),
                         style={
                             "borderRadius": "22px",
@@ -463,7 +619,7 @@ def email_capture_block():
                 ], md=7),
                 dbc.Col([
                     dbc.InputGroup([
-                        dbc.Input(type="email", placeholder="Tu email"),
+                        dbc.Input(type="email", placeholder="Tu email", style=INPUT_STYLE),
                         dbc.Button("Recibir simulación", color="dark")
                     ])
                 ], md=5)
@@ -493,28 +649,71 @@ def cta_card():
 def seo_block():
     return dbc.Card(
         dbc.CardBody([
-            html.Div(id="faq"),
-            html.H2("Qué es el interés compuesto", style={"fontWeight": "800", "fontSize": "1.6rem"}),
+            html.Div(id="faq", style={"scrollMarginTop": "90px"}),
+
+            html.H2("Calculadora de interés compuesto: cómo usarla", style={"fontWeight": "800", "fontSize": "1.7rem"}),
             html.P(
-                "El interés compuesto es el efecto por el que tus ganancias generan nuevas ganancias con el paso del tiempo. "
-                "A largo plazo, la diferencia entre empezar pronto y empezar tarde puede ser enorme."
+                "Esta calculadora de interés compuesto te permite estimar cuánto podría crecer una inversión a largo plazo combinando una cantidad inicial, aportaciones periódicas y una rentabilidad anual esperada. "
+                "También puedes ajustar inflación, impuestos y comisiones para obtener una simulación más realista."
             ),
-            html.H3("Cómo funciona esta calculadora", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
+
+            html.H3("Qué es el interés compuesto", style={"fontWeight": "800", "fontSize": "1.25rem", "marginTop": "20px"}),
             html.P(
-                "Introduce una inversión inicial, una aportación periódica, una rentabilidad anual estimada y el número de años. "
-                "Después puedes ajustar inflación, impuestos y comisiones para tener una simulación más realista."
+                "El interés compuesto es el efecto por el que los rendimientos generados por una inversión vuelven a reinvertirse y empiezan a producir nuevas ganancias. "
+                "Con el paso del tiempo, este efecto puede hacer que el crecimiento del patrimonio se acelere de forma muy significativa."
             ),
-            html.H3("Por qué empezar antes importa", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
+
+            html.H3("Cómo funciona esta calculadora de inversión", style={"fontWeight": "800", "fontSize": "1.25rem", "marginTop": "20px"}),
             html.P(
-                "Muchas veces el mayor error no es invertir poco, sino esperar demasiado. "
-                "La constancia y el tiempo suelen tener más peso que buscar la rentabilidad perfecta."
+                "Introduce tu inversión inicial, la aportación mensual o anual que quieres hacer, la rentabilidad esperada y el número de años. "
+                "Después podrás ver el capital aportado, el valor final estimado, el impacto de la inflación y una aproximación del crecimiento neto tras impuestos."
             ),
-            html.H3("Preguntas frecuentes", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
-            html.P("• ¿Sirve para ETF, fondos indexados o ahorro periódico? Sí, como simulación orientativa."),
-            html.P("• ¿El resultado está garantizado? No, es solo una estimación."),
-            html.P("• ¿Incluye impuestos reales? No, usa una aproximación simple."),
-            html.P("• ¿Por qué se muestra un valor real? Porque la inflación reduce el poder adquisitivo."),
-            html.P("• ¿Qué rentabilidad debería usar? Conviene probar varios escenarios, desde prudente a optimista.")
+
+            html.H3("Ejemplo de interés compuesto con aportaciones mensuales", style={"fontWeight": "800", "fontSize": "1.25rem", "marginTop": "20px"}),
+            html.P(
+                "Por ejemplo, si inviertes 10.000 € al inicio y aportas 300 € al mes durante 20 años con una rentabilidad anual del 7 %, el capital final estimado puede crecer de forma notable gracias al interés compuesto. "
+                "Este tipo de simulación ayuda a entender por qué empezar pronto suele ser más importante que intentar encontrar el activo perfecto."
+            ),
+
+            html.H3("Para quién sirve este simulador", style={"fontWeight": "800", "fontSize": "1.25rem", "marginTop": "20px"}),
+            html.P(
+                "Este simulador de interés compuesto es útil para personas que quieran planificar ahorro a largo plazo, comparar escenarios de inversión en ETF, fondos indexados, cuentas remuneradas o carteras diversificadas, "
+                "y visualizar el efecto de aumentar o reducir sus aportaciones periódicas."
+            ),
+
+            html.H3("Por qué empezar antes importa", style={"fontWeight": "800", "fontSize": "1.25rem", "marginTop": "20px"}),
+            html.P(
+                "En muchas estrategias de inversión, el mayor enemigo no es una rentabilidad algo menor, sino retrasar el inicio. "
+                "El tiempo es uno de los factores más potentes del interés compuesto, por lo que empezar antes puede marcar una diferencia enorme en el patrimonio futuro estimado."
+            ),
+
+            html.H3("Preguntas frecuentes sobre la calculadora de interés compuesto", style={"fontWeight": "800", "fontSize": "1.25rem", "marginTop": "20px"}),
+
+            html.H4("¿Sirve para ETF, fondos indexados o ahorro periódico?", style={"fontWeight": "800", "fontSize": "1.05rem", "marginTop": "16px"}),
+            html.P(
+                "Sí. Esta herramienta está pensada como simulador orientativo para estrategias de inversión a largo plazo, especialmente útiles en ETF, fondos indexados y planes de aportación periódica."
+            ),
+
+            html.H4("¿El resultado está garantizado?", style={"fontWeight": "800", "fontSize": "1.05rem", "marginTop": "16px"}),
+            html.P(
+                "No. Los resultados que muestra la calculadora son estimaciones basadas en los supuestos introducidos por el usuario. La rentabilidad futura real puede ser distinta."
+            ),
+
+            html.H4("¿Por qué incluir inflación, comisiones e impuestos?", style={"fontWeight": "800", "fontSize": "1.05rem", "marginTop": "16px"}),
+            html.P(
+                "Porque ayudan a acercar la simulación a escenarios más realistas. La inflación reduce poder adquisitivo, las comisiones penalizan la rentabilidad neta y los impuestos afectan al beneficio final."
+            ),
+
+            html.H4("¿Qué rentabilidad anual debería usar?", style={"fontWeight": "800", "fontSize": "1.05rem", "marginTop": "16px"}),
+            html.P(
+                "Lo más útil suele ser probar varios escenarios: uno conservador, uno base y uno más optimista. Así puedes evaluar cómo cambia el resultado final de tu inversión según distintos supuestos."
+            ),
+
+            html.H4("¿Cuál es la mejor calculadora de interés compuesto?", style={"fontWeight": "800", "fontSize": "1.05rem", "marginTop": "16px"}),
+            html.P(
+                "La mejor calculadora será la que te permita modelizar no solo una inversión inicial, sino también aportaciones periódicas, inflación, comisiones e impuestos. "
+                "Eso ofrece una visión bastante más útil que una simulación demasiado simple."
+            )
         ]),
         style={**CARD_STYLE, "marginTop": "20px"}
     )
@@ -524,6 +723,8 @@ def seo_block():
 # =========================================================
 app.layout = html.Div([
     navbar(),
+    dcc.Store(id="scroll-trigger"),
+    structured_data_block(),
     dbc.Container([
         html.Br(),
         hero_section(),
@@ -533,7 +734,7 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        html.Div(id="simulador"),
+                        html.Div(id="simulador", style={"scrollMarginTop": "90px"}),
                         html.Div("Configura tu simulación", style=SECTION_TITLE_STYLE),
 
                         dbc.Row([
@@ -544,38 +745,87 @@ app.layout = html.Div([
 
                         input_block(
                             "Inversión inicial (€)",
-                            dbc.Input(id="monto-inicial", type="number", min=0, step=100, value=10000)
+                            dbc.Input(
+                                id="monto-inicial",
+                                type="text",
+                                inputMode="decimal",
+                                value="10000",
+                                placeholder="Ej: 10.000",
+                                style=INPUT_STYLE
+                            )
                         ),
                         input_block(
                             "Aportación periódica (€)",
-                            dbc.Input(id="deposito", type="number", min=0, step=50, value=300)
+                            dbc.Input(
+                                id="deposito",
+                                type="text",
+                                inputMode="decimal",
+                                value="300",
+                                placeholder="Ej: 300 o 1.000",
+                                style=INPUT_STYLE
+                            )
                         ),
                         input_block(
                             "Rentabilidad anual esperada (%)",
-                            dbc.Input(id="tasa", type="number", min=0, step=0.1, value=7)
+                            dbc.Input(
+                                id="tasa",
+                                type="text",
+                                inputMode="decimal",
+                                value="7",
+                                placeholder="Ej: 7 o 7,5",
+                                style=INPUT_STYLE
+                            )
                         ),
                         input_block(
                             "Duración (años)",
-                            dbc.Input(id="anos", type="number", min=1, step=1, value=20)
+                            dbc.Input(id="anos", type="number", min=1, step=1, value=20, style=INPUT_STYLE)
                         ),
 
                         dbc.Accordion([
                             dbc.AccordionItem([
                                 input_block(
                                     "Comisión anual (%)",
-                                    dbc.Input(id="comision", type="number", min=0, step=0.05, value=0.20)
+                                    dbc.Input(
+                                        id="comision",
+                                        type="text",
+                                        inputMode="decimal",
+                                        value="0.20",
+                                        placeholder="Ej: 0,20",
+                                        style=INPUT_STYLE
+                                    )
                                 ),
                                 input_block(
                                     "Inflación anual (%)",
-                                    dbc.Input(id="inflacion", type="number", min=0, step=0.1, value=2.5)
+                                    dbc.Input(
+                                        id="inflacion",
+                                        type="text",
+                                        inputMode="decimal",
+                                        value="2.5",
+                                        placeholder="Ej: 2,5",
+                                        style=INPUT_STYLE
+                                    )
                                 ),
                                 input_block(
                                     "Impuestos sobre plusvalías (%)",
-                                    dbc.Input(id="impuestos", type="number", min=0, step=0.5, value=19)
+                                    dbc.Input(
+                                        id="impuestos",
+                                        type="text",
+                                        inputMode="decimal",
+                                        value="19",
+                                        placeholder="Ej: 19",
+                                        style=INPUT_STYLE
+                                    )
                                 ),
                                 input_block(
                                     "Crecimiento anual de aportación (%)",
-                                    dbc.Input(id="crec-aporte", type="number", step=0.25, value=0)
+                                    dbc.Input(
+                                        id="crec-aporte",
+                                        type="text",
+                                        inputMode="decimal",
+                                        value="0",
+                                        placeholder="Ej: 1,5",
+                                        style=INPUT_STYLE
+                                    )
                                 ),
                                 input_block(
                                     "Frecuencia",
@@ -635,7 +885,39 @@ app.layout = html.Div([
         seo_block(),
         html.Br()
     ], fluid=True)
-], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+], style={"backgroundColor": COLOR_BG, "minHeight": "100vh", "scrollBehavior": "smooth"})
+
+# =========================================================
+# CALLBACK SCROLL HERO
+# =========================================================
+@app.callback(
+    Output("scroll-trigger", "data"),
+    Input("hero-scroll-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def trigger_scroll(n_clicks):
+    return {"scroll": n_clicks}
+
+clientside_callback(
+    """
+    function(data) {
+        if (!data) {
+            return window.dash_clientside.no_update;
+        }
+
+        const el = document.getElementById("simulador");
+        if (el) {
+            const yOffset = -85;
+            const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: "smooth" });
+        }
+
+        return "";
+    }
+    """,
+    Output("hero-scroll-btn", "title"),
+    Input("scroll-trigger", "data")
+)
 
 # =========================================================
 # PRESETS
@@ -657,12 +939,12 @@ app.layout = html.Div([
 def aplicar_preset(n1, n2, n3):
     trigger = callback_context.triggered_id
     if trigger == "preset-conservador":
-        return 10000, 200, 4.5, 20, 0.25, 2.0, 19, 0
+        return "10000", "200", "4.5", 20, "0.25", "2.0", "19", "0"
     if trigger == "preset-base":
-        return 10000, 300, 7.0, 20, 0.20, 2.5, 19, 0
+        return "10000", "300", "7.0", 20, "0.20", "2.5", "19", "0"
     if trigger == "preset-dinamico":
-        return 10000, 450, 9.0, 20, 0.20, 2.5, 19, 1.5
-    return 10000, 300, 7.0, 20, 0.20, 2.5, 19, 0
+        return "10000", "450", "9.0", 20, "0.20", "2.5", "19", "1.5"
+    return "10000", "300", "7.0", 20, "0.20", "2.5", "19", "0"
 
 # =========================================================
 # RESET
@@ -682,7 +964,7 @@ def aplicar_preset(n1, n2, n3):
     prevent_initial_call=True
 )
 def resetear(n_clicks):
-    return 10000, 300, 7, 20, 0.20, 2.5, 19, 0, "mensual", "final"
+    return "10000", "300", "7", 20, "0.20", "2.5", "19", "0", "mensual", "final"
 
 # =========================================================
 # VALIDACIÓN
@@ -728,7 +1010,7 @@ def render_resultado(
     inflacion, impuestos, crec_aporte, frecuencia, momento_aportacion
 ):
     if not n_clicks:
-        return dbc.Alert("Pulsa en «Calcular» para ver tu simulación.", color="info")
+        return dbc.Alert("Pulsa en «Calcular» para ver tu simulación de interés compuesto.", color="info")
 
     errores = validar_inputs(monto_inicial, deposito, tasa, anos, inflacion, impuestos, comision, crec_aporte)
     if errores:
@@ -788,7 +1070,7 @@ def render_resultado(
 
     bloque_resumen = dbc.Card(
         dbc.CardBody([
-            html.H2("Resultado de tu simulación", style={"fontWeight": "800", "fontSize": "1.7rem"}),
+            html.H2("Resultado de tu simulación de interés compuesto", style={"fontWeight": "800", "fontSize": "1.7rem"}),
             html.P(texto_resumen, style={"fontSize": "1.08rem", "marginBottom": "8px"}),
             html.P(insight, style={"color": COLOR_MUTED, "marginBottom": "0"})
         ]),
@@ -797,13 +1079,17 @@ def render_resultado(
 
     comparativa_box = dbc.Card(
         dbc.CardBody([
-            html.Div(id="comparativa"),
+            html.Div(id="comparativa", style={"scrollMarginTop": "90px"}),
             html.H4("¿Qué pasa si aportas 100 €, 300 € o 500 €?", style={"fontWeight": "800", "marginBottom": "14px"}),
             html.P(
                 "Este bloque ayuda mucho a convertir porque deja claro el impacto real de subir la aportación periódica.",
                 style={"color": COLOR_MUTED}
             ),
-            dcc.Graph(figure=fig_comparativa, style={"height": "500px"})
+            dcc.Graph(
+                figure=fig_comparativa,
+                style={"height": "500px"},
+                config={"responsive": True}
+            )
         ]),
         style={**CARD_STYLE, "marginTop": "18px"}
     )
@@ -829,7 +1115,11 @@ def render_resultado(
         dbc.Card(
             dbc.CardBody([
                 html.H4("Gráfico principal", style={"fontWeight": "800", "marginBottom": "14px"}),
-                dcc.Graph(figure=fig_principal, style={"height": "520px"})
+                dcc.Graph(
+                    figure=fig_principal,
+                    style={"height": "520px"},
+                    config={"responsive": True}
+                )
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
@@ -923,7 +1213,9 @@ def descargar_html(n_clicks, monto, deposito, tasa, anos, comision, inflacion, i
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Calculadora de interés compuesto - Informe</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Informe generado por la calculadora de interés compuesto con aportaciones mensuales.">
+        <title>Calculadora de interés compuesto gratis - Informe</title>
         <style>
             body {{ font-family: Arial, sans-serif; margin: 40px; color: #222; }}
             h1, h2 {{ margin-bottom: 10px; }}
