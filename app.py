@@ -55,7 +55,7 @@ app.index_string = """
 
         <title>{%title%}</title>
         <!-- 🔥 VERIFICATION TAG -->
-        <meta name='impact-site-verification' content='2d5539a7-7c67-4e61-8a9d-b7c396a48dc9' />
+        <meta name="impact-site-verification" content="2d5539a7-7c67-4e61-8a9d-b7c396a48dc9" />
 
 
         <!-- Google Analytics -->
