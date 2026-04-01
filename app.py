@@ -7,6 +7,11 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 
 # =========================================================
+# CONFIG GENERAL
+# =========================================================
+MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
+
+# =========================================================
 # APP
 # =========================================================
 app = Dash(
@@ -957,7 +962,7 @@ def cta_card():
                                     size="lg",
                                     className="w-100"
                                 ),
-                                href="https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ",
+                                href=MYINVESTOR_AFFILIATE_URL,
                                 target="_blank",
                                 rel="noopener noreferrer nofollow sponsored"
                             ),
@@ -1300,8 +1305,10 @@ def article_layout(pathname):
                                             style={"textDecoration": "none"}
                                         ),
                                         html.A(
-                                            dbc.Button("Ver opciones para invertir", color="success", size="lg"),
-                                            href="/#cta-afiliacion",
+                                            dbc.Button("Ver MyInvestor", color="success", size="lg"),
+                                            href=MYINVESTOR_AFFILIATE_URL,
+                                            target="_blank",
+                                            rel="noopener noreferrer nofollow sponsored",
                                             style={"textDecoration": "none"}
                                         )
                                     ], style={"margin": "0 0 26px 0"}),
@@ -1316,11 +1323,20 @@ def article_layout(pathname):
                                                 "inflación, impuestos y comisiones.",
                                                 style={"color": COLOR_MUTED}
                                             ),
-                                            html.A(
-                                                dbc.Button("Ir a la calculadora", color="primary", size="lg"),
-                                                href="/",
-                                                style={"textDecoration": "none"}
-                                            )
+                                            html.Div([
+                                                html.A(
+                                                    dbc.Button("Ir a la calculadora", color="primary", size="lg", className="me-2"),
+                                                    href="/",
+                                                    style={"textDecoration": "none"}
+                                                ),
+                                                html.A(
+                                                    dbc.Button("Abrir MyInvestor", color="success", size="lg"),
+                                                    href=MYINVESTOR_AFFILIATE_URL,
+                                                    target="_blank",
+                                                    rel="noopener noreferrer nofollow sponsored",
+                                                    style={"textDecoration": "none"}
+                                                )
+                                            ])
                                         ]),
                                         style={**CARD_STYLE, "marginTop": "24px", "backgroundColor": COLOR_PRIMARY_SOFT}
                                     )
@@ -1346,7 +1362,9 @@ def article_layout(pathname):
                             ),
                             html.A(
                                 dbc.Button("Ver MyInvestor", color="success", className="w-100"),
-                                href="/#cta-afiliacion",
+                                href=MYINVESTOR_AFFILIATE_URL,
+                                target="_blank",
+                                rel="noopener noreferrer nofollow sponsored",
                                 style={"textDecoration": "none"}
                             )
                         ]),
