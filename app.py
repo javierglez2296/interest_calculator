@@ -42,6 +42,7 @@ app = Dash(
         }
     ]
 )
+
 server = app.server
 app.title = "Calculadora de interés compuesto gratis | Con aportaciones mensuales"
 
@@ -105,6 +106,29 @@ app.index_string = """
             .resultado-highlight {
                 animation: resultadoGlow 1.2s ease;
             }
+
+            .article-content h1,
+            .article-content h2,
+            .article-content h3,
+            .article-content h4 {
+                color: #0f172a;
+                font-weight: 800;
+            }
+
+            .article-content p,
+            .article-content li {
+                color: #334155;
+                font-size: 1.02rem;
+                line-height: 1.8;
+            }
+
+            .article-content ul {
+                padding-left: 22px;
+            }
+
+            .article-content a {
+                text-decoration: none;
+            }
         </style>
     </head>
     <body>
@@ -117,8 +141,6 @@ app.index_string = """
     </body>
 </html>
 """
-server = app.server
-app.title = "Calculadora de interés compuesto gratis | Con aportaciones mensuales"
 
 # =========================================================
 # ESTILO
@@ -166,6 +188,166 @@ LABEL_STYLE = {
 
 INPUT_STYLE = {
     "fontSize": "16px"
+}
+
+# =========================================================
+# ARTÍCULOS
+# =========================================================
+ARTICLES = {
+    "/que-es-el-interes-compuesto": {
+        "title": "Qué es el interés compuesto y por qué puede cambiar tu patrimonio a largo plazo",
+        "description": "Descubre qué es el interés compuesto, cómo funciona y por qué es una de las claves para hacer crecer tu dinero a largo plazo.",
+        "badge": "Guía de inversión",
+        "content": [
+            ("p", "El interés compuesto es uno de los conceptos más importantes para cualquier persona que quiera ahorrar e invertir mejor. Su idea es simple, pero su impacto a largo plazo puede ser enorme: no solo ganas rentabilidad sobre el dinero que aportas, sino también sobre los beneficios que ya has ido acumulando."),
+            ("p", "Dicho de forma sencilla, es el efecto de ganar dinero sobre tu dinero y sobre el dinero que ese dinero ya generó antes. Por eso se suele decir que el interés compuesto puede ser una de las herramientas más potentes para construir patrimonio con el paso de los años."),
+            ("h2", "Cómo funciona el interés compuesto"),
+            ("p", "Imagina que inviertes 10.000 euros y obtienes una rentabilidad media del 7 % anual. El primer año ganarías 700 euros. Si no retiras ese beneficio, al año siguiente ya no partes de 10.000, sino de 10.700. Y ese segundo año el 7 % se aplica sobre una base mayor."),
+            ("p", "Ese es el punto clave: los rendimientos se reinvierten y generan nuevos rendimientos. Con el tiempo, este efecto se acelera. Al principio parece lento, pero conforme pasan los años el crecimiento se vuelve mucho más visible."),
+            ("h2", "Diferencia entre interés simple e interés compuesto"),
+            ("p", "Con el interés simple, siempre ganas rentabilidad sobre la cantidad inicial. Con el interés compuesto, ganas rentabilidad sobre el capital inicial y también sobre los beneficios acumulados."),
+            ("p", "A largo plazo, la diferencia entre ambos sistemas puede ser enorme."),
+            ("h2", "Por qué el tiempo es tan importante"),
+            ("p", "El interés compuesto necesita tiempo para desplegar su verdadero potencial. Ese es el motivo por el que empezar antes suele ser más importante que intentar aportar cantidades muy grandes más adelante."),
+            ("p", "Muchas personas se centran solo en buscar una alta rentabilidad, pero olvidan que el tiempo y la constancia suelen marcar una diferencia igual o incluso mayor."),
+            ("h2", "Ejemplo con aportaciones mensuales"),
+            ("p", "Supón que empiezas con 5.000 euros iniciales y además aportas 200 euros al mes. Si mantienes esa estrategia durante años y reinviertes los beneficios, el efecto compuesto puede hacer crecer tu patrimonio de forma notable."),
+            ("ul", [
+                "El capital inicial sigue trabajando.",
+                "Las aportaciones mensuales aumentan tu base invertida.",
+                "Los rendimientos acumulados generan nuevos rendimientos."
+            ]),
+            ("h2", "Errores comunes al entender el interés compuesto"),
+            ("h3", "1. Pensar que funciona rápido"),
+            ("p", "Mucha gente espera grandes resultados en poco tiempo. En realidad, el interés compuesto suele ser discreto al principio y mucho más potente a largo plazo."),
+            ("h3", "2. No reinvertir"),
+            ("p", "Si retiras continuamente las ganancias, el efecto compuesto pierde fuerza."),
+            ("h3", "3. Empezar demasiado tarde"),
+            ("p", "Retrasar varios años el inicio puede tener un impacto importante en el resultado final."),
+            ("h3", "4. Aportar de forma irregular"),
+            ("p", "La constancia suele ser más útil que intentar acertar siempre el mejor momento del mercado."),
+            ("h3", "5. Olvidar comisiones e impuestos"),
+            ("p", "Comisiones altas, inflación e impuestos pueden reducir bastante el resultado final, así que conviene tenerlos en cuenta."),
+            ("h2", "Conclusión"),
+            ("p", "El interés compuesto no es magia, pero se le parece bastante cuando se entiende bien y se aplica con paciencia. Su verdadera fuerza está en combinar tres cosas: tiempo, reinversión y constancia."),
+            ("p", "No hace falta empezar con muchísimo dinero. Lo importante es comenzar, mantener una estrategia razonable y dejar que el tiempo haga su trabajo.")
+        ]
+    },
+    "/cuanto-dinero-puedes-tener-invirtiendo-200-euros-al-mes": {
+        "title": "Cuánto dinero puedes tener invirtiendo 200 euros al mes",
+        "description": "Una simulación sencilla para entender cuánto patrimonio podrías acumular invirtiendo 200 euros al mes durante años.",
+        "badge": "Simulación práctica",
+        "content": [
+            ("p", "Una de las preguntas más habituales entre quienes empiezan a invertir es esta: ¿de verdad merece la pena aportar 200 euros al mes? La respuesta corta es sí, especialmente si lo haces durante muchos años y de forma constante."),
+            ("p", "La clave no está solo en la cantidad mensual, sino en el tiempo. Cuando aportas 200 euros cada mes y reinviertes los rendimientos, el interés compuesto empieza a trabajar a tu favor."),
+            ("h2", "Por qué 200 euros al mes pueden ser más potentes de lo que parecen"),
+            ("p", "Muchas personas creen que para invertir hace falta tener mucho dinero. En la práctica, una estrategia periódica con una cantidad asumible puede ser suficiente para empezar a construir patrimonio."),
+            ("p", "Invertir 200 euros al mes son 2.400 euros al año. Mantener esa disciplina durante 10, 20 o 30 años puede dar lugar a cifras mucho más altas de lo que parece al principio."),
+            ("h2", "Qué variables marcan el resultado final"),
+            ("ul", [
+                "El número de años durante los que inviertes.",
+                "La rentabilidad media anual que consigas.",
+                "Si reinviertes o no las ganancias.",
+                "Las comisiones y los impuestos.",
+                "Si aumentas tus aportaciones con el tiempo."
+            ]),
+            ("h2", "Ejemplo orientativo"),
+            ("p", "Si una persona invierte 200 euros al mes durante 20 años y obtiene una rentabilidad media anual razonable, el patrimonio final podría situarse muy por encima del dinero total aportado. Eso ocurre porque con el paso de los años una parte creciente del crecimiento ya no viene solo de tus aportaciones, sino del capital acumulado."),
+            ("p", "A partir de cierto punto, el crecimiento empieza a acelerarse y se vuelve mucho más visible. Por eso las estrategias de inversión a largo plazo suelen recompensar más la constancia que la prisa."),
+            ("h2", "Qué pasa si empiezas antes o más tarde"),
+            ("p", "Empezar cinco años antes puede marcar una diferencia muy grande. No porque aportes muchísimo más dinero, sino porque das más tiempo al capital para multiplicarse."),
+            ("p", "En cambio, esperar demasiado suele salir caro. El coste de retrasar el inicio puede ser mayor que el de invertir una cantidad algo más baja."),
+            ("h2", "Cómo usar esta idea de forma útil"),
+            ("p", "La mejor manera de saber cuánto podrías tener invirtiendo 200 euros al mes es hacer una simulación con tus propios datos. Puedes probar distintos horizontes temporales, variar la rentabilidad esperada y ver cómo cambian los resultados."),
+            ("p", "Eso te permite responder preguntas muy útiles: si te conviene aportar más, si compensa empezar ya o si podrías llegar a una cifra concreta dentro de 15 o 20 años."),
+            ("h2", "Conclusión"),
+            ("p", "Invertir 200 euros al mes sí puede merecer mucho la pena. No te hará rico de la noche a la mañana, pero puede ayudarte a construir un patrimonio sólido con el paso de los años."),
+            ("p", "La diferencia real no suele estar en encontrar la inversión perfecta, sino en empezar, ser constante y dejar que el tiempo haga su trabajo.")
+        ]
+    },
+    "/cuando-se-nota-de-verdad-el-interes-compuesto": {
+        "title": "Cuándo se nota de verdad el interés compuesto",
+        "description": "El interés compuesto parece lento al principio, pero con el tiempo se acelera. Descubre cuándo suele empezar a notarse de verdad.",
+        "badge": "Concepto clave",
+        "content": [
+            ("p", "Una de las mayores frustraciones al empezar a invertir es sentir que el crecimiento va demasiado despacio. Eso es normal. El interés compuesto no suele impresionar en los primeros años, pero cambia mucho con el paso del tiempo."),
+            ("p", "La pregunta importante no es solo cuánto ganas, sino cuándo empieza a notarse de verdad el efecto acumulativo."),
+            ("h2", "Por qué al principio parece lento"),
+            ("p", "Al comienzo, casi todo el crecimiento de tu patrimonio depende de lo que tú aportas. La rentabilidad existe, pero como la base invertida todavía es pequeña, su impacto absoluto es limitado."),
+            ("p", "Eso hace que los primeros años parezcan poco espectaculares. Aun así, esa fase es clave, porque estás construyendo la base sobre la que luego crecerá todo lo demás."),
+            ("h2", "El punto de inflexión"),
+            ("p", "El interés compuesto suele empezar a notarse más cuando el capital acumulado ya es lo bastante grande como para que sus rendimientos pesen mucho más. En ese momento, el dinero invertido empieza a trabajar con mayor fuerza y la curva se vuelve más empinada."),
+            ("p", "No hay una fecha exacta universal, porque depende de la rentabilidad, de las aportaciones y del capital inicial. Pero en horizontes largos, mucha gente empieza a percibir una diferencia clara a partir de los años intermedios del proceso, no al principio."),
+            ("h2", "Cómo saber si ya estás entrando en esa fase"),
+            ("ul", [
+                "Tu cartera empieza a crecer más por la rentabilidad que por nuevas aportaciones.",
+                "Un buen año de mercado añade una cantidad relevante a tu patrimonio.",
+                "Tus resultados mejoran aunque no aumentes demasiado tus aportaciones.",
+                "La diferencia entre seguir invertido y parar se vuelve muy visible."
+            ]),
+            ("h2", "Qué errores hacen que nunca se note del todo"),
+            ("h3", "1. Cambiar de estrategia constantemente"),
+            ("p", "Si interrumpes el proceso cada poco tiempo, el interés compuesto no llega a desplegarse."),
+            ("h3", "2. Retirar ganancias demasiado pronto"),
+            ("p", "Sacar beneficios continuamente limita mucho el crecimiento acumulado."),
+            ("h3", "3. Empezar tarde y querer resultados inmediatos"),
+            ("p", "La paciencia es una parte esencial del proceso."),
+            ("h2", "Qué puedes hacer para acelerarlo razonablemente"),
+            ("ul", [
+                "Aportar de forma periódica.",
+                "Aumentar tus aportaciones cuando puedas.",
+                "Reducir comisiones innecesarias.",
+                "Mantener una visión de largo plazo.",
+                "Evitar decisiones impulsivas."
+            ]),
+            ("h2", "Conclusión"),
+            ("p", "El interés compuesto se nota de verdad cuando le das tiempo suficiente. Al principio avanza despacio, pero luego puede sorprenderte mucho más de lo que parece."),
+            ("p", "La mayoría abandona antes de llegar a esa fase. Precisamente por eso, la constancia suele ser una ventaja tan potente.")
+        ]
+    },
+    "/etf-vs-cuenta-remunerada": {
+        "title": "ETF vs cuenta remunerada: qué diferencias hay y para quién encaja cada opción",
+        "description": "Compara ETF y cuenta remunerada para entender cuál puede encajar mejor según tu plazo, riesgo y objetivo financiero.",
+        "badge": "Comparativa",
+        "content": [
+            ("p", "Muchas personas que empiezan a mover su dinero dudan entre dos opciones muy distintas: invertir en ETF o dejar el dinero en una cuenta remunerada. Ambas pueden ser útiles, pero no sirven exactamente para lo mismo."),
+            ("p", "Elegir bien depende sobre todo de tu horizonte temporal, tu tolerancia al riesgo y el uso que vayas a dar a ese dinero."),
+            ("h2", "Qué es una cuenta remunerada"),
+            ("p", "Una cuenta remunerada es una cuenta bancaria que paga intereses por el dinero depositado. Su principal ventaja es la simplicidad: sabes que tu saldo no debería sufrir grandes oscilaciones y mantienes liquidez alta."),
+            ("p", "Suele ser una opción interesante para fondo de emergencia, dinero a corto plazo o personas que todavía no quieren asumir volatilidad."),
+            ("h2", "Qué es un ETF"),
+            ("p", "Un ETF es un fondo cotizado que puede replicar un índice, un sector o una cesta de activos. Permite invertir de forma diversificada y normalmente se utiliza con un enfoque de medio o largo plazo."),
+            ("p", "Su gran ventaja es el potencial de crecimiento, pero a cambio asumes fluctuaciones de mercado. Eso significa que en algunos periodos el valor puede subir mucho y en otros bajar."),
+            ("h2", "Diferencias principales"),
+            ("ul", [
+                "La cuenta remunerada prioriza estabilidad y liquidez.",
+                "El ETF prioriza crecimiento potencial a largo plazo.",
+                "La cuenta remunerada suele tener menos volatilidad.",
+                "El ETF puede ofrecer mejores resultados a largo plazo, pero no garantiza nada.",
+                "La cuenta remunerada encaja mejor para plazos cortos; el ETF suele tener más sentido a plazos largos."
+            ]),
+            ("h2", "Para quién encaja mejor una cuenta remunerada"),
+            ("ul", [
+                "Para quien necesita el dinero en poco tiempo.",
+                "Para un fondo de emergencia.",
+                "Para perfiles muy conservadores.",
+                "Para quien prioriza tranquilidad sobre rentabilidad potencial."
+            ]),
+            ("h2", "Para quién encaja mejor un ETF"),
+            ("ul", [
+                "Para quien invierte a largo plazo.",
+                "Para quien acepta oscilaciones del mercado.",
+                "Para quien busca crecimiento patrimonial.",
+                "Para estrategias de aportación periódica."
+            ]),
+            ("h2", "¿Y si combinas ambas?"),
+            ("p", "De hecho, en muchos casos la mejor solución no es elegir solo una. Puedes mantener una parte del dinero en una cuenta remunerada para seguridad y liquidez, y destinar otra parte a ETF para crecimiento a largo plazo."),
+            ("p", "Ese enfoque te permite cubrir necesidades de corto plazo sin renunciar al potencial del interés compuesto en el dinero que no necesitas tocar."),
+            ("h2", "Conclusión"),
+            ("p", "ETF y cuenta remunerada no son enemigos. Son herramientas distintas para objetivos distintos."),
+            ("p", "Si el dinero lo necesitas pronto, la cuenta remunerada suele tener más sentido. Si tu objetivo es construir patrimonio a largo plazo, los ETF suelen ofrecer más potencial, aunque con más volatilidad.")
+        ]
+    }
 }
 
 # =========================================================
@@ -499,7 +681,7 @@ def crear_tabla(df):
     )
 
 # =========================================================
-# COMPONENTES UI
+# COMPONENTES SEO / UI
 # =========================================================
 def structured_data_block():
     json_ld = """
@@ -519,22 +701,50 @@ def structured_data_block():
     """
     return html.Script(json_ld, type="application/ld+json")
 
+def article_structured_data_block(pathname, title, description):
+    json_ld = f"""
+    {{
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{title}",
+      "description": "{description}",
+      "author": {{
+        "@type": "Organization",
+        "name": "Calculadora de interés compuesto gratis"
+      }},
+      "publisher": {{
+        "@type": "Organization",
+        "name": "Calculadora de interés compuesto gratis"
+      }},
+      "mainEntityOfPage": {{
+        "@type": "WebPage",
+        "@id": "{pathname}"
+      }}
+    }}
+    """
+    return html.Script(json_ld, type="application/ld+json")
+
 def navbar():
     return html.Div(
         dbc.Container([
             dbc.Row([
                 dbc.Col(
-                    html.Div([
-                        html.Div("●", style={"color": COLOR_PRIMARY, "fontSize": "20px", "lineHeight": "1"}),
-                        html.Div(BRAND_NAME, style={"fontWeight": "800", "color": COLOR_TEXT, "fontSize": "1rem"})
-                    ], style={"display": "flex", "alignItems": "center", "gap": "8px"}),
+                    html.A(
+                        html.Div([
+                            html.Div("●", style={"color": COLOR_PRIMARY, "fontSize": "20px", "lineHeight": "1"}),
+                            html.Div(BRAND_NAME, style={"fontWeight": "800", "color": COLOR_TEXT, "fontSize": "1rem"})
+                        ], style={"display": "flex", "alignItems": "center", "gap": "8px"}),
+                        href="/",
+                        style={"textDecoration": "none"}
+                    ),
                     md=6
                 ),
                 dbc.Col(
                     html.Div([
-                        html.A("Simulador", href="#simulador", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
-                        html.A("Comparativa", href="#comparativa", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
-                        html.A("FAQ", href="#faq", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("Simulador", href="/#simulador", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("Comparativa", href="/#comparativa", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("Artículos", href="/#articulos", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("FAQ", href="/#faq", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
                     ], style={"display": "flex", "justifyContent": "flex-end", "gap": "18px", "flexWrap": "wrap"}),
                     md=6
                 )
@@ -601,13 +811,13 @@ def hero_section():
                         }
                     ),
                     html.Div([
-    dbc.Button("Calcular mi inversión", id="hero-scroll-btn", color="primary", className="me-2"),
-    html.A(
-        dbc.Button("Ver opciones para invertir", color="success"),
-        href="#cta-afiliacion",
-        style={"textDecoration": "none"}
-        )
-    ], className="mt-3"),
+                        dbc.Button("Calcular mi inversión", id="hero-scroll-btn", color="primary", className="me-2"),
+                        html.A(
+                            dbc.Button("Ver opciones para invertir", color="success"),
+                            href="#cta-afiliacion",
+                            style={"textDecoration": "none"}
+                        )
+                    ], className="mt-3"),
                     html.Div([
                         dbc.Badge("Interés compuesto", color="light", text_color="dark", className="me-2"),
                         dbc.Badge("Aportaciones mensuales", color="light", text_color="dark", className="me-2"),
@@ -653,6 +863,42 @@ def trust_block():
             html.P("Puedes insertar enlaces de afiliación donde el usuario ya está convencido.", style={"color": COLOR_MUTED, "marginBottom": "0"})
         ]), style=CARD_STYLE), md=4),
     ], className="g-3 mb-4")
+
+def article_preview_block():
+    cards = []
+    for path, article in ARTICLES.items():
+        cards.append(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        dbc.Badge(article["badge"], color="light", text_color="dark", className="mb-2"),
+                        html.H4(article["title"], style={"fontWeight": "800", "fontSize": "1.15rem", "lineHeight": "1.35"}),
+                        html.P(article["description"], style={"color": COLOR_MUTED, "marginTop": "10px", "minHeight": "88px"}),
+                        html.A(
+                            dbc.Button("Leer artículo", color="primary", className="w-100"),
+                            href=path,
+                            style={"textDecoration": "none"}
+                        )
+                    ]),
+                    style={**CARD_STYLE, "height": "100%"}
+                ),
+                md=6,
+                lg=3
+            )
+        )
+
+    return dbc.Card(
+        dbc.CardBody([
+            html.Div(id="articulos", style={"scrollMarginTop": "90px"}),
+            html.H2("Artículos para aprender e invertir mejor", style={"fontWeight": "800", "marginBottom": "8px"}),
+            html.P(
+                "Estos contenidos están pensados para atraer tráfico desde Google y llevar al usuario hacia la calculadora o tus enlaces de afiliación.",
+                style={"color": COLOR_MUTED, "marginBottom": "18px"}
+            ),
+            dbc.Row(cards, className="g-3")
+        ]),
+        style={**CARD_STYLE, "marginBottom": "20px"}
+    )
 
 def email_capture_block():
     return dbc.Card(
@@ -808,176 +1054,338 @@ def seo_block():
         style={**CARD_STYLE, "marginTop": "20px"}
     )
 
+def build_article_content(blocks):
+    children = []
+    for block_type, value in blocks:
+        if block_type == "p":
+            children.append(html.P(value))
+        elif block_type == "h2":
+            children.append(html.H2(value))
+        elif block_type == "h3":
+            children.append(html.H3(value))
+        elif block_type == "h4":
+            children.append(html.H4(value))
+        elif block_type == "ul":
+            children.append(html.Ul([html.Li(item) for item in value]))
+    return children
+
+def related_articles_block(current_path):
+    cards = []
+    for path, article in ARTICLES.items():
+        if path == current_path:
+            continue
+        cards.append(
+            dbc.Card(
+                dbc.CardBody([
+                    html.Div(article["title"], style={"fontWeight": "800", "fontSize": "1rem", "marginBottom": "8px"}),
+                    html.P(article["description"], style={"color": COLOR_MUTED, "fontSize": "0.95rem", "marginBottom": "12px"}),
+                    html.A(
+                        dbc.Button("Leer", color="primary", className="w-100"),
+                        href=path,
+                        style={"textDecoration": "none"}
+                    )
+                ]),
+                style={**CARD_STYLE, "marginBottom": "12px"}
+            )
+        )
+    return cards
+
 # =========================================================
-# LAYOUT
+# LAYOUT HOME
+# =========================================================
+def home_layout():
+    return html.Div([
+        dcc.Store(id="scroll-trigger"),
+        dcc.Store(id="resultado-scroll-trigger"),
+        structured_data_block(),
+        dbc.Container([
+            html.Br(),
+            hero_section(),
+            trust_block(),
+            article_preview_block(),
+
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.Div(id="simulador", style={"scrollMarginTop": "90px"}),
+                            html.Div("Configura tu simulación", style=SECTION_TITLE_STYLE),
+
+                            dbc.Row([
+                                dbc.Col(dbc.Button("Conservador", id="preset-conservador", color="light", className="w-100"), md=4),
+                                dbc.Col(dbc.Button("Base", id="preset-base", color="light", className="w-100"), md=4),
+                                dbc.Col(dbc.Button("Dinámico", id="preset-dinamico", color="light", className="w-100"), md=4),
+                            ], className="g-2 mb-3"),
+
+                            input_block(
+                                "Inversión inicial (€)",
+                                dbc.Input(
+                                    id="monto-inicial",
+                                    type="text",
+                                    inputMode="decimal",
+                                    value="10000",
+                                    placeholder="Ej: 10.000",
+                                    style=INPUT_STYLE
+                                )
+                            ),
+                            input_block(
+                                "Aportación periódica (€)",
+                                dbc.Input(
+                                    id="deposito",
+                                    type="text",
+                                    inputMode="decimal",
+                                    value="300",
+                                    placeholder="Ej: 300 o 1.000",
+                                    style=INPUT_STYLE
+                                )
+                            ),
+                            input_block(
+                                "Rentabilidad anual esperada (%)",
+                                dbc.Input(
+                                    id="tasa",
+                                    type="text",
+                                    inputMode="decimal",
+                                    value="7",
+                                    placeholder="Ej: 7 o 7,5",
+                                    style=INPUT_STYLE
+                                )
+                            ),
+                            input_block(
+                                "Duración (años)",
+                                dbc.Input(id="anos", type="number", min=1, step=1, value=20, style=INPUT_STYLE)
+                            ),
+
+                            dbc.Accordion([
+                                dbc.AccordionItem([
+                                    input_block(
+                                        "Comisión anual (%)",
+                                        dbc.Input(
+                                            id="comision",
+                                            type="text",
+                                            inputMode="decimal",
+                                            value="0.20",
+                                            placeholder="Ej: 0,20",
+                                            style=INPUT_STYLE
+                                        )
+                                    ),
+                                    input_block(
+                                        "Inflación anual (%)",
+                                        dbc.Input(
+                                            id="inflacion",
+                                            type="text",
+                                            inputMode="decimal",
+                                            value="2.5",
+                                            placeholder="Ej: 2,5",
+                                            style=INPUT_STYLE
+                                        )
+                                    ),
+                                    input_block(
+                                        "Impuestos sobre plusvalías (%)",
+                                        dbc.Input(
+                                            id="impuestos",
+                                            type="text",
+                                            inputMode="decimal",
+                                            value="19",
+                                            placeholder="Ej: 19",
+                                            style=INPUT_STYLE
+                                        )
+                                    ),
+                                    input_block(
+                                        "Crecimiento anual de aportación (%)",
+                                        dbc.Input(
+                                            id="crec-aporte",
+                                            type="text",
+                                            inputMode="decimal",
+                                            value="0",
+                                            placeholder="Ej: 1,5",
+                                            style=INPUT_STYLE
+                                        )
+                                    ),
+                                    input_block(
+                                        "Frecuencia",
+                                        dcc.Dropdown(
+                                            id="frecuencia",
+                                            options=[
+                                                {"label": "Mensual", "value": "mensual"},
+                                                {"label": "Anual", "value": "anual"}
+                                            ],
+                                            value="mensual",
+                                            clearable=False
+                                        )
+                                    ),
+                                    input_block(
+                                        "Momento de la aportación",
+                                        dcc.Dropdown(
+                                            id="momento-aportacion",
+                                            options=[
+                                                {"label": "Al inicio del período", "value": "inicio"},
+                                                {"label": "Al final del período", "value": "final"}
+                                            ],
+                                            value="final",
+                                            clearable=False
+                                        )
+                                    ),
+                                ], title="Opciones avanzadas")
+                            ], start_collapsed=True, className="mb-3"),
+
+                            dbc.Row([
+                                dbc.Col(dbc.Button("Calcular", id="calcular-boton", color="primary", className="w-100"), md=6),
+                                dbc.Col(dbc.Button("Reset", id="reset-boton", color="light", className="w-100"), md=6),
+                            ], className="g-2"),
+
+                            html.Hr(),
+
+                            html.Div("Exportar", style=SECTION_TITLE_STYLE),
+                            dbc.Row([
+                                dbc.Col(dbc.Button("CSV", id="descargar-csv-btn", color="secondary", className="w-100"), md=4),
+                                dbc.Col(dbc.Button("Excel", id="descargar-excel-btn", color="secondary", className="w-100"), md=4),
+                                dbc.Col(dbc.Button("Informe HTML", id="descargar-html-btn", color="dark", className="w-100"), md=4),
+                            ], className="g-2"),
+
+                            dcc.Download(id="descargar-csv"),
+                            dcc.Download(id="descargar-excel"),
+                            dcc.Download(id="descargar-html"),
+
+                            html.Div(id="mensajes-validacion", className="mt-3")
+                        ])
+                    ], style=CARD_STYLE)
+                ], md=4),
+
+                dbc.Col([
+                    html.Div(id="resultado-anchor", style={"scrollMarginTop": "90px"}),
+                    html.Div(id="resultado-principal")
+                ], md=8)
+            ]),
+
+            seo_block(),
+            html.Br()
+        ], fluid=True)
+    ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+
+# =========================================================
+# LAYOUT ARTÍCULO
+# =========================================================
+def article_layout(pathname):
+    article = ARTICLES[pathname]
+
+    return html.Div([
+        article_structured_data_block(pathname, article["title"], article["description"]),
+        dbc.Container([
+            html.Br(),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card(
+                        dbc.CardBody([
+                            dbc.Badge(article["badge"], color="light", text_color="dark", className="mb-3"),
+                            html.Div(
+                                className="article-content",
+                                children=[
+                                    html.H1(
+                                        article["title"],
+                                        style={
+                                            "fontSize": "clamp(2rem, 5vw, 2.8rem)",
+                                            "lineHeight": "1.15",
+                                            "marginBottom": "18px"
+                                        }
+                                    ),
+                                    html.P(
+                                        article["description"],
+                                        style={"fontSize": "1.08rem", "color": COLOR_MUTED, "marginBottom": "22px"}
+                                    ),
+
+                                    html.Div([
+                                        html.A(
+                                            dbc.Button("Probar la calculadora", color="primary", size="lg", className="me-2"),
+                                            href="/",
+                                            style={"textDecoration": "none"}
+                                        ),
+                                        html.A(
+                                            dbc.Button("Ver opciones para invertir", color="success", size="lg"),
+                                            href="/#cta-afiliacion",
+                                            style={"textDecoration": "none"}
+                                        )
+                                    ], style={"margin": "0 0 26px 0"}),
+
+                                    *build_article_content(article["content"]),
+
+                                    dbc.Card(
+                                        dbc.CardBody([
+                                            html.H3("Haz tu propia simulación", style={"fontWeight": "800", "marginBottom": "10px"}),
+                                            html.P(
+                                                "Prueba ahora la calculadora y descubre cuánto podría crecer tu dinero con aportaciones mensuales, "
+                                                "inflación, impuestos y comisiones.",
+                                                style={"color": COLOR_MUTED}
+                                            ),
+                                            html.A(
+                                                dbc.Button("Ir a la calculadora", color="primary", size="lg"),
+                                                href="/",
+                                                style={"textDecoration": "none"}
+                                            )
+                                        ]),
+                                        style={**CARD_STYLE, "marginTop": "24px", "backgroundColor": COLOR_PRIMARY_SOFT}
+                                    )
+                                ]
+                            )
+                        ]),
+                        style=CARD_STYLE
+                    )
+                ], lg=8),
+
+                dbc.Col([
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.H4("Sigue explorando", style={"fontWeight": "800"}),
+                            html.P(
+                                "Usa la calculadora para ver números reales según tu caso.",
+                                style={"color": COLOR_MUTED}
+                            ),
+                            html.A(
+                                dbc.Button("Abrir calculadora", color="primary", className="w-100 mb-2"),
+                                href="/",
+                                style={"textDecoration": "none"}
+                            ),
+                            html.A(
+                                dbc.Button("Ver MyInvestor", color="success", className="w-100"),
+                                href="/#cta-afiliacion",
+                                style={"textDecoration": "none"}
+                            )
+                        ]),
+                        style={**CARD_STYLE, "marginBottom": "18px"}
+                    ),
+
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.H4("Más artículos", style={"fontWeight": "800", "marginBottom": "14px"}),
+                            *related_articles_block(pathname)
+                        ]),
+                        style=CARD_STYLE
+                    )
+                ], lg=4)
+            ]),
+            html.Br()
+        ], fluid=True)
+    ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+
+# =========================================================
+# APP LAYOUT GENERAL CON RUTAS
 # =========================================================
 app.layout = html.Div([
+    dcc.Location(id="url", refresh=False),
     navbar(),
-    dcc.Store(id="scroll-trigger"),
-    dcc.Store(id="resultado-scroll-trigger"),
-    structured_data_block(),
-    dbc.Container([
-        html.Br(),
-        hero_section(),
-        trust_block(),
-
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Div(id="simulador", style={"scrollMarginTop": "90px"}),
-                        html.Div("Configura tu simulación", style=SECTION_TITLE_STYLE),
-
-                        dbc.Row([
-                            dbc.Col(dbc.Button("Conservador", id="preset-conservador", color="light", className="w-100"), md=4),
-                            dbc.Col(dbc.Button("Base", id="preset-base", color="light", className="w-100"), md=4),
-                            dbc.Col(dbc.Button("Dinámico", id="preset-dinamico", color="light", className="w-100"), md=4),
-                        ], className="g-2 mb-3"),
-
-                        input_block(
-                            "Inversión inicial (€)",
-                            dbc.Input(
-                                id="monto-inicial",
-                                type="text",
-                                inputMode="decimal",
-                                value="10000",
-                                placeholder="Ej: 10.000",
-                                style=INPUT_STYLE
-                            )
-                        ),
-                        input_block(
-                            "Aportación periódica (€)",
-                            dbc.Input(
-                                id="deposito",
-                                type="text",
-                                inputMode="decimal",
-                                value="300",
-                                placeholder="Ej: 300 o 1.000",
-                                style=INPUT_STYLE
-                            )
-                        ),
-                        input_block(
-                            "Rentabilidad anual esperada (%)",
-                            dbc.Input(
-                                id="tasa",
-                                type="text",
-                                inputMode="decimal",
-                                value="7",
-                                placeholder="Ej: 7 o 7,5",
-                                style=INPUT_STYLE
-                            )
-                        ),
-                        input_block(
-                            "Duración (años)",
-                            dbc.Input(id="anos", type="number", min=1, step=1, value=20, style=INPUT_STYLE)
-                        ),
-
-                        dbc.Accordion([
-                            dbc.AccordionItem([
-                                input_block(
-                                    "Comisión anual (%)",
-                                    dbc.Input(
-                                        id="comision",
-                                        type="text",
-                                        inputMode="decimal",
-                                        value="0.20",
-                                        placeholder="Ej: 0,20",
-                                        style=INPUT_STYLE
-                                    )
-                                ),
-                                input_block(
-                                    "Inflación anual (%)",
-                                    dbc.Input(
-                                        id="inflacion",
-                                        type="text",
-                                        inputMode="decimal",
-                                        value="2.5",
-                                        placeholder="Ej: 2,5",
-                                        style=INPUT_STYLE
-                                    )
-                                ),
-                                input_block(
-                                    "Impuestos sobre plusvalías (%)",
-                                    dbc.Input(
-                                        id="impuestos",
-                                        type="text",
-                                        inputMode="decimal",
-                                        value="19",
-                                        placeholder="Ej: 19",
-                                        style=INPUT_STYLE
-                                    )
-                                ),
-                                input_block(
-                                    "Crecimiento anual de aportación (%)",
-                                    dbc.Input(
-                                        id="crec-aporte",
-                                        type="text",
-                                        inputMode="decimal",
-                                        value="0",
-                                        placeholder="Ej: 1,5",
-                                        style=INPUT_STYLE
-                                    )
-                                ),
-                                input_block(
-                                    "Frecuencia",
-                                    dcc.Dropdown(
-                                        id="frecuencia",
-                                        options=[
-                                            {"label": "Mensual", "value": "mensual"},
-                                            {"label": "Anual", "value": "anual"}
-                                        ],
-                                        value="mensual",
-                                        clearable=False
-                                    )
-                                ),
-                                input_block(
-                                    "Momento de la aportación",
-                                    dcc.Dropdown(
-                                        id="momento-aportacion",
-                                        options=[
-                                            {"label": "Al inicio del período", "value": "inicio"},
-                                            {"label": "Al final del período", "value": "final"}
-                                        ],
-                                        value="final",
-                                        clearable=False
-                                    )
-                                ),
-                            ], title="Opciones avanzadas")
-                        ], start_collapsed=True, className="mb-3"),
-
-                        dbc.Row([
-                            dbc.Col(dbc.Button("Calcular", id="calcular-boton", color="primary", className="w-100"), md=6),
-                            dbc.Col(dbc.Button("Reset", id="reset-boton", color="light", className="w-100"), md=6),
-                        ], className="g-2"),
-
-                        html.Hr(),
-
-                        html.Div("Exportar", style=SECTION_TITLE_STYLE),
-                        dbc.Row([
-                            dbc.Col(dbc.Button("CSV", id="descargar-csv-btn", color="secondary", className="w-100"), md=4),
-                            dbc.Col(dbc.Button("Excel", id="descargar-excel-btn", color="secondary", className="w-100"), md=4),
-                            dbc.Col(dbc.Button("Informe HTML", id="descargar-html-btn", color="dark", className="w-100"), md=4),
-                        ], className="g-2"),
-
-                        dcc.Download(id="descargar-csv"),
-                        dcc.Download(id="descargar-excel"),
-                        dcc.Download(id="descargar-html"),
-
-                        html.Div(id="mensajes-validacion", className="mt-3")
-                    ])
-                ], style=CARD_STYLE)
-            ], md=4),
-
-            dbc.Col([
-                html.Div(id="resultado-anchor", style={"scrollMarginTop": "90px"}),
-                html.Div(id="resultado-principal")
-            ], md=8)
-        ]),
-
-        seo_block(),
-        html.Br()
-    ], fluid=True)
+    html.Div(id="page-content")
 ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+
+# =========================================================
+# ROUTER
+# =========================================================
+@app.callback(
+    Output("page-content", "children"),
+    Input("url", "pathname")
+)
+def render_page(pathname):
+    if pathname in ARTICLES:
+        return article_layout(pathname)
+    return home_layout()
 
 # =========================================================
 # CALLBACK SCROLL HERO
