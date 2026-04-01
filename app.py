@@ -22,28 +22,22 @@ app = Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
         {
             "name": "description",
-            "content": "Calcula cuánto puede crecer tu dinero con esta calculadora de interés compuesto gratis. Simula inversión inicial, aportaciones mensuales, rentabilidad anual, inflación, impuestos y comisiones. Además incluye calculadora FIRE y calculadora de hipoteca."
+            "content": "Calculadora de interés compuesto gratis, calculadora FIRE y calculadora de hipoteca. Simula inversión, libertad financiera y cuota hipotecaria."
         },
         {"name": "robots", "content": "index, follow"},
         {"name": "theme-color", "content": "#2563eb"},
         {"property": "og:type", "content": "website"},
-        {
-            "property": "og:title",
-            "content": "Calculadora de interés compuesto, FIRE e hipoteca"
-        },
+        {"property": "og:title", "content": "Calculadora de interés compuesto, FIRE e hipoteca"},
         {
             "property": "og:description",
-            "content": "Simula interés compuesto, libertad financiera FIRE y cuota hipotecaria en una sola web."
+            "content": "Simula cuánto podría crecer tu inversión, cuándo podrías alcanzar FIRE y cuánto pagarías de hipoteca."
         },
         {"property": "og:locale", "content": "es_ES"},
         {"name": "twitter:card", "content": "summary_large_image"},
-        {
-            "name": "twitter:title",
-            "content": "Calculadora de interés compuesto, FIRE e hipoteca"
-        },
+        {"name": "twitter:title", "content": "Calculadora de interés compuesto, FIRE e hipoteca"},
         {
             "name": "twitter:description",
-            "content": "Simula cuánto podría crecer tu inversión, cuándo alcanzar FIRE y cuánto pagarías de hipoteca."
+            "content": "Calcula tu patrimonio futuro, tu objetivo FIRE y tu hipoteca."
         }
     ]
 )
@@ -72,18 +66,18 @@ app.index_string = """
           });
         </script>
 
-        <meta name="description" content="Calculadora de interés compuesto, FIRE e hipoteca. Simula inversión inicial, aportaciones mensuales, rentabilidad anual, inflación, impuestos y comisiones.">
+        <meta name="description" content="Calculadora de interés compuesto gratis, calculadora FIRE y calculadora de hipoteca.">
         <meta name="robots" content="index, follow">
         <meta name="theme-color" content="#2563eb">
 
         <meta property="og:type" content="website">
         <meta property="og:title" content="Calculadora de interés compuesto, FIRE e hipoteca">
-        <meta property="og:description" content="Simula interés compuesto, libertad financiera FIRE y cuota hipotecaria en una sola web.">
+        <meta property="og:description" content="Simula inversión, libertad financiera FIRE y cuota hipotecaria en una sola web.">
         <meta property="og:locale" content="es_ES">
 
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="Calculadora de interés compuesto, FIRE e hipoteca">
-        <meta name="twitter:description" content="Calcula tu patrimonio futuro, tu objetivo FIRE y tu hipoteca.">
+        <meta name="twitter:description" content="Calcula tu inversión, tu objetivo FIRE y tu hipoteca.">
 
         {%favicon%}
         {%css%}
@@ -210,13 +204,12 @@ ARTICLES = {
         "description": "Descubre qué es el interés compuesto, cómo funciona y por qué es una de las claves para hacer crecer tu dinero a largo plazo.",
         "badge": "Guía de inversión",
         "content": [
-            ("p", "El interés compuesto es uno de los conceptos más importantes para cualquier persona que quiera ahorrar e invertir mejor. Su idea es simple, pero su impacto a largo plazo puede ser enorme: no solo ganas rentabilidad sobre el dinero que aportas, sino también sobre los beneficios que ya has ido acumulando."),
-            ("p", "Dicho de forma sencilla, es el efecto de ganar dinero sobre tu dinero y sobre el dinero que ese dinero ya generó antes. Por eso se suele decir que el interés compuesto puede ser una de las herramientas más potentes para construir patrimonio con el paso de los años."),
+            ("p", "El interés compuesto es uno de los conceptos más importantes para cualquier persona que quiera ahorrar e invertir mejor. Su idea es simple, pero su impacto a largo plazo puede ser enorme."),
             ("h2", "Cómo funciona el interés compuesto"),
-            ("p", "Imagina que inviertes 10.000 euros y obtienes una rentabilidad media del 7 % anual. El primer año ganarías 700 euros. Si no retiras ese beneficio, al año siguiente ya no partes de 10.000, sino de 10.700."),
-            ("p", "Ese es el punto clave: los rendimientos se reinvierten y generan nuevos rendimientos. Con el tiempo, este efecto se acelera."),
+            ("p", "No solo ganas rentabilidad sobre el dinero que aportas, sino también sobre los beneficios acumulados de años anteriores."),
+            ("p", "Con el tiempo, el crecimiento se acelera porque el capital sobre el que genera rendimientos cada vez es mayor."),
             ("h2", "Conclusión"),
-            ("p", "El interés compuesto combina tiempo, reinversión y constancia. No hace falta empezar con muchísimo dinero. Lo importante es comenzar y mantener una estrategia razonable.")
+            ("p", "El interés compuesto no hace magia, pero el efecto del tiempo puede ser enorme si mantienes la constancia.")
         ]
     },
     "/cuanto-dinero-puedes-tener-invirtiendo-200-euros-al-mes": {
@@ -224,11 +217,11 @@ ARTICLES = {
         "description": "Una simulación sencilla para entender cuánto patrimonio podrías acumular invirtiendo 200 euros al mes durante años.",
         "badge": "Simulación práctica",
         "content": [
-            ("p", "Una de las preguntas más habituales entre quienes empiezan a invertir es esta: ¿de verdad merece la pena aportar 200 euros al mes? La respuesta corta es sí, especialmente si lo haces durante muchos años y de forma constante."),
-            ("h2", "Por qué 200 euros al mes pueden ser más potentes de lo que parecen"),
-            ("p", "Muchas personas creen que para invertir hace falta tener mucho dinero. En la práctica, una estrategia periódica con una cantidad asumible puede ser suficiente para empezar a construir patrimonio."),
+            ("p", "Invertir 200 euros al mes puede parecer poco al principio, pero a largo plazo puede dar lugar a un patrimonio interesante."),
+            ("h2", "La clave está en el tiempo"),
+            ("p", "Lo importante no es solo la cantidad, sino cuántos años mantienes la estrategia y si reinviertes los rendimientos."),
             ("h2", "Conclusión"),
-            ("p", "Invertir 200 euros al mes sí puede merecer mucho la pena. No te hará rico de la noche a la mañana, pero puede ayudarte a construir un patrimonio sólido con el paso de los años.")
+            ("p", "Una aportación periódica asequible puede ser suficiente para empezar a construir patrimonio.")
         ]
     },
     "/cuando-se-nota-de-verdad-el-interes-compuesto": {
@@ -236,11 +229,11 @@ ARTICLES = {
         "description": "El interés compuesto parece lento al principio, pero con el tiempo se acelera. Descubre cuándo suele empezar a notarse de verdad.",
         "badge": "Concepto clave",
         "content": [
-            ("p", "Una de las mayores frustraciones al empezar a invertir es sentir que el crecimiento va demasiado despacio. Eso es normal. El interés compuesto no suele impresionar en los primeros años, pero cambia mucho con el paso del tiempo."),
-            ("h2", "Por qué al principio parece lento"),
-            ("p", "Al comienzo, casi todo el crecimiento de tu patrimonio depende de lo que tú aportas."),
+            ("p", "Al principio parece que avanza despacio porque la base invertida todavía es pequeña."),
+            ("h2", "El punto de inflexión"),
+            ("p", "Con los años, los rendimientos empiezan a pesar más que tus nuevas aportaciones y ahí es cuando se nota de verdad."),
             ("h2", "Conclusión"),
-            ("p", "El interés compuesto se nota de verdad cuando le das tiempo suficiente. La mayoría abandona antes de llegar a esa fase.")
+            ("p", "La mayoría abandona antes de ver el tramo más potente del interés compuesto.")
         ]
     },
     "/que-es-fire-y-cuanto-necesitas": {
@@ -248,20 +241,12 @@ ARTICLES = {
         "description": "Descubre qué significa FIRE, cómo calcular tu número FIRE y qué capital podrías necesitar para vivir de tus inversiones.",
         "badge": "FIRE",
         "content": [
-            ("p", "FIRE significa Financial Independence, Retire Early. La idea central es acumular suficiente patrimonio para que tus inversiones puedan cubrir tus gastos de vida sin depender totalmente de un salario."),
-            ("h2", "Cómo se calcula el número FIRE"),
-            ("p", "Una forma muy conocida de estimarlo es multiplicar tus gastos anuales por 25 si utilizas una tasa de retirada del 4 %. Por ejemplo, si necesitas 24.000 € al año, tu objetivo FIRE orientativo sería 600.000 €."),
-            ("h2", "Qué variables importan"),
-            ("ul", [
-                "Tus gastos anuales reales.",
-                "Tu cartera actual.",
-                "Lo que aportas cada año.",
-                "La rentabilidad esperada.",
-                "La inflación.",
-                "La tasa de retirada que consideres razonable."
-            ]),
+            ("p", "FIRE significa Financial Independence, Retire Early. El objetivo es acumular un patrimonio suficiente para que tus inversiones cubran tus gastos."),
+            ("h2", "Cómo calcular tu número FIRE"),
+            ("p", "Una forma conocida es dividir tus gastos anuales entre tu tasa de retirada segura, por ejemplo el 4 %."),
+            ("p", "Si necesitas 24.000 € al año y usas una tasa del 4 %, necesitarías aproximadamente 600.000 €."),
             ("h2", "Conclusión"),
-            ("p", "FIRE no va solo de jubilarte pronto. Va de construir suficiente margen financiero para tener más libertad de decisión.")
+            ("p", "FIRE no va solo de dejar de trabajar antes, sino de tener más libertad financiera.")
         ]
     },
     "/regla-del-4-por-ciento": {
@@ -269,18 +254,13 @@ ARTICLES = {
         "description": "La regla del 4 % es una referencia clásica para estimar cuánto patrimonio puedes necesitar para vivir de tus inversiones.",
         "badge": "FIRE",
         "content": [
-            ("p", "La regla del 4 % propone que una cartera diversificada podría sostener retiradas anuales equivalentes al 4 % del patrimonio inicial, ajustadas por inflación, durante un periodo largo."),
+            ("p", "La regla del 4 % es una aproximación usada para estimar cuánto patrimonio podrías necesitar para retirarte."),
             ("h2", "Ejemplo sencillo"),
-            ("p", "Si quieres generar 20.000 € al año, con la regla del 4 % necesitarías aproximadamente 500.000 € invertidos."),
-            ("h2", "Cuándo conviene ser prudente"),
-            ("ul", [
-                "Si esperas una jubilación muy larga.",
-                "Si tu cartera es muy agresiva o muy conservadora.",
-                "Si tus gastos no son estables.",
-                "Si quieres un margen extra de seguridad."
-            ]),
+            ("p", "Si quieres 20.000 € al año, necesitarías en torno a 500.000 € con esa referencia."),
+            ("h2", "Usarla con prudencia"),
+            ("p", "Conviene probar varios escenarios, como 3,5 %, 4 % y 4,5 %, para no depender de una única hipótesis."),
             ("h2", "Conclusión"),
-            ("p", "La regla del 4 % es una referencia útil, pero conviene probar varios escenarios, como 3,5 %, 4 % y 4,5 %.")
+            ("p", "Es una guía útil, no una garantía.")
         ]
     },
     "/como-calcular-tu-hipoteca": {
@@ -288,28 +268,16 @@ ARTICLES = {
         "description": "Aprende a calcular la cuota hipotecaria, los intereses totales y el esfuerzo mensual antes de comprar una vivienda.",
         "badge": "Hipoteca",
         "content": [
-            ("p", "Antes de comprar vivienda conviene saber cuánto te costará realmente la hipoteca. No basta con mirar el precio de la casa: también importan la entrada, el plazo y el tipo de interés."),
-            ("h2", "Qué debes calcular"),
+            ("p", "Antes de comprar vivienda conviene calcular bien la hipoteca, no solo el precio del inmueble."),
+            ("h2", "Qué debes mirar"),
             ("ul", [
-                "Importe financiado.",
-                "Cuota mensual.",
-                "Intereses totales.",
-                "Coste total del préstamo."
+                "Importe financiado",
+                "Cuota mensual",
+                "Intereses totales",
+                "Ahorro inicial necesario"
             ]),
-            ("h2", "Por qué es importante"),
-            ("p", "Una diferencia pequeña en el tipo de interés o en el plazo puede cambiar mucho el coste final."),
             ("h2", "Conclusión"),
-            ("p", "La calculadora de hipoteca te ayuda a ver rápido si una compra tiene sentido antes de comprometerte.")
-        ]
-    },
-    "/etf-vs-cuenta-remunerada": {
-        "title": "ETF vs cuenta remunerada: qué diferencias hay y para quién encaja cada opción",
-        "description": "Compara ETF y cuenta remunerada para entender cuál puede encajar mejor según tu plazo, riesgo y objetivo financiero.",
-        "badge": "Comparativa",
-        "content": [
-            ("p", "Muchas personas que empiezan a mover su dinero dudan entre dos opciones muy distintas: invertir en ETF o dejar el dinero en una cuenta remunerada."),
-            ("h2", "Conclusión"),
-            ("p", "ETF y cuenta remunerada no son enemigos. Son herramientas distintas para objetivos distintos.")
+            ("p", "Una diferencia pequeña en interés o plazo puede cambiar mucho el coste final.")
         ]
     }
 }
@@ -773,7 +741,14 @@ def crear_tabla_fire(df):
         page_size=10,
         sort_action="native",
         style_table={"overflowX": "auto"},
-        style_cell={"textAlign": "center", "padding": "8px", "fontSize": "13px", "minWidth": "120px", "whiteSpace": "normal"},
+        style_cell={
+            "textAlign": "center",
+            "padding": "8px",
+            "fontFamily": "Arial",
+            "fontSize": "13px",
+            "minWidth": "120px",
+            "whiteSpace": "normal"
+        },
         style_header={"fontWeight": "700", "backgroundColor": "#f8fafc"},
         style_data_conditional=[{"if": {"row_index": "odd"}, "backgroundColor": "#fbfbfb"}]
     )
@@ -789,7 +764,14 @@ def crear_tabla_hipoteca(df):
         page_size=12,
         sort_action="native",
         style_table={"overflowX": "auto"},
-        style_cell={"textAlign": "center", "padding": "8px", "fontSize": "13px", "minWidth": "120px", "whiteSpace": "normal"},
+        style_cell={
+            "textAlign": "center",
+            "padding": "8px",
+            "fontFamily": "Arial",
+            "fontSize": "13px",
+            "minWidth": "120px",
+            "whiteSpace": "normal"
+        },
         style_header={"fontWeight": "700", "backgroundColor": "#f8fafc"},
         style_data_conditional=[{"if": {"row_index": "odd"}, "backgroundColor": "#fbfbfb"}]
     )
@@ -915,7 +897,7 @@ def hero_section():
                         }
                     ),
                     html.P(
-                        "Ideal para usuarios que quieren ahorrar, invertir mejor y tomar decisiones financieras con números claros.",
+                        "Usa estas herramientas para comparar escenarios y tomar mejores decisiones con tus números.",
                         style={
                             "fontSize": "0.98rem",
                             "color": COLOR_MUTED,
@@ -938,46 +920,11 @@ def hero_section():
                         dbc.Badge("FIRE", color="light", text_color="dark", className="me-2"),
                         dbc.Badge("Hipoteca", color="light", text_color="dark")
                     ], className="mt-4")
-                ], md=8),
-                dbc.Col([
-                    dbc.Card(
-                        dbc.CardBody([
-                            html.Div("Herramientas incluidas", style={"fontWeight": "700", "color": COLOR_MUTED}),
-                            html.H3("3 en 1", style={"fontWeight": "800", "marginTop": "10px", "marginBottom": "4px"}),
-                            html.Div("Inversión · FIRE · Hipoteca", style={"color": COLOR_MUTED, "fontSize": "0.95rem"}),
-                            html.Hr(),
-                            html.Div("Perfecta para monetización SEO", style={"color": COLOR_MUTED}),
-                            html.H2("Artículos + CTAs", style={"fontWeight": "800", "color": COLOR_PRIMARY, "marginTop": "8px"}),
-                            html.Div("Preparada para afiliación financiera", style={"color": COLOR_MUTED, "fontSize": "0.82rem"})
-                        ]),
-                        style={
-                            "borderRadius": "22px",
-                            "background": "linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)",
-                            "border": f"1px solid {COLOR_BORDER}",
-                            "boxShadow": "0 12px 30px rgba(37,99,235,0.10)"
-                        }
-                    )
-                ], md=4)
+                ], md=12)
             ])
         ]),
         style={**CARD_STYLE, "marginBottom": "20px"}
     )
-
-def trust_block():
-    return dbc.Row([
-        dbc.Col(dbc.Card(dbc.CardBody([
-            html.H5("Más tráfico potencial", style={"fontWeight": "800"}),
-            html.P("Tienes varias URLs y varias búsquedas objetivo dentro de la misma web.", style={"color": COLOR_MUTED, "marginBottom": "0"})
-        ]), style=CARD_STYLE), md=4),
-        dbc.Col(dbc.Card(dbc.CardBody([
-            html.H5("Más intención comercial", style={"fontWeight": "800"}),
-            html.P("FIRE, inversión e hipoteca encajan bien con afiliación financiera.", style={"color": COLOR_MUTED, "marginBottom": "0"})
-        ]), style=CARD_STYLE), md=4),
-        dbc.Col(dbc.Card(dbc.CardBody([
-            html.H5("Más tiempo en página", style={"fontWeight": "800"}),
-            html.P("El usuario puede probar varias calculadoras y leer artículos relacionados.", style={"color": COLOR_MUTED, "marginBottom": "0"})
-        ]), style=CARD_STYLE), md=4),
-    ], className="g-3 mb-4")
 
 def article_preview_block():
     cards = []
@@ -1005,9 +952,9 @@ def article_preview_block():
     return dbc.Card(
         dbc.CardBody([
             html.Div(id="articulos", style={"scrollMarginTop": "90px"}),
-            html.H2("Artículos para atraer tráfico y convertir", style={"fontWeight": "800", "marginBottom": "8px"}),
+            html.H2("Artículos relacionados", style={"fontWeight": "800", "marginBottom": "8px"}),
             html.P(
-                "He añadido artículos de interés compuesto, FIRE e hipoteca para captar tráfico SEO y dirigir al usuario hacia la calculadora o al enlace de MyInvestor.",
+                "Lee más sobre inversión, FIRE y cálculo hipotecario.",
                 style={"color": COLOR_MUTED, "marginBottom": "18px"}
             ),
             dbc.Row(cards, className="g-3")
@@ -1020,9 +967,9 @@ def email_capture_block():
         dbc.CardBody([
             dbc.Row([
                 dbc.Col([
-                    html.H3("Captura leads con esta sección", style={"fontWeight": "800", "marginBottom": "8px"}),
+                    html.H3("Recibe tu simulación", style={"fontWeight": "800", "marginBottom": "8px"}),
                     html.P(
-                        "Aquí puedes conectar más adelante un formulario real para enviar la simulación por email y monetizar después con afiliación.",
+                        "Puedes añadir aquí más adelante un formulario real para guardar emails y enviar simulaciones.",
                         style={"color": COLOR_MUTED, "marginBottom": "0"}
                     )
                 ], md=7),
@@ -1043,7 +990,7 @@ def cta_card():
             html.Div(id="cta-afiliacion", style={"scrollMarginTop": "90px"}),
             html.H3("¿Quieres empezar a invertir?", style={"fontWeight": "800"}),
             html.P(
-                "Si quieres empezar hoy mismo, puedes abrir cuenta en MyInvestor. Encaja bien para fondos indexados, ahorro invertido y construcción de patrimonio a largo plazo.",
+                "Si quieres empezar hoy mismo, puedes abrir cuenta en MyInvestor y dar el primer paso hacia una estrategia de inversión a largo plazo.",
                 style={"color": COLOR_MUTED}
             ),
             dbc.Row([
@@ -1052,14 +999,15 @@ def cta_card():
                         dbc.CardBody([
                             html.H4("MyInvestor", style={"fontWeight": "800", "marginBottom": "10px"}),
                             html.P(
-                                "Banco orientado a inversión y ahorro a largo plazo.",
+                                "Opción popular en España para fondos indexados y ahorro invertido.",
                                 style={"color": COLOR_MUTED, "marginBottom": "10px"}
                             ),
                             html.Ul([
-                                html.Li("Fondos indexados y carteras"),
-                                html.Li("Opción interesante para empezar a invertir"),
-                                html.Li("Alta online")
+                                html.Li("Fondos indexados y cartera a largo plazo"),
+                                html.Li("Alta online"),
+                                html.Li("Útil para empezar a invertir")
                             ], style={"paddingLeft": "18px", "marginBottom": "16px"}),
+
                             html.A(
                                 dbc.Button(
                                     "Abrir cuenta en MyInvestor",
@@ -1072,6 +1020,7 @@ def cta_card():
                                 rel="noopener noreferrer nofollow sponsored",
                                 style={"textDecoration": "none"}
                             ),
+
                             html.Div(
                                 "Enlace promocional. Puede generar una comisión o beneficio promocional.",
                                 style={
@@ -1097,22 +1046,19 @@ def seo_block():
         dbc.CardBody([
             html.Div(id="faq", style={"scrollMarginTop": "90px"}),
 
-            html.H2("Preguntas frecuentes sobre las calculadoras financieras", style={"fontWeight": "800", "fontSize": "1.7rem"}),
+            html.H2("Preguntas frecuentes", style={"fontWeight": "800", "fontSize": "1.7rem"}),
 
-            html.H3("¿Esta web sirve para calcular interés compuesto?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
+            html.H3("¿Sirve para calcular interés compuesto?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
             html.P("Sí. Puedes simular inversión inicial, aportaciones periódicas, inflación, impuestos y comisiones."),
 
             html.H3("¿También sirve para calcular FIRE?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
-            html.P("Sí. La calculadora FIRE estima en cuántos años podrías alcanzar tu objetivo de libertad financiera según tu cartera, aportaciones y gastos."),
+            html.P("Sí. La calculadora FIRE estima en cuántos años podrías alcanzar tu objetivo de libertad financiera."),
 
             html.H3("¿Tiene calculadora de hipoteca?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
-            html.P("Sí. Puedes calcular cuota mensual, intereses totales, importe financiado y ahorro inicial necesario."),
+            html.P("Sí. Puedes calcular cuota mensual, intereses totales y ahorro inicial necesario."),
 
             html.H3("¿Los resultados están garantizados?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
-            html.P("No. Son simulaciones orientativas basadas en los supuestos que introduzcas."),
-
-            html.H3("¿Se puede usar para ETF, fondos indexados o ahorro periódico?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
-            html.P("Sí. La calculadora de interés compuesto está especialmente pensada para ese tipo de estrategias.")
+            html.P("No. Son simulaciones orientativas basadas en los datos que introduzcas.")
         ]),
         style={**CARD_STYLE, "marginTop": "20px"}
     )
@@ -1154,7 +1100,7 @@ def related_articles_block(current_path):
     return cards
 
 # =========================================================
-# BLOQUES DE CALCULADORAS
+# BLOQUES CALCULADORAS
 # =========================================================
 def compound_tab():
     return dbc.Row([
@@ -1266,12 +1212,32 @@ def fire_tab():
             dbc.Card([
                 dbc.CardBody([
                     html.Div("Configura tu objetivo FIRE", style=SECTION_TITLE_STYLE),
-                    input_block("Patrimonio invertido actual (€)", dbc.Input(id="fire-cartera-actual", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)),
-                    input_block("Aportación anual (€)", dbc.Input(id="fire-aportacion-anual", type="text", inputMode="decimal", value="7000", style=INPUT_STYLE)),
-                    input_block("Rentabilidad anual esperada (%)", dbc.Input(id="fire-rentabilidad", type="text", inputMode="decimal", value="7", style=INPUT_STYLE)),
-                    input_block("Inflación anual (%)", dbc.Input(id="fire-inflacion", type="text", inputMode="decimal", value="2.5", style=INPUT_STYLE)),
-                    input_block("Gasto anual objetivo de hoy (€)", dbc.Input(id="fire-gasto-anual", type="text", inputMode="decimal", value="24000", style=INPUT_STYLE)),
-                    input_block("Tasa de retirada segura (%)", dbc.Input(id="fire-retiro", type="text", inputMode="decimal", value="4", style=INPUT_STYLE)),
+
+                    input_block(
+                        "Patrimonio invertido actual (€)",
+                        dbc.Input(id="fire-cartera-actual", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Aportación anual (€)",
+                        dbc.Input(id="fire-aportacion-anual", type="text", inputMode="decimal", value="7000", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Rentabilidad anual esperada (%)",
+                        dbc.Input(id="fire-rentabilidad", type="text", inputMode="decimal", value="7", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Inflación anual (%)",
+                        dbc.Input(id="fire-inflacion", type="text", inputMode="decimal", value="2.5", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Gasto anual objetivo de hoy (€)",
+                        dbc.Input(id="fire-gasto-anual", type="text", inputMode="decimal", value="24000", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Tasa de retirada segura (%)",
+                        dbc.Input(id="fire-retiro", type="text", inputMode="decimal", value="4", style=INPUT_STYLE)
+                    ),
+
                     dbc.Button("Calcular FIRE", id="fire-calcular-boton", color="primary", className="w-100")
                 ])
             ], style=CARD_STYLE)
@@ -1288,11 +1254,28 @@ def mortgage_tab():
             dbc.Card([
                 dbc.CardBody([
                     html.Div("Configura tu hipoteca", style=SECTION_TITLE_STYLE),
-                    input_block("Precio de la vivienda (€)", dbc.Input(id="hip-precio", type="text", inputMode="decimal", value="250000", style=INPUT_STYLE)),
-                    input_block("Entrada (€)", dbc.Input(id="hip-entrada", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)),
-                    input_block("Interés anual (%)", dbc.Input(id="hip-interes", type="text", inputMode="decimal", value="3.0", style=INPUT_STYLE)),
-                    input_block("Plazo (años)", dbc.Input(id="hip-anos", type="number", min=1, step=1, value=30, style=INPUT_STYLE)),
-                    input_block("Gastos de compra (%)", dbc.Input(id="hip-gastos", type="text", inputMode="decimal", value="10", style=INPUT_STYLE)),
+
+                    input_block(
+                        "Precio de la vivienda (€)",
+                        dbc.Input(id="hip-precio", type="text", inputMode="decimal", value="250000", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Entrada (€)",
+                        dbc.Input(id="hip-entrada", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Interés anual (%)",
+                        dbc.Input(id="hip-interes", type="text", inputMode="decimal", value="3.0", style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Plazo (años)",
+                        dbc.Input(id="hip-anos", type="number", min=1, step=1, value=30, style=INPUT_STYLE)
+                    ),
+                    input_block(
+                        "Gastos de compra (%)",
+                        dbc.Input(id="hip-gastos", type="text", inputMode="decimal", value="10", style=INPUT_STYLE)
+                    ),
+
                     dbc.Button("Calcular hipoteca", id="hip-calcular-boton", color="primary", className="w-100")
                 ])
             ], style=CARD_STYLE)
@@ -1331,7 +1314,6 @@ def home_layout():
         dbc.Container([
             html.Br(),
             hero_section(),
-            trust_block(),
             calculators_block(),
             cta_card(),
             email_capture_block(),
@@ -1393,7 +1375,7 @@ def article_layout(pathname):
                                         dbc.CardBody([
                                             html.H3("Haz tu propia simulación", style={"fontWeight": "800", "marginBottom": "10px"}),
                                             html.P(
-                                                "Prueba ahora las calculadoras de interés compuesto, FIRE e hipoteca, y compara distintos escenarios.",
+                                                "Prueba ahora la calculadora y descubre distintos escenarios según tu caso.",
                                                 style={"color": COLOR_MUTED}
                                             ),
                                             html.Div([
@@ -1423,9 +1405,9 @@ def article_layout(pathname):
                 dbc.Col([
                     dbc.Card(
                         dbc.CardBody([
-                            html.H4("Empieza hoy", style={"fontWeight": "800"}),
+                            html.H4("Sigue explorando", style={"fontWeight": "800"}),
                             html.P(
-                                "Usa la web para hacer números reales y compara opciones de ahorro e inversión.",
+                                "Usa la calculadora para hacer números reales según tu caso.",
                                 style={"color": COLOR_MUTED}
                             ),
                             html.A(
@@ -1722,7 +1704,7 @@ def render_resultado(
         dbc.CardBody([
             html.H4("¿Qué pasa si aportas 100 €, 300 € o 500 €?", style={"fontWeight": "800", "marginBottom": "14px"}),
             html.P(
-                "Este bloque ayuda mucho a convertir porque deja claro el impacto real de subir la aportación periódica.",
+                "Compara rápidamente cómo cambia el resultado final al subir tu aportación periódica.",
                 style={"color": COLOR_MUTED}
             ),
             dcc.Graph(
@@ -1794,12 +1776,17 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
     if not n_clicks:
         return dbc.Alert("Pulsa en «Calcular FIRE» para ver tu escenario.", color="info")
 
-    df_fire, objetivo_ano = calcular_fire(cartera_actual, aportacion_anual, rentabilidad, inflacion, gasto_anual, retiro)
-    fig = crear_figura_fire(df_fire)
+    df_fire, objetivo_ano = calcular_fire(
+        cartera_actual,
+        aportacion_anual,
+        rentabilidad,
+        inflacion,
+        gasto_anual,
+        retiro
+    )
 
-    ultimo = df_fire.iloc[-1]
+    fig = crear_figura_fire(df_fire)
     numero_fire_actual = df_fire.iloc[0]["Número FIRE"]
-    capital_final = ultimo["Capital estimado"]
     distancia_actual = max(numero_fire_actual - safe_float(cartera_actual), 0)
 
     mensaje = (
@@ -1809,9 +1796,27 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
     )
 
     cards = dbc.Row([
-        dbc.Col(metric_card("Número FIRE actual", formatear_euros_es(numero_fire_actual), "Objetivo orientativo hoy", COLOR_PRIMARY, COLOR_PRIMARY_SOFT), md=6, lg=4),
-        dbc.Col(metric_card("Distancia actual", formatear_euros_es(distancia_actual), "Lo que te falta hoy", COLOR_WARNING, COLOR_WARNING_SOFT), md=6, lg=4),
-        dbc.Col(metric_card("Años hasta FIRE", str(objetivo_ano) if objetivo_ano is not None else "No alcanzado", "Según tus supuestos", COLOR_SUCCESS, COLOR_SUCCESS_SOFT), md=12, lg=4),
+        dbc.Col(metric_card(
+            "Número FIRE actual",
+            formatear_euros_es(numero_fire_actual),
+            "Objetivo orientativo hoy",
+            COLOR_PRIMARY,
+            COLOR_PRIMARY_SOFT
+        ), md=6, lg=4),
+        dbc.Col(metric_card(
+            "Distancia actual",
+            formatear_euros_es(distancia_actual),
+            "Lo que te falta hoy",
+            COLOR_WARNING,
+            COLOR_WARNING_SOFT
+        ), md=6, lg=4),
+        dbc.Col(metric_card(
+            "Años hasta FIRE",
+            str(objetivo_ano) if objetivo_ano is not None else "No alcanzado",
+            "Según tus supuestos",
+            COLOR_SUCCESS,
+            COLOR_SUCCESS_SOFT
+        ), md=12, lg=4),
     ], className="g-3")
 
     return html.Div([
@@ -1823,13 +1828,19 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
             style={**CARD_STYLE, "marginBottom": "18px"}
         ),
         cards,
+
         dbc.Card(
             dbc.CardBody([
                 html.H4("Gráfico FIRE", style={"fontWeight": "800", "marginBottom": "14px"}),
-                dcc.Graph(figure=fig, style={"height": "500px"}, config={"responsive": True})
+                dcc.Graph(
+                    figure=fig,
+                    style={"height": "500px"},
+                    config={"responsive": True}
+                )
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
+
         dbc.Card(
             dbc.CardBody([
                 html.H4("Detalle anual", style={"fontWeight": "800", "marginBottom": "14px"}),
@@ -1837,10 +1848,14 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
+
         dbc.Card(
             dbc.CardBody([
-                html.H4("CTA recomendada", style={"fontWeight": "800"}),
-                html.P("Si quieres empezar a construir tu cartera para acercarte a FIRE, puedes mirar una opción como MyInvestor.", style={"color": COLOR_MUTED}),
+                html.H4("Empieza a construir tu cartera", style={"fontWeight": "800"}),
+                html.P(
+                    "Si quieres empezar a invertir para acercarte a FIRE, puedes mirar una opción como MyInvestor.",
+                    style={"color": COLOR_MUTED}
+                ),
                 html.A(
                     dbc.Button("Ver MyInvestor", color="success", size="lg"),
                     href=MYINVESTOR_AFFILIATE_URL,
@@ -1892,13 +1907,19 @@ def render_hipoteca(n_clicks, precio, entrada, interes, anos, gastos):
             style={**CARD_STYLE, "marginBottom": "18px"}
         ),
         cards,
+
         dbc.Card(
             dbc.CardBody([
                 html.H4("Gráfico de saldo pendiente", style={"fontWeight": "800", "marginBottom": "14px"}),
-                dcc.Graph(figure=fig, style={"height": "500px"}, config={"responsive": True})
+                dcc.Graph(
+                    figure=fig,
+                    style={"height": "500px"},
+                    config={"responsive": True}
+                )
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
+
         dbc.Card(
             dbc.CardBody([
                 html.H4("Tabla de amortización resumida", style={"fontWeight": "800", "marginBottom": "14px"}),
@@ -1983,7 +2004,7 @@ def descargar_html(n_clicks, monto, deposito, tasa, anos, comision, inflacion, i
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Informe generado por la calculadora de interés compuesto con aportaciones mensuales.">
+        <meta name="description" content="Informe generado por la calculadora de interés compuesto.">
         <title>Calculadora de interés compuesto - Informe</title>
         <style>
             body {{ font-family: Arial, sans-serif; margin: 40px; color: #222; }}
