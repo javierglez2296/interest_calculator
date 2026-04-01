@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 # CONFIG GENERAL
 # =========================================================
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
+HIPOTECA_LEAD_URL = "#"  # Sustituye esto por tu partner hipotecario cuando lo tengas
 
 # =========================================================
 # APP
@@ -908,7 +909,7 @@ def hero_section():
                     html.Div([
                         dbc.Button("Abrir calculadoras", id="hero-scroll-btn", color="primary", className="me-2"),
                         html.A(
-                            dbc.Button("Ver opciones para invertir", color="success"),
+                            dbc.Button("Empieza a invertir hoy", color="success"),
                             href=MYINVESTOR_AFFILIATE_URL,
                             target="_blank",
                             rel="noopener noreferrer nofollow sponsored",
@@ -984,33 +985,42 @@ def email_capture_block():
         style={**CARD_STYLE, "marginTop": "18px"}
     )
 
-def cta_card():
+def cta_card(valor_final=None, deposito=None):
+    if valor_final and deposito:
+        texto_dinamico = (
+            f"Si mantienes una aportación de {formatear_euros_es(deposito)}, "
+            f"podrías acercarte a un patrimonio estimado de {formatear_euros_es(valor_final)}. "
+            f"Empezar antes suele marcar una diferencia muy importante."
+        )
+    else:
+        texto_dinamico = "El factor más importante no suele ser encontrar la rentabilidad perfecta, sino empezar pronto y ser constante."
+
     return dbc.Card(
         dbc.CardBody([
             html.Div(id="cta-afiliacion", style={"scrollMarginTop": "90px"}),
-            html.H3("¿Quieres empezar a invertir?", style={"fontWeight": "800"}),
-            html.P(
-                "Si quieres empezar hoy mismo, puedes abrir cuenta en MyInvestor y dar el primer paso hacia una estrategia de inversión a largo plazo.",
-                style={"color": COLOR_MUTED}
+            html.H2("Empieza a invertir cuanto antes", style={"fontWeight": "800"}),
+            html.P(texto_dinamico, style={"color": COLOR_MUTED}),
+            html.Div(
+                "Cada año que retrasas empezar puede reducir tu patrimonio futuro potencial.",
+                style={"fontWeight": "600", "marginBottom": "12px", "color": COLOR_TEXT}
             ),
             dbc.Row([
                 dbc.Col([
                     dbc.Card(
                         dbc.CardBody([
-                            html.H4("MyInvestor", style={"fontWeight": "800", "marginBottom": "10px"}),
+                            html.H4("Empieza hoy con MyInvestor", style={"fontWeight": "800", "marginBottom": "10px"}),
                             html.P(
-                                "Opción popular en España para fondos indexados y ahorro invertido.",
-                                style={"color": COLOR_MUTED, "marginBottom": "10px"}
+                                "Una opción conocida en España para inversión a largo plazo y fondos indexados.",
+                                style={"color": COLOR_MUTED}
                             ),
                             html.Ul([
-                                html.Li("Fondos indexados y cartera a largo plazo"),
                                 html.Li("Alta online"),
-                                html.Li("Útil para empezar a invertir")
+                                html.Li("Acceso a fondos indexados"),
+                                html.Li("Útil para inversión periódica")
                             ], style={"paddingLeft": "18px", "marginBottom": "16px"}),
-
                             html.A(
                                 dbc.Button(
-                                    "Abrir cuenta en MyInvestor",
+                                    "Abrir cuenta y empezar a invertir",
                                     color="success",
                                     size="lg",
                                     className="w-100"
@@ -1020,9 +1030,8 @@ def cta_card():
                                 rel="noopener noreferrer nofollow sponsored",
                                 style={"textDecoration": "none"}
                             ),
-
                             html.Div(
-                                "Enlace promocional. Puede generar una comisión o beneficio promocional.",
+                                "Enlace promocional. Puede generar una comisión.",
                                 style={
                                     "fontSize": "0.82rem",
                                     "color": COLOR_MUTED,
@@ -1039,6 +1048,64 @@ def cta_card():
             ], className="g-3")
         ]),
         style={**CARD_STYLE, "marginTop": "18px"}
+    )
+
+def fire_cta_card(objetivo_ano=None, numero_fire=None):
+    if objetivo_ano is not None:
+        texto = f"Con este escenario podrías alcanzar FIRE en unos {objetivo_ano} años. Si quieres acercarte a ese objetivo, empezar o aumentar tu inversión puede ser decisivo."
+    else:
+        texto = "Con estos supuestos todavía estás lejos del objetivo FIRE. Aumentar aportaciones o empezar cuanto antes puede acercarte mucho más."
+
+    subtitulo = f"Objetivo FIRE orientativo: {formatear_euros_es(numero_fire)}" if numero_fire else "Construye tu cartera con visión de largo plazo"
+
+    return dbc.Card(
+        dbc.CardBody([
+            html.H4("Empieza a construir tu cartera FIRE", style={"fontWeight": "800"}),
+            html.P(texto, style={"color": COLOR_MUTED}),
+            html.Div(subtitulo, style={"fontWeight": "600", "marginBottom": "12px"}),
+            html.A(
+                dbc.Button("Empezar a invertir para FIRE", color="success", size="lg"),
+                href=MYINVESTOR_AFFILIATE_URL,
+                target="_blank",
+                rel="noopener noreferrer nofollow sponsored",
+                style={"textDecoration": "none"}
+            ),
+            html.Div(
+                "Enlace promocional. Puede generar una comisión.",
+                style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"}
+            )
+        ]),
+        style={**CARD_STYLE, "marginTop": "18px", "background": "linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)"}
+    )
+
+def hipoteca_cta_card(cuota=None):
+    if cuota:
+        texto = f"Con una cuota estimada de {formatear_euros_es(cuota)}, puede tener sentido comparar opciones antes de decidirte."
+    else:
+        texto = "Comparar varias ofertas hipotecarias puede ayudarte a reducir el coste total de la compra."
+
+    return dbc.Card(
+        dbc.CardBody([
+            html.H4("Compara hipotecas antes de decidir", style={"fontWeight": "800"}),
+            html.P(texto, style={"color": COLOR_MUTED}),
+            html.Ul([
+                html.Li("Compara varias ofertas"),
+                html.Li("Valora fija, variable o mixta"),
+                html.Li("Revisa el coste total, no solo la cuota")
+            ], style={"paddingLeft": "18px", "marginBottom": "16px"}),
+            html.A(
+                dbc.Button("Comparar hipotecas", color="primary", size="lg"),
+                href=HIPOTECA_LEAD_URL,
+                target="_blank",
+                rel="noopener noreferrer nofollow sponsored",
+                style={"textDecoration": "none"}
+            ),
+            html.Div(
+                "Sustituye este enlace por tu partner hipotecario cuando lo tengas.",
+                style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"}
+            )
+        ]),
+        style={**CARD_STYLE, "marginTop": "18px", "backgroundColor": COLOR_PRIMARY_SOFT}
     )
 
 def seo_block():
@@ -1361,7 +1428,7 @@ def article_layout(pathname):
                                             style={"textDecoration": "none"}
                                         ),
                                         html.A(
-                                            dbc.Button("Ver MyInvestor", color="success", size="lg"),
+                                            dbc.Button("Empieza a invertir hoy", color="success", size="lg"),
                                             href=MYINVESTOR_AFFILIATE_URL,
                                             target="_blank",
                                             rel="noopener noreferrer nofollow sponsored",
@@ -1385,7 +1452,7 @@ def article_layout(pathname):
                                                     style={"textDecoration": "none"}
                                                 ),
                                                 html.A(
-                                                    dbc.Button("Abrir MyInvestor", color="success", size="lg"),
+                                                    dbc.Button("Abrir cuenta y empezar", color="success", size="lg"),
                                                     href=MYINVESTOR_AFFILIATE_URL,
                                                     target="_blank",
                                                     rel="noopener noreferrer nofollow sponsored",
@@ -1416,7 +1483,7 @@ def article_layout(pathname):
                                 style={"textDecoration": "none"}
                             ),
                             html.A(
-                                dbc.Button("Ver MyInvestor", color="success", className="w-100"),
+                                dbc.Button("Empieza a invertir hoy", color="success", className="w-100"),
                                 href=MYINVESTOR_AFFILIATE_URL,
                                 target="_blank",
                                 rel="noopener noreferrer nofollow sponsored",
@@ -1695,7 +1762,16 @@ def render_resultado(
         dbc.CardBody([
             html.H2("Resultado de tu simulación de interés compuesto", style={"fontWeight": "800", "fontSize": "1.7rem"}),
             html.P(texto_resumen, style={"fontSize": "1.08rem", "marginBottom": "8px"}),
-            html.P(insight, style={"color": COLOR_MUTED, "marginBottom": "0"})
+            html.P(insight, style={"color": COLOR_MUTED, "marginBottom": "14px"}),
+            html.Div([
+                html.A(
+                    dbc.Button("Empezar a invertir ahora", color="success", size="lg"),
+                    href=MYINVESTOR_AFFILIATE_URL,
+                    target="_blank",
+                    rel="noopener noreferrer nofollow sponsored",
+                    style={"textDecoration": "none"}
+                )
+            ])
         ]),
         style={**CARD_STYLE, "marginBottom": "18px"}
     )
@@ -1745,6 +1821,8 @@ def render_resultado(
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
+
+        cta_card(valor_final, deposito),
 
         comparativa_box,
 
@@ -1823,7 +1901,14 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
         dbc.Card(
             dbc.CardBody([
                 html.H2("Resultado de tu simulación FIRE", style={"fontWeight": "800", "fontSize": "1.7rem"}),
-                html.P(mensaje, style={"fontSize": "1.08rem", "marginBottom": "0"})
+                html.P(mensaje, style={"fontSize": "1.08rem", "marginBottom": "14px"}),
+                html.A(
+                    dbc.Button("Empezar a invertir para FIRE", color="success", size="lg"),
+                    href=MYINVESTOR_AFFILIATE_URL,
+                    target="_blank",
+                    rel="noopener noreferrer nofollow sponsored",
+                    style={"textDecoration": "none"}
+                )
             ]),
             style={**CARD_STYLE, "marginBottom": "18px"}
         ),
@@ -1841,28 +1926,12 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
 
+        fire_cta_card(objetivo_ano, numero_fire_actual),
+
         dbc.Card(
             dbc.CardBody([
                 html.H4("Detalle anual", style={"fontWeight": "800", "marginBottom": "14px"}),
                 crear_tabla_fire(df_fire.head(25))
-            ]),
-            style={**CARD_STYLE, "marginTop": "18px"}
-        ),
-
-        dbc.Card(
-            dbc.CardBody([
-                html.H4("Empieza a construir tu cartera", style={"fontWeight": "800"}),
-                html.P(
-                    "Si quieres empezar a invertir para acercarte a FIRE, puedes mirar una opción como MyInvestor.",
-                    style={"color": COLOR_MUTED}
-                ),
-                html.A(
-                    dbc.Button("Ver MyInvestor", color="success", size="lg"),
-                    href=MYINVESTOR_AFFILIATE_URL,
-                    target="_blank",
-                    rel="noopener noreferrer nofollow sponsored",
-                    style={"textDecoration": "none"}
-                )
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         )
@@ -1901,7 +1970,14 @@ def render_hipoteca(n_clicks, precio, entrada, interes, anos, gastos):
                 html.P(
                     f"Para una vivienda de {formatear_euros_es(precio)} con una entrada de {formatear_euros_es(entrada)}, "
                     f"la cuota estimada sería de {formatear_euros_es(resultado['cuota'])} al mes.",
-                    style={"fontSize": "1.08rem", "marginBottom": "0"}
+                    style={"fontSize": "1.08rem", "marginBottom": "14px"}
+                ),
+                html.A(
+                    dbc.Button("Comparar hipotecas ahora", color="primary", size="lg"),
+                    href=HIPOTECA_LEAD_URL,
+                    target="_blank",
+                    rel="noopener noreferrer nofollow sponsored",
+                    style={"textDecoration": "none"}
                 )
             ]),
             style={**CARD_STYLE, "marginBottom": "18px"}
@@ -1919,6 +1995,8 @@ def render_hipoteca(n_clicks, precio, entrada, interes, anos, gastos):
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
+
+        hipoteca_cta_card(resultado["cuota"]),
 
         dbc.Card(
             dbc.CardBody([
