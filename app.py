@@ -49,15 +49,36 @@ app.title = "Calculadora de interés compuesto, FIRE e hipoteca"
 
 @app.server.route("/sitemap.xml")
 def sitemap():
-    sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://interescompuesto.app/</loc>
-    <lastmod>2026-03-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>"""
+    urls = [
+        {
+            "loc": "https://interescompuesto.app/",
+            "lastmod": "2026-03-31",
+            "changefreq": "weekly",
+            "priority": "1.0"
+        }
+    ]
+
+    for path in ARTICLES.keys():
+        urls.append({
+            "loc": f"https://interescompuesto.app{path}",
+            "lastmod": "2026-03-31",
+            "changefreq": "monthly",
+            "priority": "0.8"
+        })
+
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+
+    for url in urls:
+        sitemap_xml += "  <url>\n"
+        sitemap_xml += f"    <loc>{url['loc']}</loc>\n"
+        sitemap_xml += f"    <lastmod>{url['lastmod']}</lastmod>\n"
+        sitemap_xml += f"    <changefreq>{url['changefreq']}</changefreq>\n"
+        sitemap_xml += f"    <priority>{url['priority']}</priority>\n"
+        sitemap_xml += "  </url>\n"
+
+    sitemap_xml += "</urlset>"
+
     return Response(sitemap_xml, mimetype="application/xml")
 
 app.index_string = """
