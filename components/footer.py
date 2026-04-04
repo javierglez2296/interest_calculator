@@ -1,7 +1,7 @@
 from dash import html
 import dash_bootstrap_components as dbc
 
-def create_footer():
+def build_footer():
     return html.Footer(
         dbc.Container(
             dbc.Row(
