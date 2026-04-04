@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 from flask import Response
+from flask_compress import Compress
 
 import pandas as pd
 from dash import Dash, dcc, html, Input, Output, State, dash_table, callback_context, clientside_callback
@@ -10,226 +11,9 @@ import dash_bootstrap_components as dbc
 # =========================================================
 # CONFIG GENERAL
 # =========================================================
+SITE_URL = "https://interescompuesto.app"
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
-HIPOTECA_LEAD_URL = "#"  # Sustituye esto por tu partner hipotecario cuando lo tengas
-
-# =========================================================
-# APP
-# =========================================================
-app = Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.LUX],
-    suppress_callback_exceptions=True,
-    meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
-        {
-            "name": "description",
-            "content": "Calculadora de interés compuesto gratis, calculadora FIRE y calculadora de hipoteca. Simula inversión, libertad financiera y cuota hipotecaria."
-        },
-        {"name": "robots", "content": "index, follow"},
-        {"name": "theme-color", "content": "#2563eb"},
-        {"property": "og:type", "content": "website"},
-        {"property": "og:title", "content": "Calculadora de interés compuesto, FIRE e hipoteca"},
-        {
-            "property": "og:description",
-            "content": "Simula cuánto podría crecer tu inversión, cuándo podrías alcanzar FIRE y cuánto pagarías de hipoteca."
-        },
-        {"property": "og:locale", "content": "es_ES"},
-        {"name": "twitter:card", "content": "summary_large_image"},
-        {"name": "twitter:title", "content": "Calculadora de interés compuesto, FIRE e hipoteca"},
-        {
-            "name": "twitter:description",
-            "content": "Calcula tu patrimonio futuro, tu objetivo FIRE y tu hipoteca."
-        }
-    ]
-)
-
-server = app.server
-app.title = "Calculadora de interés compuesto, FIRE e hipoteca"
-
-@app.server.route("/sitemap.xml")
-def sitemap():
-    urls = [
-        {
-            "loc": "https://interescompuesto.app/",
-            "lastmod": "2026-03-31",
-            "changefreq": "weekly",
-            "priority": "1.0"
-        }
-    ]
-
-    for path in ARTICLES.keys():
-        urls.append({
-            "loc": f"https://interescompuesto.app{path}",
-            "lastmod": "2026-03-31",
-            "changefreq": "monthly",
-            "priority": "0.8"
-        })
-
-    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-
-    for url in urls:
-        sitemap_xml += "  <url>\n"
-        sitemap_xml += f"    <loc>{url['loc']}</loc>\n"
-        sitemap_xml += f"    <lastmod>{url['lastmod']}</lastmod>\n"
-        sitemap_xml += f"    <changefreq>{url['changefreq']}</changefreq>\n"
-        sitemap_xml += f"    <priority>{url['priority']}</priority>\n"
-        sitemap_xml += "  </url>\n"
-
-    sitemap_xml += "</urlset>"
-
-    return Response(sitemap_xml, mimetype="application/xml")
-
-app.index_string = """
-<!DOCTYPE html>
-<html lang="es">
-    <head>
-        {%metas%}
-
-        <meta name="google-site-verification" content="T-JtHON5w3hyTmxz5G0_uuQmrESyzYM0H3Io-KORWAQ" />
-        <title>{%title%}</title>
-        <meta name="impact-site-verification" content="2d5539a7-7c67-4e61-8a9d-b7c396a48dc9" />
-
-        <!-- Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJS7ZLKTBX"></script>
-        <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-VJS7ZLKTBX', {
-            'anonymize_ip': true
-          });
-        </script>
-
-        <meta name="description" content="Calculadora de interés compuesto gratis, calculadora FIRE y calculadora de hipoteca.">
-        <meta name="robots" content="index, follow">
-        <meta name="theme-color" content="#2563eb">
-
-        <meta property="og:type" content="website">
-        <meta property="og:title" content="Calculadora de interés compuesto, FIRE e hipoteca">
-        <meta property="og:description" content="Simula inversión, libertad financiera FIRE y cuota hipotecaria en una sola web.">
-        <meta property="og:locale" content="es_ES">
-
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="Calculadora de interés compuesto, FIRE e hipoteca">
-        <meta name="twitter:description" content="Calcula tu inversión, tu objetivo FIRE y tu hipoteca.">
-
-        {%favicon%}
-        {%css%}
-
-        <style>
-            html {
-                scroll-behavior: smooth;
-            }
-
-            @keyframes resultadoGlow {
-                0% {
-                    box-shadow: 0 0 0 rgba(37, 99, 235, 0.00);
-                    transform: translateY(0);
-                }
-                30% {
-                    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.10);
-                    transform: translateY(-2px);
-                }
-                100% {
-                    box-shadow: 0 0 0 rgba(37, 99, 235, 0.00);
-                    transform: translateY(0);
-                }
-            }
-
-            .resultado-highlight {
-                animation: resultadoGlow 1.2s ease;
-            }
-
-            .article-content h1,
-            .article-content h2,
-            .article-content h3,
-            .article-content h4 {
-                color: #0f172a;
-                font-weight: 800;
-            }
-
-            .article-content p,
-            .article-content li {
-                color: #334155;
-                font-size: 1.02rem;
-                line-height: 1.8;
-            }
-
-            .article-content ul {
-                padding-left: 22px;
-            }
-
-            .article-content a {
-                text-decoration: none;
-            }
-
-            .custom-tab {
-                font-weight: 700 !important;
-                font-size: 0.98rem !important;
-                padding: 14px 16px !important;
-            }
-        </style>
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-"""
-
-# =========================================================
-# ESTILO
-# =========================================================
-BRAND_NAME = "Calculadoras financieras"
-
-COLOR_BG = "#f5f7fb"
-COLOR_CARD = "#ffffff"
-COLOR_TEXT = "#0f172a"
-COLOR_MUTED = "#64748b"
-COLOR_BORDER = "#e2e8f0"
-
-COLOR_PRIMARY = "#2563eb"
-COLOR_PRIMARY_SOFT = "#eff6ff"
-COLOR_SUCCESS = "#16a34a"
-COLOR_SUCCESS_SOFT = "#f0fdf4"
-COLOR_WARNING = "#d97706"
-COLOR_WARNING_SOFT = "#fff7ed"
-COLOR_DANGER = "#dc2626"
-COLOR_DANGER_SOFT = "#fef2f2"
-COLOR_DARK = "#0f172a"
-COLOR_CAPITAL = "#94a3b8"
-COLOR_REAL = "#0f766e"
-
-CARD_STYLE = {
-    "borderRadius": "20px",
-    "boxShadow": "0 12px 30px rgba(15, 23, 42, 0.06)",
-    "border": f"1px solid {COLOR_BORDER}",
-    "backgroundColor": COLOR_CARD
-}
-
-SECTION_TITLE_STYLE = {
-    "fontWeight": "800",
-    "fontSize": "1.15rem",
-    "marginBottom": "14px",
-    "color": COLOR_TEXT
-}
-
-LABEL_STYLE = {
-    "fontWeight": "700",
-    "marginBottom": "6px",
-    "display": "block",
-    "color": COLOR_TEXT
-}
-
-INPUT_STYLE = {
-    "fontSize": "16px"
-}
+HIPOTECA_LEAD_URL = "#"
 
 # =========================================================
 # ARTÍCULOS
@@ -317,6 +101,210 @@ ARTICLES = {
         ]
     }
 }
+
+STATIC_ROUTES = [
+    {
+        "loc": f"{SITE_URL}/",
+        "lastmod": "2026-04-04",
+        "changefreq": "weekly",
+        "priority": "1.0"
+    },
+    {
+        "loc": f"{SITE_URL}/calculadora",
+        "lastmod": "2026-04-04",
+        "changefreq": "weekly",
+        "priority": "0.95"
+    },
+    {
+        "loc": f"{SITE_URL}/fire",
+        "lastmod": "2026-04-04",
+        "changefreq": "weekly",
+        "priority": "0.9"
+    },
+    {
+        "loc": f"{SITE_URL}/hipoteca",
+        "lastmod": "2026-04-04",
+        "changefreq": "weekly",
+        "priority": "0.9"
+    }
+]
+
+# =========================================================
+# APP
+# =========================================================
+app = Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.LUX],
+    suppress_callback_exceptions=True,
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {
+            "name": "description",
+            "content": "Calculadora de interés compuesto gratis, calculadora FIRE y calculadora de hipoteca. Simula inversión, libertad financiera y cuota hipotecaria."
+        },
+        {"name": "robots", "content": "index, follow"},
+        {"name": "theme-color", "content": "#2563eb"},
+        {"property": "og:type", "content": "website"},
+        {"property": "og:title", "content": "Calculadora de interés compuesto, FIRE e hipoteca"},
+        {
+            "property": "og:description",
+            "content": "Simula cuánto podría crecer tu inversión, cuándo podrías alcanzar FIRE y cuánto pagarías de hipoteca."
+        },
+        {"property": "og:locale", "content": "es_ES"},
+        {"name": "twitter:card", "content": "summary_large_image"},
+        {"name": "twitter:title", "content": "Calculadora de interés compuesto, FIRE e hipoteca"},
+        {"name": "twitter:description", "content": "Calcula tu patrimonio futuro, tu objetivo FIRE y tu hipoteca."}
+    ]
+)
+
+server = app.server
+Compress(server)
+
+app.title = "Calculadora de interés compuesto, FIRE e hipoteca"
+
+@app.server.route("/sitemap.xml")
+def sitemap():
+    urls = list(STATIC_ROUTES)
+
+    for path in ARTICLES.keys():
+        urls.append({
+            "loc": f"{SITE_URL}{path}",
+            "lastmod": "2026-04-04",
+            "changefreq": "monthly",
+            "priority": "0.8"
+        })
+
+    sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+
+    for url in urls:
+        sitemap_xml.append("  <url>")
+        sitemap_xml.append(f"    <loc>{url['loc']}</loc>")
+        sitemap_xml.append(f"    <lastmod>{url['lastmod']}</lastmod>")
+        sitemap_xml.append(f"    <changefreq>{url['changefreq']}</changefreq>")
+        sitemap_xml.append(f"    <priority>{url['priority']}</priority>")
+        sitemap_xml.append("  </url>")
+
+    sitemap_xml.append("</urlset>")
+    return Response("\n".join(sitemap_xml), mimetype="application/xml")
+
+app.index_string = """
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        {%metas%}
+        <meta name="google-site-verification" content="T-JtHON5w3hyTmxz5G0_uuQmrESyzYM0H3Io-KORWAQ" />
+        <meta name="impact-site-verification" content="2d5539a7-7c67-4e61-8a9d-b7c396a48dc9" />
+        <title>{%title%}</title>
+
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJS7ZLKTBX"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-VJS7ZLKTBX', {'anonymize_ip': true});
+        </script>
+
+        {%favicon%}
+        {%css%}
+
+        <style>
+            html { scroll-behavior: smooth; }
+
+            @keyframes resultadoGlow {
+                0% { box-shadow: 0 0 0 rgba(37, 99, 235, 0.00); transform: translateY(0); }
+                30% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.10); transform: translateY(-2px); }
+                100% { box-shadow: 0 0 0 rgba(37, 99, 235, 0.00); transform: translateY(0); }
+            }
+
+            .resultado-highlight { animation: resultadoGlow 1.1s ease; }
+
+            .article-content h1,
+            .article-content h2,
+            .article-content h3,
+            .article-content h4 {
+                color: #0f172a;
+                font-weight: 800;
+            }
+
+            .article-content p,
+            .article-content li {
+                color: #334155;
+                font-size: 1.02rem;
+                line-height: 1.8;
+            }
+
+            .article-content ul { padding-left: 22px; }
+            .article-content a { text-decoration: none; }
+
+            @media (max-width: 768px) {
+                .resultado-highlight {
+                    animation: none !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+"""
+
+# =========================================================
+# ESTILO
+# =========================================================
+BRAND_NAME = "Calculadoras financieras"
+
+COLOR_BG = "#f5f7fb"
+COLOR_CARD = "#ffffff"
+COLOR_TEXT = "#0f172a"
+COLOR_MUTED = "#64748b"
+COLOR_BORDER = "#e2e8f0"
+
+COLOR_PRIMARY = "#2563eb"
+COLOR_PRIMARY_SOFT = "#eff6ff"
+COLOR_SUCCESS = "#16a34a"
+COLOR_SUCCESS_SOFT = "#f0fdf4"
+COLOR_WARNING = "#d97706"
+COLOR_WARNING_SOFT = "#fff7ed"
+COLOR_DANGER = "#dc2626"
+COLOR_DANGER_SOFT = "#fef2f2"
+COLOR_DARK = "#0f172a"
+COLOR_CAPITAL = "#94a3b8"
+COLOR_REAL = "#0f766e"
+
+GRAPH_CONFIG = {
+    "responsive": True,
+    "displayModeBar": False
+}
+
+CARD_STYLE = {
+    "borderRadius": "20px",
+    "boxShadow": "0 12px 30px rgba(15, 23, 42, 0.06)",
+    "border": f"1px solid {COLOR_BORDER}",
+    "backgroundColor": COLOR_CARD
+}
+
+SECTION_TITLE_STYLE = {
+    "fontWeight": "800",
+    "fontSize": "1.15rem",
+    "marginBottom": "14px",
+    "color": COLOR_TEXT
+}
+
+LABEL_STYLE = {
+    "fontWeight": "700",
+    "marginBottom": "6px",
+    "display": "block",
+    "color": COLOR_TEXT
+}
+
+INPUT_STYLE = {"fontSize": "16px"}
 
 # =========================================================
 # UTILIDADES
@@ -446,7 +434,7 @@ def validar_inputs(monto_inicial, deposito, tasa, anos, inflacion, impuestos, co
     return errores
 
 # =========================================================
-# CÁLCULO INTERÉS COMPUESTO
+# CÁLCULOS
 # =========================================================
 def calcular_escenario(
     nombre_escenario,
@@ -479,7 +467,9 @@ def calcular_escenario(
     rows = []
 
     for t in range(1, total_periodos + 1):
-        aporte_periodo = generar_aporte_periodico(t, deposito_periodico, crecimiento_aportacion_anual_pct, frecuencia)
+        aporte_periodo = generar_aporte_periodico(
+            t, deposito_periodico, crecimiento_aportacion_anual_pct, frecuencia
+        )
 
         if momento_aportacion == "inicio":
             saldo_bruto += aporte_periodo
@@ -516,15 +506,22 @@ def calcular_escenario(
     return pd.DataFrame(rows), nombre_periodo
 
 def preparar_df_plot(df, frecuencia):
-    if frecuencia == "mensual" and len(df) > 24:
-        df_plot = df[df["Mes"] % 12 == 0].copy()
-        df_plot["Etiqueta"] = df_plot["Mes"].apply(lambda x: f"Año {x // 12}")
-        return df_plot, "Año"
+    if frecuencia == "mensual":
+        total = len(df)
+        if total > 480:
+            df_plot = df[df["Mes"] % 24 == 0].copy()
+            df_plot["Etiqueta"] = df_plot["Mes"].apply(lambda x: f"Año {x // 12}")
+            return df_plot, "Año"
+        if total > 120:
+            df_plot = df[df["Mes"] % 12 == 0].copy()
+            df_plot["Etiqueta"] = df_plot["Mes"].apply(lambda x: f"Año {x // 12}")
+            return df_plot, "Año"
+        if total > 60:
+            df_plot = df[df["Mes"] % 6 == 0].copy()
+            df_plot["Etiqueta"] = df_plot["Mes"].apply(lambda x: f"Mes {x}")
+            return df_plot, "Mes"
     return df.copy(), obtener_nombre_periodo(frecuencia)
 
-# =========================================================
-# CÁLCULO FIRE
-# =========================================================
 def calcular_fire(cartera_actual, aportacion_anual, rentabilidad_anual_pct, inflacion_pct, gasto_anual_hoy, tasa_retirada_pct, max_anos=60):
     cartera_actual = safe_float(cartera_actual)
     aportacion_anual = safe_float(aportacion_anual)
@@ -557,9 +554,6 @@ def calcular_fire(cartera_actual, aportacion_anual, rentabilidad_anual_pct, infl
 
     return pd.DataFrame(rows), objetivo_ano
 
-# =========================================================
-# CÁLCULO HIPOTECA
-# =========================================================
 def calcular_hipoteca(precio_vivienda, entrada, interes_anual_pct, anos, gastos_compra_pct=10):
     precio_vivienda = safe_float(precio_vivienda)
     entrada = safe_float(entrada)
@@ -615,8 +609,8 @@ def base_layout(fig, titulo, yaxis_title, xaxis_title=None):
         title={"text": titulo, "x": 0.5},
         template="plotly_white",
         hovermode="x unified",
-        legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
-        margin=dict(l=40, r=20, t=90, b=60),
+        legend=dict(orientation="h", y=1.08, x=0.5, xanchor="center"),
+        margin=dict(l=30, r=15, t=70, b=50),
         yaxis_title=yaxis_title,
         xaxis_title=xaxis_title,
         paper_bgcolor="white",
@@ -638,10 +632,10 @@ def crear_figura_principal(df_plot):
     fig.add_trace(go.Scatter(
         x=df_plot["Etiqueta"],
         y=df_plot["Valor total neto"],
-        mode="lines+markers",
+        mode="lines+markers" if len(df_plot) <= 35 else "lines",
         name="Valor total estimado",
         line=dict(width=4, color=COLOR_PRIMARY),
-        marker=dict(size=7)
+        marker=dict(size=6)
     ))
 
     fig.add_trace(go.Scatter(
@@ -662,8 +656,8 @@ def crear_figura_principal(df_plot):
         text=f"+{formatear_euros_es(crecimiento)}",
         showarrow=True,
         arrowhead=2,
-        ax=-55,
-        ay=-55,
+        ax=-45,
+        ay=-45,
         bgcolor="white",
         bordercolor=COLOR_BORDER
     )
@@ -706,7 +700,8 @@ def crear_figura_fire(df):
         y=df["Capital estimado"],
         mode="lines+markers",
         name="Capital estimado",
-        line=dict(width=4, color=COLOR_PRIMARY)
+        line=dict(width=4, color=COLOR_PRIMARY),
+        marker=dict(size=6)
     ))
 
     fig.add_trace(go.Scatter(
@@ -813,7 +808,7 @@ def crear_tabla_hipoteca(df):
     )
 
 # =========================================================
-# COMPONENTES SEO / UI
+# SEO / UI
 # =========================================================
 def structured_data_block():
     json_ld = """
@@ -850,7 +845,7 @@ def article_structured_data_block(pathname, title, description):
       }},
       "mainEntityOfPage": {{
         "@type": "WebPage",
-        "@id": "{pathname}"
+        "@id": "{SITE_URL}{pathname}"
       }}
     }}
     """
@@ -869,15 +864,16 @@ def navbar():
                         href="/",
                         style={"textDecoration": "none"}
                     ),
-                    md=5
+                    md=4
                 ),
                 dbc.Col(
                     html.Div([
-                        html.A("Calculadoras", href="/#herramientas", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("Interés compuesto", href="/calculadora", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("FIRE", href="/fire", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
+                        html.A("Hipoteca", href="/hipoteca", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
                         html.A("Artículos", href="/#articulos", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
-                        html.A("FAQ", href="/#faq", style={"color": COLOR_MUTED, "textDecoration": "none", "fontWeight": "600"}),
                     ], style={"display": "flex", "justifyContent": "flex-end", "gap": "18px", "flexWrap": "wrap"}),
-                    md=7
+                    md=8
                 )
             ], align="center")
         ], fluid=True),
@@ -903,10 +899,7 @@ def metric_card(title, value, subtitle=None, accent=COLOR_PRIMARY, soft_bg="#fff
     )
 
 def input_block(label, component):
-    return html.Div([
-        html.Label(label, style=LABEL_STYLE),
-        component
-    ], className="mb-3")
+    return html.Div([html.Label(label, style=LABEL_STYLE), component], className="mb-3")
 
 def hero_section():
     return dbc.Card(
@@ -926,30 +919,16 @@ def hero_section():
                     ),
                     html.P(
                         "Simula cuánto podría crecer tu inversión, cuándo podrías alcanzar la libertad financiera y cuánto pagarías por una hipoteca.",
-                        style={
-                            "fontSize": "clamp(0.98rem, 2.8vw, 1.08rem)",
-                            "color": COLOR_MUTED,
-                            "maxWidth": "780px"
-                        }
+                        style={"fontSize": "clamp(0.98rem, 2.8vw, 1.08rem)", "color": COLOR_MUTED, "maxWidth": "780px"}
                     ),
                     html.P(
-                        "Usa estas herramientas para comparar escenarios y tomar mejores decisiones con tus números.",
-                        style={
-                            "fontSize": "0.98rem",
-                            "color": COLOR_MUTED,
-                            "maxWidth": "780px",
-                            "marginBottom": "0"
-                        }
+                        "Ahora cada calculadora tiene su propia página para cargar más rápido y posicionar mejor.",
+                        style={"fontSize": "0.98rem", "color": COLOR_MUTED, "maxWidth": "780px", "marginBottom": "0"}
                     ),
                     html.Div([
-                        dbc.Button("Abrir calculadoras", id="hero-scroll-btn", color="primary", className="me-2"),
-                        html.A(
-                            dbc.Button("Empieza a invertir hoy", color="success"),
-                            href=MYINVESTOR_AFFILIATE_URL,
-                            target="_blank",
-                            rel="noopener noreferrer nofollow sponsored",
-                            style={"textDecoration": "none"}
-                        )
+                        html.A(dbc.Button("Interés compuesto", color="primary", className="me-2"), href="/calculadora", style={"textDecoration": "none"}),
+                        html.A(dbc.Button("Calculadora FIRE", color="light", className="me-2"), href="/fire", style={"textDecoration": "none"}),
+                        html.A(dbc.Button("Hipoteca", color="light"), href="/hipoteca", style={"textDecoration": "none"})
                     ], className="mt-3"),
                     html.Div([
                         dbc.Badge("Interés compuesto", color="light", text_color="dark", className="me-2"),
@@ -972,11 +951,7 @@ def article_preview_block():
                         dbc.Badge(article["badge"], color="light", text_color="dark", className="mb-2"),
                         html.H4(article["title"], style={"fontWeight": "800", "fontSize": "1.15rem", "lineHeight": "1.35"}),
                         html.P(article["description"], style={"color": COLOR_MUTED, "marginTop": "10px", "minHeight": "88px"}),
-                        html.A(
-                            dbc.Button("Leer artículo", color="primary", className="w-100"),
-                            href=path,
-                            style={"textDecoration": "none"}
-                        )
+                        html.A(dbc.Button("Leer artículo", color="primary", className="w-100"), href=path, style={"textDecoration": "none"})
                     ]),
                     style={**CARD_STYLE, "height": "100%"}
                 ),
@@ -989,10 +964,7 @@ def article_preview_block():
         dbc.CardBody([
             html.Div(id="articulos", style={"scrollMarginTop": "90px"}),
             html.H2("Artículos relacionados", style={"fontWeight": "800", "marginBottom": "8px"}),
-            html.P(
-                "Lee más sobre inversión, FIRE y cálculo hipotecario.",
-                style={"color": COLOR_MUTED, "marginBottom": "18px"}
-            ),
+            html.P("Lee más sobre inversión, FIRE y cálculo hipotecario.", style={"color": COLOR_MUTED, "marginBottom": "18px"}),
             dbc.Row(cards, className="g-3")
         ]),
         style={**CARD_STYLE, "marginBottom": "20px"}
@@ -1032,7 +1004,6 @@ def cta_card(valor_final=None, deposito=None):
 
     return dbc.Card(
         dbc.CardBody([
-            html.Div(id="cta-afiliacion", style={"scrollMarginTop": "90px"}),
             html.H2("Empieza a invertir cuanto antes", style={"fontWeight": "800"}),
             html.P(texto_dinamico, style={"color": COLOR_MUTED}),
             html.Div(
@@ -1054,30 +1025,18 @@ def cta_card(valor_final=None, deposito=None):
                                 html.Li("Útil para inversión periódica")
                             ], style={"paddingLeft": "18px", "marginBottom": "16px"}),
                             html.A(
-                                dbc.Button(
-                                    "Abrir cuenta y empezar a invertir",
-                                    color="success",
-                                    size="lg",
-                                    className="w-100"
-                                ),
+                                dbc.Button("Abrir cuenta y empezar a invertir", color="success", size="lg", className="w-100"),
                                 href=MYINVESTOR_AFFILIATE_URL,
                                 target="_blank",
                                 rel="noopener noreferrer nofollow sponsored",
                                 style={"textDecoration": "none"}
                             ),
                             html.Div(
-                                "Este enlace es de afiliado. Si abres cuenta a través de él, yo recibo una pequeña comisión sin que te cueste nada extra",
-                                style={
-                                    "fontSize": "0.82rem",
-                                    "color": COLOR_MUTED,
-                                    "marginTop": "10px"
-                                }
+                                "Este enlace es de afiliado. Si abres cuenta a través de él, yo recibo una pequeña comisión sin que te cueste nada extra.",
+                                style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"}
                             )
                         ]),
-                        style={
-                            **CARD_STYLE,
-                            "background": "linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)"
-                        }
+                        style={**CARD_STYLE, "background": "linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)"}
                     )
                 ], md=12)
             ], className="g-3")
@@ -1105,10 +1064,7 @@ def fire_cta_card(objetivo_ano=None, numero_fire=None):
                 rel="noopener noreferrer nofollow sponsored",
                 style={"textDecoration": "none"}
             ),
-            html.Div(
-                "Enlace promocional. Puede generar una comisión.",
-                style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"}
-            )
+            html.Div("Enlace promocional. Puede generar una comisión.", style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"})
         ]),
         style={**CARD_STYLE, "marginTop": "18px", "background": "linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)"}
     )
@@ -1135,10 +1091,7 @@ def hipoteca_cta_card(cuota=None):
                 rel="noopener noreferrer nofollow sponsored",
                 style={"textDecoration": "none"}
             ),
-            html.Div(
-                "Sustituye este enlace por tu partner hipotecario cuando lo tengas.",
-                style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"}
-            )
+            html.Div("Sustituye este enlace por tu partner hipotecario cuando lo tengas.", style={"fontSize": "0.82rem", "color": COLOR_MUTED, "marginTop": "10px"})
         ]),
         style={**CARD_STYLE, "marginTop": "18px", "backgroundColor": COLOR_PRIMARY_SOFT}
     )
@@ -1147,18 +1100,13 @@ def seo_block():
     return dbc.Card(
         dbc.CardBody([
             html.Div(id="faq", style={"scrollMarginTop": "90px"}),
-
             html.H2("Preguntas frecuentes", style={"fontWeight": "800", "fontSize": "1.7rem"}),
-
             html.H3("¿Sirve para calcular interés compuesto?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
             html.P("Sí. Puedes simular inversión inicial, aportaciones periódicas, inflación, impuestos y comisiones."),
-
             html.H3("¿También sirve para calcular FIRE?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
             html.P("Sí. La calculadora FIRE estima en cuántos años podrías alcanzar tu objetivo de libertad financiera."),
-
             html.H3("¿Tiene calculadora de hipoteca?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
             html.P("Sí. Puedes calcular cuota mensual, intereses totales y ahorro inicial necesario."),
-
             html.H3("¿Los resultados están garantizados?", style={"fontWeight": "800", "fontSize": "1.2rem", "marginTop": "18px"}),
             html.P("No. Son simulaciones orientativas basadas en los datos que introduzcas.")
         ]),
@@ -1190,11 +1138,7 @@ def related_articles_block(current_path):
                 dbc.CardBody([
                     html.Div(article["title"], style={"fontWeight": "800", "fontSize": "1rem", "marginBottom": "8px"}),
                     html.P(article["description"], style={"color": COLOR_MUTED, "fontSize": "0.95rem", "marginBottom": "12px"}),
-                    html.A(
-                        dbc.Button("Leer", color="primary", className="w-100"),
-                        href=path,
-                        style={"textDecoration": "none"}
-                    )
+                    html.A(dbc.Button("Leer", color="primary", className="w-100"), href=path, style={"textDecoration": "none"})
                 ]),
                 style={**CARD_STYLE, "marginBottom": "12px"}
             )
@@ -1202,221 +1146,149 @@ def related_articles_block(current_path):
     return cards
 
 # =========================================================
-# BLOQUES CALCULADORAS
+# BLOQUES DE PÁGINA
 # =========================================================
-def compound_tab():
-    return dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardBody([
-                    html.Div("Configura tu simulación", style=SECTION_TITLE_STYLE),
-
-                    dbc.Row([
-                        dbc.Col(dbc.Button("Conservador", id="preset-conservador", color="light", className="w-100"), md=4),
-                        dbc.Col(dbc.Button("Base", id="preset-base", color="light", className="w-100"), md=4),
-                        dbc.Col(dbc.Button("Dinámico", id="preset-dinamico", color="light", className="w-100"), md=4),
-                    ], className="g-2 mb-3"),
-
-                    input_block(
-                        "Inversión inicial (€)",
-                        dbc.Input(id="monto-inicial", type="text", inputMode="decimal", value="10000", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Aportación periódica (€)",
-                        dbc.Input(id="deposito", type="text", inputMode="decimal", value="300", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Rentabilidad anual esperada (%)",
-                        dbc.Input(id="tasa", type="text", inputMode="decimal", value="7", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Duración (años)",
-                        dbc.Input(id="anos", type="number", min=1, step=1, value=20, style=INPUT_STYLE)
-                    ),
-
-                    dbc.Accordion([
-                        dbc.AccordionItem([
-                            input_block(
-                                "Comisión anual (%)",
-                                dbc.Input(id="comision", type="text", inputMode="decimal", value="0.20", style=INPUT_STYLE)
-                            ),
-                            input_block(
-                                "Inflación anual (%)",
-                                dbc.Input(id="inflacion", type="text", inputMode="decimal", value="2.5", style=INPUT_STYLE)
-                            ),
-                            input_block(
-                                "Impuestos sobre plusvalías (%)",
-                                dbc.Input(id="impuestos", type="text", inputMode="decimal", value="19", style=INPUT_STYLE)
-                            ),
-                            input_block(
-                                "Crecimiento anual de aportación (%)",
-                                dbc.Input(id="crec-aporte", type="text", inputMode="decimal", value="0", style=INPUT_STYLE)
-                            ),
-                            input_block(
-                                "Frecuencia",
-                                dcc.Dropdown(
-                                    id="frecuencia",
-                                    options=[
-                                        {"label": "Mensual", "value": "mensual"},
-                                        {"label": "Anual", "value": "anual"}
-                                    ],
-                                    value="mensual",
-                                    clearable=False
-                                )
-                            ),
-                            input_block(
-                                "Momento de la aportación",
-                                dcc.Dropdown(
-                                    id="momento-aportacion",
-                                    options=[
-                                        {"label": "Al inicio del período", "value": "inicio"},
-                                        {"label": "Al final del período", "value": "final"}
-                                    ],
-                                    value="final",
-                                    clearable=False
-                                )
-                            ),
-                        ], title="Opciones avanzadas")
-                    ], start_collapsed=True, className="mb-3"),
-
-                    dbc.Row([
-                        dbc.Col(dbc.Button("Calcular", id="calcular-boton", color="primary", className="w-100"), md=6),
-                        dbc.Col(dbc.Button("Reset", id="reset-boton", color="light", className="w-100"), md=6),
-                    ], className="g-2"),
-
-                    html.Hr(),
-
-                    html.Div("Exportar", style=SECTION_TITLE_STYLE),
-                    dbc.Row([
-                        dbc.Col(dbc.Button("CSV", id="descargar-csv-btn", color="secondary", className="w-100"), md=4),
-                        dbc.Col(dbc.Button("Excel", id="descargar-excel-btn", color="secondary", className="w-100"), md=4),
-                        dbc.Col(dbc.Button("Informe HTML", id="descargar-html-btn", color="dark", className="w-100"), md=4),
-                    ], className="g-2"),
-
-                    dcc.Download(id="descargar-csv"),
-                    dcc.Download(id="descargar-excel"),
-                    dcc.Download(id="descargar-html"),
-
-                    html.Div(id="mensajes-validacion", className="mt-3")
-                ])
-            ], style=CARD_STYLE)
-        ], md=4),
-
-        dbc.Col([
-            html.Div(id="resultado-anchor", style={"scrollMarginTop": "90px"}),
-            html.Div(id="resultado-principal")
-        ], md=8)
-    ])
-
-def fire_tab():
-    return dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardBody([
-                    html.Div("Configura tu objetivo FIRE", style=SECTION_TITLE_STYLE),
-
-                    input_block(
-                        "Patrimonio invertido actual (€)",
-                        dbc.Input(id="fire-cartera-actual", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Aportación anual (€)",
-                        dbc.Input(id="fire-aportacion-anual", type="text", inputMode="decimal", value="7000", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Rentabilidad anual esperada (%)",
-                        dbc.Input(id="fire-rentabilidad", type="text", inputMode="decimal", value="7", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Inflación anual (%)",
-                        dbc.Input(id="fire-inflacion", type="text", inputMode="decimal", value="2.5", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Gasto anual objetivo de hoy (€)",
-                        dbc.Input(id="fire-gasto-anual", type="text", inputMode="decimal", value="24000", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Tasa de retirada segura (%)",
-                        dbc.Input(id="fire-retiro", type="text", inputMode="decimal", value="4", style=INPUT_STYLE)
-                    ),
-
-                    dbc.Button("Calcular FIRE", id="fire-calcular-boton", color="primary", className="w-100")
-                ])
-            ], style=CARD_STYLE)
-        ], md=4),
-
-        dbc.Col([
-            html.Div(id="fire-resultado")
-        ], md=8)
-    ])
-
-def mortgage_tab():
-    return dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardBody([
-                    html.Div("Configura tu hipoteca", style=SECTION_TITLE_STYLE),
-
-                    input_block(
-                        "Precio de la vivienda (€)",
-                        dbc.Input(id="hip-precio", type="text", inputMode="decimal", value="250000", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Entrada (€)",
-                        dbc.Input(id="hip-entrada", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Interés anual (%)",
-                        dbc.Input(id="hip-interes", type="text", inputMode="decimal", value="3.0", style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Plazo (años)",
-                        dbc.Input(id="hip-anos", type="number", min=1, step=1, value=30, style=INPUT_STYLE)
-                    ),
-                    input_block(
-                        "Gastos de compra (%)",
-                        dbc.Input(id="hip-gastos", type="text", inputMode="decimal", value="10", style=INPUT_STYLE)
-                    ),
-
-                    dbc.Button("Calcular hipoteca", id="hip-calcular-boton", color="primary", className="w-100")
-                ])
-            ], style=CARD_STYLE)
-        ], md=4),
-
-        dbc.Col([
-            html.Div(id="hip-resultado")
-        ], md=8)
-    ])
-
-def calculators_block():
+def compound_tool_card():
     return dbc.Card(
         dbc.CardBody([
-            html.Div(id="herramientas", style={"scrollMarginTop": "90px"}),
-            html.H2("Calculadoras", style={"fontWeight": "800", "marginBottom": "12px"}),
-            html.P("Elige la herramienta que quieras usar.", style={"color": COLOR_MUTED, "marginBottom": "18px"}),
-            dbc.Tabs(
-                [
-                    dbc.Tab(compound_tab(), label="Interés compuesto", tabClassName="custom-tab"),
-                    dbc.Tab(fire_tab(), label="Calculadora FIRE", tabClassName="custom-tab"),
-                    dbc.Tab(mortgage_tab(), label="Calculadora hipoteca", tabClassName="custom-tab"),
-                ]
-            )
+            html.Div("Configura tu simulación", style=SECTION_TITLE_STYLE),
+
+            dbc.Row([
+                dbc.Col(dbc.Button("Conservador", id="preset-conservador", color="light", className="w-100"), md=4),
+                dbc.Col(dbc.Button("Base", id="preset-base", color="light", className="w-100"), md=4),
+                dbc.Col(dbc.Button("Dinámico", id="preset-dinamico", color="light", className="w-100"), md=4),
+            ], className="g-2 mb-3"),
+
+            input_block("Inversión inicial (€)", dbc.Input(id="monto-inicial", type="text", inputMode="decimal", value="10000", style=INPUT_STYLE)),
+            input_block("Aportación periódica (€)", dbc.Input(id="deposito", type="text", inputMode="decimal", value="300", style=INPUT_STYLE)),
+            input_block("Rentabilidad anual esperada (%)", dbc.Input(id="tasa", type="text", inputMode="decimal", value="7", style=INPUT_STYLE)),
+            input_block("Duración (años)", dbc.Input(id="anos", type="number", min=1, step=1, value=20, style=INPUT_STYLE)),
+
+            dbc.Accordion([
+                dbc.AccordionItem([
+                    input_block("Comisión anual (%)", dbc.Input(id="comision", type="text", inputMode="decimal", value="0.20", style=INPUT_STYLE)),
+                    input_block("Inflación anual (%)", dbc.Input(id="inflacion", type="text", inputMode="decimal", value="2.5", style=INPUT_STYLE)),
+                    input_block("Impuestos sobre plusvalías (%)", dbc.Input(id="impuestos", type="text", inputMode="decimal", value="19", style=INPUT_STYLE)),
+                    input_block("Crecimiento anual de aportación (%)", dbc.Input(id="crec-aporte", type="text", inputMode="decimal", value="0", style=INPUT_STYLE)),
+                    input_block(
+                        "Frecuencia",
+                        dcc.Dropdown(
+                            id="frecuencia",
+                            options=[{"label": "Mensual", "value": "mensual"}, {"label": "Anual", "value": "anual"}],
+                            value="mensual",
+                            clearable=False
+                        )
+                    ),
+                    input_block(
+                        "Momento de la aportación",
+                        dcc.Dropdown(
+                            id="momento-aportacion",
+                            options=[{"label": "Al inicio del período", "value": "inicio"}, {"label": "Al final del período", "value": "final"}],
+                            value="final",
+                            clearable=False
+                        )
+                    ),
+                ], title="Opciones avanzadas")
+            ], start_collapsed=True, className="mb-3"),
+
+            dbc.Row([
+                dbc.Col(dbc.Button("Calcular", id="calcular-boton", color="primary", className="w-100"), md=6),
+                dbc.Col(dbc.Button("Reset", id="reset-boton", color="light", className="w-100"), md=6),
+            ], className="g-2"),
+
+            html.Hr(),
+
+            html.Div("Exportar", style=SECTION_TITLE_STYLE),
+            dbc.Row([
+                dbc.Col(dbc.Button("CSV", id="descargar-csv-btn", color="secondary", className="w-100"), md=4),
+                dbc.Col(dbc.Button("Excel", id="descargar-excel-btn", color="secondary", className="w-100"), md=4),
+                dbc.Col(dbc.Button("Informe HTML", id="descargar-html-btn", color="dark", className="w-100"), md=4),
+            ], className="g-2"),
+
+            dcc.Download(id="descargar-csv"),
+            dcc.Download(id="descargar-excel"),
+            dcc.Download(id="descargar-html"),
+
+            html.Div(id="mensajes-validacion", className="mt-3")
         ]),
-        style={**CARD_STYLE, "marginBottom": "20px"}
+        style=CARD_STYLE
+    )
+
+def fire_tool_card():
+    return dbc.Card(
+        dbc.CardBody([
+            html.Div("Configura tu objetivo FIRE", style=SECTION_TITLE_STYLE),
+            input_block("Patrimonio invertido actual (€)", dbc.Input(id="fire-cartera-actual", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)),
+            input_block("Aportación anual (€)", dbc.Input(id="fire-aportacion-anual", type="text", inputMode="decimal", value="7000", style=INPUT_STYLE)),
+            input_block("Rentabilidad anual esperada (%)", dbc.Input(id="fire-rentabilidad", type="text", inputMode="decimal", value="7", style=INPUT_STYLE)),
+            input_block("Inflación anual (%)", dbc.Input(id="fire-inflacion", type="text", inputMode="decimal", value="2.5", style=INPUT_STYLE)),
+            input_block("Gasto anual objetivo de hoy (€)", dbc.Input(id="fire-gasto-anual", type="text", inputMode="decimal", value="24000", style=INPUT_STYLE)),
+            input_block("Tasa de retirada segura (%)", dbc.Input(id="fire-retiro", type="text", inputMode="decimal", value="4", style=INPUT_STYLE)),
+            dbc.Button("Calcular FIRE", id="fire-calcular-boton", color="primary", className="w-100")
+        ]),
+        style=CARD_STYLE
+    )
+
+def mortgage_tool_card():
+    return dbc.Card(
+        dbc.CardBody([
+            html.Div("Configura tu hipoteca", style=SECTION_TITLE_STYLE),
+            input_block("Precio de la vivienda (€)", dbc.Input(id="hip-precio", type="text", inputMode="decimal", value="250000", style=INPUT_STYLE)),
+            input_block("Entrada (€)", dbc.Input(id="hip-entrada", type="text", inputMode="decimal", value="50000", style=INPUT_STYLE)),
+            input_block("Interés anual (%)", dbc.Input(id="hip-interes", type="text", inputMode="decimal", value="3.0", style=INPUT_STYLE)),
+            input_block("Plazo (años)", dbc.Input(id="hip-anos", type="number", min=1, step=1, value=30, style=INPUT_STYLE)),
+            input_block("Gastos de compra (%)", dbc.Input(id="hip-gastos", type="text", inputMode="decimal", value="10", style=INPUT_STYLE)),
+            dbc.Button("Calcular hipoteca", id="hip-calcular-boton", color="primary", className="w-100")
+        ]),
+        style=CARD_STYLE
     )
 
 # =========================================================
-# LAYOUT HOME
+# LAYOUTS
 # =========================================================
 def home_layout():
     return html.Div([
-        dcc.Store(id="scroll-trigger"),
-        dcc.Store(id="resultado-scroll-trigger"),
         structured_data_block(),
         dbc.Container([
             html.Br(),
             hero_section(),
-            calculators_block(),
+
+            dbc.Row([
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.H3("Calculadora de interés compuesto", style={"fontWeight": "800"}),
+                            html.P("Simula aportaciones, inflación, comisiones e impuestos.", style={"color": COLOR_MUTED}),
+                            html.A(dbc.Button("Abrir", color="primary"), href="/calculadora", style={"textDecoration": "none"})
+                        ]),
+                        style={**CARD_STYLE, "height": "100%"}
+                    ),
+                    md=4
+                ),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.H3("Calculadora FIRE", style={"fontWeight": "800"}),
+                            html.P("Calcula cuántos años podrías tardar en alcanzar tu objetivo FIRE.", style={"color": COLOR_MUTED}),
+                            html.A(dbc.Button("Abrir", color="primary"), href="/fire", style={"textDecoration": "none"})
+                        ]),
+                        style={**CARD_STYLE, "height": "100%"}
+                    ),
+                    md=4
+                ),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.H3("Calculadora de hipoteca", style={"fontWeight": "800"}),
+                            html.P("Estima cuota, intereses y ahorro inicial necesario.", style={"color": COLOR_MUTED}),
+                            html.A(dbc.Button("Abrir", color="primary"), href="/hipoteca", style={"textDecoration": "none"})
+                        ]),
+                        style={**CARD_STYLE, "height": "100%"}
+                    ),
+                    md=4
+                )
+            ], className="g-3"),
+
             cta_card(),
             email_capture_block(),
             article_preview_block(),
@@ -1425,9 +1297,76 @@ def home_layout():
         ], fluid=True)
     ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
 
-# =========================================================
-# LAYOUT ARTÍCULO
-# =========================================================
+def compound_page_layout():
+    return html.Div([
+        dcc.Store(id="resultado-scroll-trigger"),
+        dbc.Container([
+            html.Br(),
+            dbc.Card(
+                dbc.CardBody([
+                    html.H1("Calculadora de interés compuesto", style={"fontWeight": "800", "marginBottom": "8px"}),
+                    html.P(
+                        "Simula cuánto podría crecer tu inversión con aportaciones periódicas, inflación, comisiones e impuestos.",
+                        style={"color": COLOR_MUTED, "marginBottom": "0"}
+                    )
+                ]),
+                style={**CARD_STYLE, "marginBottom": "20px"}
+            ),
+            dbc.Row([
+                dbc.Col([compound_tool_card()], md=4),
+                dbc.Col([
+                    html.Div(id="resultado-anchor", style={"scrollMarginTop": "90px"}),
+                    html.Div(id="resultado-principal")
+                ], md=8)
+            ], className="g-3"),
+            html.Br()
+        ], fluid=True)
+    ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+
+def fire_page_layout():
+    return html.Div([
+        dbc.Container([
+            html.Br(),
+            dbc.Card(
+                dbc.CardBody([
+                    html.H1("Calculadora FIRE", style={"fontWeight": "800", "marginBottom": "8px"}),
+                    html.P(
+                        "Estima en cuántos años podrías alcanzar la libertad financiera según tu cartera, aportaciones y gasto anual.",
+                        style={"color": COLOR_MUTED, "marginBottom": "0"}
+                    )
+                ]),
+                style={**CARD_STYLE, "marginBottom": "20px"}
+            ),
+            dbc.Row([
+                dbc.Col([fire_tool_card()], md=4),
+                dbc.Col([html.Div(id="fire-resultado")], md=8)
+            ], className="g-3"),
+            html.Br()
+        ], fluid=True)
+    ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+
+def mortgage_page_layout():
+    return html.Div([
+        dbc.Container([
+            html.Br(),
+            dbc.Card(
+                dbc.CardBody([
+                    html.H1("Calculadora de hipoteca", style={"fontWeight": "800", "marginBottom": "8px"}),
+                    html.P(
+                        "Calcula tu cuota mensual, los intereses totales y el ahorro inicial necesario antes de comprar vivienda.",
+                        style={"color": COLOR_MUTED, "marginBottom": "0"}
+                    )
+                ]),
+                style={**CARD_STYLE, "marginBottom": "20px"}
+            ),
+            dbc.Row([
+                dbc.Col([mortgage_tool_card()], md=4),
+                dbc.Col([html.Div(id="hip-resultado")], md=8)
+            ], className="g-3"),
+            html.Br()
+        ], fluid=True)
+    ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
+
 def article_layout(pathname):
     article = ARTICLES[pathname]
 
@@ -1445,23 +1384,14 @@ def article_layout(pathname):
                                 children=[
                                     html.H1(
                                         article["title"],
-                                        style={
-                                            "fontSize": "clamp(2rem, 5vw, 2.8rem)",
-                                            "lineHeight": "1.15",
-                                            "marginBottom": "18px"
-                                        }
+                                        style={"fontSize": "clamp(2rem, 5vw, 2.8rem)", "lineHeight": "1.15", "marginBottom": "18px"}
                                     ),
                                     html.P(
                                         article["description"],
                                         style={"fontSize": "1.08rem", "color": COLOR_MUTED, "marginBottom": "22px"}
                                     ),
-
                                     html.Div([
-                                        html.A(
-                                            dbc.Button("Probar las calculadoras", color="primary", size="lg", className="me-2"),
-                                            href="/",
-                                            style={"textDecoration": "none"}
-                                        ),
+                                        html.A(dbc.Button("Calculadora principal", color="primary", size="lg", className="me-2"), href="/calculadora", style={"textDecoration": "none"}),
                                         html.A(
                                             dbc.Button("Empieza a invertir hoy", color="success", size="lg"),
                                             href=MYINVESTOR_AFFILIATE_URL,
@@ -1470,22 +1400,13 @@ def article_layout(pathname):
                                             style={"textDecoration": "none"}
                                         )
                                     ], style={"margin": "0 0 26px 0"}),
-
                                     *build_article_content(article["content"]),
-
                                     dbc.Card(
                                         dbc.CardBody([
                                             html.H3("Haz tu propia simulación", style={"fontWeight": "800", "marginBottom": "10px"}),
-                                            html.P(
-                                                "Prueba ahora la calculadora y descubre distintos escenarios según tu caso.",
-                                                style={"color": COLOR_MUTED}
-                                            ),
+                                            html.P("Prueba ahora la calculadora y descubre distintos escenarios según tu caso.", style={"color": COLOR_MUTED}),
                                             html.Div([
-                                                html.A(
-                                                    dbc.Button("Ir a la web", color="primary", size="lg", className="me-2"),
-                                                    href="/",
-                                                    style={"textDecoration": "none"}
-                                                ),
+                                                html.A(dbc.Button("Ir a la calculadora", color="primary", size="lg", className="me-2"), href="/calculadora", style={"textDecoration": "none"}),
                                                 html.A(
                                                     dbc.Button("Abrir cuenta y empezar", color="success", size="lg"),
                                                     href=MYINVESTOR_AFFILIATE_URL,
@@ -1503,31 +1424,17 @@ def article_layout(pathname):
                         style=CARD_STYLE
                     )
                 ], lg=8),
-
                 dbc.Col([
                     dbc.Card(
                         dbc.CardBody([
                             html.H4("Sigue explorando", style={"fontWeight": "800"}),
-                            html.P(
-                                "Usa la calculadora para hacer números reales según tu caso.",
-                                style={"color": COLOR_MUTED}
-                            ),
-                            html.A(
-                                dbc.Button("Abrir calculadoras", color="primary", className="w-100 mb-2"),
-                                href="/",
-                                style={"textDecoration": "none"}
-                            ),
-                            html.A(
-                                dbc.Button("Empieza a invertir hoy", color="success", className="w-100"),
-                                href=MYINVESTOR_AFFILIATE_URL,
-                                target="_blank",
-                                rel="noopener noreferrer nofollow sponsored",
-                                style={"textDecoration": "none"}
-                            )
+                            html.P("Usa la calculadora para hacer números reales según tu caso.", style={"color": COLOR_MUTED}),
+                            html.A(dbc.Button("Interés compuesto", color="primary", className="w-100 mb-2"), href="/calculadora", style={"textDecoration": "none"}),
+                            html.A(dbc.Button("Calculadora FIRE", color="light", className="w-100 mb-2"), href="/fire", style={"textDecoration": "none"}),
+                            html.A(dbc.Button("Hipoteca", color="light", className="w-100"), href="/hipoteca", style={"textDecoration": "none"})
                         ]),
                         style={**CARD_STYLE, "marginBottom": "18px"}
                     ),
-
                     dbc.Card(
                         dbc.CardBody([
                             html.H4("Más artículos", style={"fontWeight": "800", "marginBottom": "14px"}),
@@ -1542,7 +1449,7 @@ def article_layout(pathname):
     ], style={"backgroundColor": COLOR_BG, "minHeight": "100vh"})
 
 # =========================================================
-# APP LAYOUT GENERAL CON RUTAS
+# APP LAYOUT
 # =========================================================
 app.layout = html.Div([
     dcc.Location(id="url", refresh=False),
@@ -1553,49 +1460,20 @@ app.layout = html.Div([
 # =========================================================
 # ROUTER
 # =========================================================
-@app.callback(
-    Output("page-content", "children"),
-    Input("url", "pathname")
-)
+@app.callback(Output("page-content", "children"), Input("url", "pathname"))
 def render_page(pathname):
     if pathname in ARTICLES:
         return article_layout(pathname)
+    if pathname == "/calculadora":
+        return compound_page_layout()
+    if pathname == "/fire":
+        return fire_page_layout()
+    if pathname == "/hipoteca":
+        return mortgage_page_layout()
     return home_layout()
 
 # =========================================================
-# CALLBACK SCROLL HERO
-# =========================================================
-@app.callback(
-    Output("scroll-trigger", "data"),
-    Input("hero-scroll-btn", "n_clicks"),
-    prevent_initial_call=True
-)
-def trigger_scroll(n_clicks):
-    return {"scroll": n_clicks}
-
-clientside_callback(
-    """
-    function(data) {
-        if (!data) {
-            return window.dash_clientside.no_update;
-        }
-
-        const el = document.getElementById("herramientas");
-        if (el) {
-            const yOffset = -70;
-            const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: "smooth" });
-        }
-
-        return "";
-    }
-    """,
-    Output("hero-scroll-btn", "title"),
-    Input("scroll-trigger", "data")
-)
-
-# =========================================================
-# CALLBACK SCROLL RESULTADO + HIGHLIGHT
+# SCROLL RESULTADO + HIGHLIGHT
 # =========================================================
 @app.callback(
     Output("resultado-scroll-trigger", "data"),
@@ -1798,15 +1676,13 @@ def render_resultado(
             html.H2("Resultado de tu simulación de interés compuesto", style={"fontWeight": "800", "fontSize": "1.7rem"}),
             html.P(texto_resumen, style={"fontSize": "1.08rem", "marginBottom": "8px"}),
             html.P(insight, style={"color": COLOR_MUTED, "marginBottom": "14px"}),
-            html.Div([
-                html.A(
-                    dbc.Button("Empezar a invertir ahora", color="success", size="lg"),
-                    href=MYINVESTOR_AFFILIATE_URL,
-                    target="_blank",
-                    rel="noopener noreferrer nofollow sponsored",
-                    style={"textDecoration": "none"}
-                )
-            ])
+            html.A(
+                dbc.Button("Empezar a invertir ahora", color="success", size="lg"),
+                href=MYINVESTOR_AFFILIATE_URL,
+                target="_blank",
+                rel="noopener noreferrer nofollow sponsored",
+                style={"textDecoration": "none"}
+            )
         ]),
         style={**CARD_STYLE, "marginBottom": "18px"}
     )
@@ -1814,15 +1690,8 @@ def render_resultado(
     comparativa_box = dbc.Card(
         dbc.CardBody([
             html.H4("¿Qué pasa si aportas 100 €, 300 € o 500 €?", style={"fontWeight": "800", "marginBottom": "14px"}),
-            html.P(
-                "Compara rápidamente cómo cambia el resultado final al subir tu aportación periódica.",
-                style={"color": COLOR_MUTED}
-            ),
-            dcc.Graph(
-                figure=fig_comparativa,
-                style={"height": "500px"},
-                config={"responsive": True}
-            )
+            html.P("Compara rápidamente cómo cambia el resultado final al subir tu aportación periódica.", style={"color": COLOR_MUTED}),
+            dcc.Graph(figure=fig_comparativa, style={"height": "460px"}, config=GRAPH_CONFIG)
         ]),
         style={**CARD_STYLE, "marginTop": "18px"}
     )
@@ -1844,23 +1713,15 @@ def render_resultado(
     return html.Div([
         bloque_resumen,
         cards,
-
         dbc.Card(
             dbc.CardBody([
                 html.H4("Gráfico principal", style={"fontWeight": "800", "marginBottom": "14px"}),
-                dcc.Graph(
-                    figure=fig_principal,
-                    style={"height": "520px"},
-                    config={"responsive": True}
-                )
+                dcc.Graph(figure=fig_principal, style={"height": "500px"}, config=GRAPH_CONFIG)
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
-
         cta_card(valor_final, deposito),
-
         comparativa_box,
-
         dbc.Card(
             dbc.CardBody([
                 html.H4("Detalle completo", style={"fontWeight": "800", "marginBottom": "14px"}),
@@ -1868,7 +1729,6 @@ def render_resultado(
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
-
         hipotesis
     ])
 
@@ -1909,27 +1769,9 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
     )
 
     cards = dbc.Row([
-        dbc.Col(metric_card(
-            "Número FIRE actual",
-            formatear_euros_es(numero_fire_actual),
-            "Objetivo orientativo hoy",
-            COLOR_PRIMARY,
-            COLOR_PRIMARY_SOFT
-        ), md=6, lg=4),
-        dbc.Col(metric_card(
-            "Distancia actual",
-            formatear_euros_es(distancia_actual),
-            "Lo que te falta hoy",
-            COLOR_WARNING,
-            COLOR_WARNING_SOFT
-        ), md=6, lg=4),
-        dbc.Col(metric_card(
-            "Años hasta FIRE",
-            str(objetivo_ano) if objetivo_ano is not None else "No alcanzado",
-            "Según tus supuestos",
-            COLOR_SUCCESS,
-            COLOR_SUCCESS_SOFT
-        ), md=12, lg=4),
+        dbc.Col(metric_card("Número FIRE actual", formatear_euros_es(numero_fire_actual), "Objetivo orientativo hoy", COLOR_PRIMARY, COLOR_PRIMARY_SOFT), md=6, lg=4),
+        dbc.Col(metric_card("Distancia actual", formatear_euros_es(distancia_actual), "Lo que te falta hoy", COLOR_WARNING, COLOR_WARNING_SOFT), md=6, lg=4),
+        dbc.Col(metric_card("Años hasta FIRE", str(objetivo_ano) if objetivo_ano is not None else "No alcanzado", "Según tus supuestos", COLOR_SUCCESS, COLOR_SUCCESS_SOFT), md=12, lg=4),
     ], className="g-3")
 
     return html.Div([
@@ -1948,21 +1790,14 @@ def render_fire(n_clicks, cartera_actual, aportacion_anual, rentabilidad, inflac
             style={**CARD_STYLE, "marginBottom": "18px"}
         ),
         cards,
-
         dbc.Card(
             dbc.CardBody([
                 html.H4("Gráfico FIRE", style={"fontWeight": "800", "marginBottom": "14px"}),
-                dcc.Graph(
-                    figure=fig,
-                    style={"height": "500px"},
-                    config={"responsive": True}
-                )
+                dcc.Graph(figure=fig, style={"height": "470px"}, config=GRAPH_CONFIG)
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
-
         fire_cta_card(objetivo_ano, numero_fire_actual),
-
         dbc.Card(
             dbc.CardBody([
                 html.H4("Detalle anual", style={"fontWeight": "800", "marginBottom": "14px"}),
@@ -2018,21 +1853,14 @@ def render_hipoteca(n_clicks, precio, entrada, interes, anos, gastos):
             style={**CARD_STYLE, "marginBottom": "18px"}
         ),
         cards,
-
         dbc.Card(
             dbc.CardBody([
                 html.H4("Gráfico de saldo pendiente", style={"fontWeight": "800", "marginBottom": "14px"}),
-                dcc.Graph(
-                    figure=fig,
-                    style={"height": "500px"},
-                    config={"responsive": True}
-                )
+                dcc.Graph(figure=fig, style={"height": "470px"}, config=GRAPH_CONFIG)
             ]),
             style={**CARD_STYLE, "marginTop": "18px"}
         ),
-
         hipoteca_cta_card(resultado["cuota"]),
-
         dbc.Card(
             dbc.CardBody([
                 html.H4("Tabla de amortización resumida", style={"fontWeight": "800", "marginBottom": "14px"}),
