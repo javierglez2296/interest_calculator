@@ -106,15 +106,13 @@ app.index_string = f"""
 # =========================================================
 # LAYOUT
 # =========================================================
-app.layout = dbc.Container(
+app.layout = html.Div(
     [
-        dcc.Location(id="main-location"),
+        dcc.Store(id="theme-store", storage_type="local"),
         create_navbar(),
 
         html.Main(
-            [
-                page_container,
-            ],
+            page_container,
             className="flex-grow-1"
         ),
 
@@ -129,8 +127,7 @@ app.layout = dbc.Container(
 
         create_footer(),
     ],
-    fluid=True,
-    className="px-0 min-vh-100 d-flex flex-column"
+    className="min-vh-100 d-flex flex-column"
 )
 
 # =========================================================
