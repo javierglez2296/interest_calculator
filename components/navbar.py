@@ -9,7 +9,7 @@ NAV_LINKS = [
     ("Blog", "/blog"),
 ]
 
-def build_navbar():
+def create_navbar():
     links = [
         dbc.NavLink(label, href=href, class_name="fw-semibold")
         for label, href in NAV_LINKS
