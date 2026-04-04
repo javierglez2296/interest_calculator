@@ -1,11 +1,10 @@
 import json
 from dash import Dash, html, dcc, page_container
 import dash_bootstrap_components as dbc
-from flask import redirect
 
 from components.navbar import create_navbar
 from components.footer import create_footer
-from components.disclaimer_afiliados import affiliate_disclaimer
+from components.disclaimer_afiliados import disclaimer_afiliados
 
 # =========================================================
 # CONFIG
@@ -37,17 +36,6 @@ app = Dash(
 )
 
 server = app.server
-
-# =========================================================
-# REDIRECTS OPCIONALES
-# =========================================================
-@server.route("/calculadora")
-def calculadora_redirect():
-    return redirect("/", code=302)
-
-@server.route("/home")
-def home_redirect():
-    return redirect("/", code=302)
 
 # =========================================================
 # STRUCTURED DATA
@@ -133,7 +121,7 @@ app.layout = dbc.Container(
         dbc.Container(
             [
                 html.Hr(className="my-4"),
-                affiliate_disclaimer(),
+                disclaimer_afiliados(),
             ],
             fluid=True,
             className="px-3 px-md-4 px-lg-5"
