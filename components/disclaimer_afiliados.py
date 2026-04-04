@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 DEGIRO_AFFILIATE_URL = "#"
 
-def affiliate_context_card(title="Opciones para empezar a invertir"):
+def build_disclaimer(title="Opciones para empezar a invertir"):
     return dbc.Card(
         dbc.CardBody(
             [
