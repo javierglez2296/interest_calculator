@@ -1066,7 +1066,7 @@ def cta_card(valor_final=None, deposito=None):
                                 style={"textDecoration": "none"}
                             ),
                             html.Div(
-                                "Enlace promocional. Puede generar una comisión.",
+                                "Este enlace es de afiliado. Si abres cuenta a través de él, yo recibo una pequeña comisión sin que te cueste nada extra",
                                 style={
                                     "fontSize": "0.82rem",
                                     "color": COLOR_MUTED,
