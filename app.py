@@ -2,8 +2,8 @@ import json
 from dash import Dash, html, dcc, page_container
 import dash_bootstrap_components as dbc
 
-from components.navbar import create_navbar
-from components.footer import create_footer
+from components.navbar import build_navbar
+from components.footer import build_footer
 from components.disclaimer_afiliados import build_disclaimer
 
 # =========================================================
@@ -35,6 +35,7 @@ app = Dash(
     update_title=None,
 )
 
+# 👇 CLAVE PARA RENDER
 server = app.server
 
 # =========================================================
@@ -109,13 +110,17 @@ app.index_string = f"""
 app.layout = html.Div(
     [
         dcc.Store(id="theme-store", storage_type="local"),
-        create_navbar(),
 
+        # NAVBAR
+        build_navbar(),
+
+        # CONTENIDO DINÁMICO
         html.Main(
             page_container,
             className="flex-grow-1"
         ),
 
+        # BLOQUE AFILIADOS GLOBAL
         dbc.Container(
             [
                 html.Hr(className="my-4"),
@@ -125,7 +130,8 @@ app.layout = html.Div(
             className="px-3 px-md-4 px-lg-5"
         ),
 
-        create_footer(),
+        # FOOTER
+        build_footer(),
     ],
     className="min-vh-100 d-flex flex-column"
 )
