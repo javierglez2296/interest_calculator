@@ -1,5 +1,6 @@
 import io
 from datetime import datetime
+from flask import Response
 
 import pandas as pd
 from dash import Dash, dcc, html, Input, Output, State, dash_table, callback_context, clientside_callback
@@ -45,6 +46,19 @@ app = Dash(
 
 server = app.server
 app.title = "Calculadora de interés compuesto, FIRE e hipoteca"
+
+@app.server.route("/sitemap.xml")
+def sitemap():
+    sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://interescompuesto.app/</loc>
+    <lastmod>2026-03-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+    return Response(sitemap_xml, mimetype="application/xml")
 
 app.index_string = """
 <!DOCTYPE html>
