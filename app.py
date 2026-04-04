@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 
 from components.navbar import create_navbar
 from components.footer import create_footer
-from components.disclaimer_afiliados import disclaimer_afiliados
+from components.disclaimer_afiliados import build_disclaimer
 
 # =========================================================
 # CONFIG
@@ -119,7 +119,7 @@ app.layout = html.Div(
         dbc.Container(
             [
                 html.Hr(className="my-4"),
-                disclaimer_afiliados(),
+                build_disclaimer(),
             ],
             fluid=True,
             className="px-3 px-md-4 px-lg-5"
