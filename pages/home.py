@@ -1,7 +1,7 @@
 import dash
 from dash import html
 import dash_bootstrap_components as dbc
-from components.disclaimer_afiliados import disclaimer_afiliados
+from components.disclaimer_afiliados import build_disclaimer
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
@@ -86,7 +86,7 @@ layout = dbc.Container(
             className="align-items-center py-4 py-md-5",
         ),
 
-        disclaimer_afiliados(),
+        build_disclaimer(),
 
         html.H2("Calculadoras", className="fw-bold mt-5 mb-4"),
         dbc.Row(
