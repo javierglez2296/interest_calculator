@@ -23,7 +23,7 @@ def _build_nav_links(class_name=""):
     ]
 
 
-def create_navbar():
+def build_navbar():
     desktop_links = _build_nav_links()
     mobile_links = _build_nav_links()
 
