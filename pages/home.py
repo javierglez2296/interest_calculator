@@ -1,7 +1,6 @@
 import dash
 from dash import html
 import dash_bootstrap_components as dbc
-
 from components.disclaimer_afiliados import disclaimer_afiliados
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
@@ -11,6 +10,7 @@ dash.register_page(
     path="/",
     title="Inicio | Interés Compuesto",
     name="Inicio",
+    description="Calculadoras financieras en español para interés compuesto, FIRE e hipoteca. Simula inversión, libertad financiera y cuota hipotecaria."
 )
 
 def teaser_card(titulo, texto, href, boton_texto="Abrir"):
@@ -36,8 +36,8 @@ layout = dbc.Container(
                             className="display-5 fw-bold mb-3"
                         ),
                         html.P(
-                            "Simula tu inversión con interés compuesto, calcula tu objetivo FIRE "
-                            "y estima la cuota de tu hipoteca en una web rápida y clara.",
+                            "Calcula el crecimiento de tu inversión con interés compuesto, estima tu número FIRE "
+                            "y simula la cuota de tu hipoteca con herramientas claras, rápidas y gratuitas.",
                             className="lead text-muted"
                         ),
                         html.Div(
@@ -128,7 +128,7 @@ layout = dbc.Container(
                     teaser_card(
                         "Qué es el interés compuesto y cómo aprovecharlo",
                         "Una guía clara para entender por qué el largo plazo importa tanto.",
-                        "/blog",
+                        "/blog/interes-compuesto",
                         "Leer",
                     ),
                     md=4,
@@ -138,7 +138,7 @@ layout = dbc.Container(
                     teaser_card(
                         "Cuánto necesitas para FIRE",
                         "La lógica detrás de la regla del 4% y cómo hacer tus propios números.",
-                        "/blog",
+                        "/blog/fire",
                         "Leer",
                     ),
                     md=4,
@@ -148,7 +148,7 @@ layout = dbc.Container(
                     teaser_card(
                         "Hipoteca fija o variable",
                         "Claves para entender la cuota, el coste total y el riesgo.",
-                        "/blog",
+                        "/blog/hipoteca",
                         "Leer",
                     ),
                     md=4,
