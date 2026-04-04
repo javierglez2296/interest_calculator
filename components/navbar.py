@@ -16,6 +16,7 @@ def _build_nav_links(class_name=""):
             label,
             href=href,
             active="exact",
+            external_link=False,
             class_name=f"fw-semibold nav-link-custom {class_name}".strip(),
         )
         for label, href in NAV_LINKS
@@ -107,16 +108,7 @@ def create_navbar():
         function(desktopValue, mobileValue, currentData) {
             const desktop = Boolean(desktopValue);
             const mobile = Boolean(mobileValue);
-
-            let dark = false;
-
-            if (desktop !== mobile) {
-                dark = desktop || mobile;
-            } else if (currentData && typeof currentData.dark !== "undefined") {
-                dark = desktop;
-            } else {
-                dark = false;
-            }
+            const dark = desktop || mobile;
 
             document.body.classList.toggle("dark-mode", dark);
             document.documentElement.setAttribute("data-bs-theme", dark ? "dark" : "light");
