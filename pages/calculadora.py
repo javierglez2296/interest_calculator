@@ -1636,12 +1636,3 @@ def descargar_csv(n_clicks, evolucion_data):
     return dcc.send_data_frame(df.to_csv, "simulacion_interes_compuesto.csv", index=False)
 
 
-# =========================================================
-# DESCARGA CSV
-# =========================================================
-@callback(
-    Output("ic-download-csv", "data"),
-    Input("ic-download-btn", "n_clicks"),
-    State("ic-evolucion-store", "data"),
-    prevent_initial_call=True,
-)
