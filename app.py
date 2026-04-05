@@ -4,7 +4,6 @@ import dash_bootstrap_components as dbc
 
 from components.navbar import build_navbar
 from components.footer import build_footer
-from components.disclaimer_afiliados import build_disclaimer
 
 # =========================================================
 # CONFIG
@@ -35,7 +34,6 @@ app = Dash(
     update_title=None,
 )
 
-# 👇 CLAVE PARA RENDER
 server = app.server
 
 # =========================================================
@@ -105,35 +103,93 @@ app.index_string = f"""
 """
 
 # =========================================================
+# ESTILOS GLOBALES
+# =========================================================
+global_styles = html.Style("""
+:root {
+    --site-bg: #ffffff;
+    --site-bg-soft: #f8fbff;
+    --site-text: #101828;
+    --site-text-soft: #667085;
+    --site-border: rgba(16, 24, 40, 0.06);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--site-bg);
+    color: var(--site-text);
+}
+
+.site-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(circle at top left, rgba(37,99,235,0.03), transparent 22%),
+        linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+}
+
+.site-main {
+    flex: 1 0 auto;
+    width: 100%;
+}
+
+.page-wrapper {
+    width: 100%;
+}
+
+.page-inner {
+    width: 100%;
+}
+
+.section-divider {
+    height: 1px;
+    background: var(--site-border);
+    margin: 0;
+}
+
+[data-bs-theme="dark"] body {
+    background: #0b1220;
+    color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .site-shell {
+    background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.05), transparent 22%),
+        linear-gradient(180deg, #0b1220 0%, #0b1220 100%);
+}
+
+@media (max-width: 768px) {
+    .site-main {
+        overflow-x: hidden;
+    }
+}
+""")
+
+# =========================================================
 # LAYOUT
 # =========================================================
 app.layout = html.Div(
     [
+        global_styles,
         dcc.Store(id="theme-store", storage_type="local"),
 
-        # NAVBAR
         build_navbar(),
 
-        # CONTENIDO DINÁMICO
         html.Main(
-            page_container,
-            className="flex-grow-1"
+            html.Div(
+                page_container,
+                className="page-inner"
+            ),
+            className="site-main page-wrapper"
         ),
 
-        # BLOQUE AFILIADOS GLOBAL
-        dbc.Container(
-            [
-                html.Hr(className="my-4"),
-                build_disclaimer(),
-            ],
-            fluid=True,
-            className="px-3 px-md-4 px-lg-5"
-        ),
-
-        # FOOTER
         build_footer(),
     ],
-    className="min-vh-100 d-flex flex-column"
+    className="site-shell"
 )
 
 # =========================================================
