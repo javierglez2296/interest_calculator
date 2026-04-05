@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 
 from helpers import parse_number, calcular_interes_compuesto, formatear_euros_es
 
+MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
+
 dash.register_page(
     __name__,
     path="/calculadora",
@@ -12,20 +14,49 @@ dash.register_page(
     name="Calculadora",
 )
 
+# =========================================================
+# COMPONENTES
+# =========================================================
+
+def metric_card(title, value, highlight=False):
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div(title, className="text-muted small"),
+                html.Div(
+                    value,
+                    className=f"fw-bold {'text-success' if highlight else ''}",
+                    style={"fontSize": "1.6rem"},
+                ),
+            ]
+        ),
+        className="shadow-sm border-0 rounded-4 h-100",
+    )
+
+# =========================================================
+# LAYOUT
+# =========================================================
+
 layout = dbc.Container(
     [
-        html.H1("Calculadora de interés compuesto", className="fw-bold mt-4 mb-3"),
+        html.H1(
+            "💰 Calcula cuánto dinero puedes tener en el futuro",
+            className="fw-bold mt-4 mb-2",
+        ),
         html.P(
-            "Simula cómo puede evolucionar tu patrimonio con aportaciones periódicas.",
+            "Introduce tus datos y descubre cómo el interés compuesto puede multiplicar tu dinero.",
             className="text-muted mb-4"
         ),
 
         dbc.Row(
             [
+                # INPUTS
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
                             [
+                                html.H5("Datos de inversión", className="fw-bold mb-3"),
+
                                 dbc.Label("Capital inicial (€)"),
                                 dbc.Input(id="ic-capital-inicial", value="10000", type="text", className="mb-3"),
 
@@ -35,24 +66,33 @@ layout = dbc.Container(
                                 dbc.Label("Años"),
                                 dbc.Input(id="ic-anios", value="20", type="number", className="mb-3"),
 
-                                dbc.Label("Rentabilidad anual (%)"),
+                                dbc.Label("Rentabilidad (%)"),
                                 dbc.Input(id="ic-rentabilidad", value="7", type="text", className="mb-3"),
 
-                                dbc.Label("Inflación anual (%)"),
+                                dbc.Label("Inflación (%)"),
                                 dbc.Input(id="ic-inflacion", value="2", type="text", className="mb-3"),
 
-                                dbc.Label("Comisión anual (%)"),
+                                dbc.Label("Comisión (%)"),
                                 dbc.Input(id="ic-comision", value="0.2", type="text", className="mb-3"),
 
-                                dbc.Button("Calcular", id="ic-boton", color="primary", className="w-100"),
+                                dbc.Button(
+                                    "💰 Calcular mi dinero futuro",
+                                    id="ic-boton",
+                                    color="primary",
+                                    className="w-100 mt-2",
+                                ),
                             ]
                         ),
-                        className="shadow-sm border-0 rounded-4",
+                        className="shadow border-0 rounded-4",
                     ),
                     lg=4,
                 ),
+
+                # RESULTADOS
                 dbc.Col(
                     [
+                        html.Div(id="scroll-target"),  # 🔥 para scroll
+
                         dbc.Row(
                             [
                                 dbc.Col(html.Div(id="ic-resultado-final"), md=4, className="mb-3"),
@@ -60,11 +100,35 @@ layout = dbc.Container(
                                 dbc.Col(html.Div(id="ic-ganancia"), md=4, className="mb-3"),
                             ]
                         ),
+
+                        html.Div(id="ic-mensaje-emocional", className="mb-3"),
+
                         dbc.Card(
                             dbc.CardBody(
                                 dcc.Graph(id="ic-grafico", config={"displayModeBar": False})
                             ),
-                            className="shadow-sm border-0 rounded-4",
+                            className="shadow-sm border-0 rounded-4 mb-4",
+                        ),
+
+                        # 🔥 CTA DINERO
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H5("Empieza a invertir hoy", className="fw-bold"),
+                                    html.P(
+                                        "Para conseguir este resultado necesitas invertir. Puedes empezar con poco dinero.",
+                                        className="text-muted"
+                                    ),
+                                    dbc.Button(
+                                        "Abrir cuenta gratis",
+                                        href=MYINVESTOR_AFFILIATE_URL,
+                                        target="_blank",
+                                        color="success",
+                                        className="w-100"
+                                    )
+                                ]
+                            ),
+                            className="shadow border-0 rounded-4",
                         ),
                     ],
                     lg=8,
@@ -77,22 +141,16 @@ layout = dbc.Container(
     className="px-4 px-md-5 pb-5",
 )
 
-def metric_card(title, value):
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.Div(title, className="text-muted small"),
-                html.Div(value, className="fw-bold fs-4"),
-            ]
-        ),
-        className="shadow-sm border-0 rounded-4 h-100",
-    )
+# =========================================================
+# CALLBACK
+# =========================================================
 
 @callback(
     Output("ic-resultado-final", "children"),
     Output("ic-total-aportado", "children"),
     Output("ic-ganancia", "children"),
     Output("ic-grafico", "figure"),
+    Output("ic-mensaje-emocional", "children"),
     Input("ic-boton", "n_clicks"),
     Input("ic-capital-inicial", "value"),
     Input("ic-aportacion", "value"),
@@ -102,6 +160,7 @@ def metric_card(title, value):
     Input("ic-comision", "value"),
 )
 def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, inflacion, comision):
+
     capital_inicial = parse_number(capital_inicial)
     aportacion = parse_number(aportacion)
     anios = int(anios or 0)
@@ -122,10 +181,11 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
         fig = go.Figure()
         fig.update_layout(template="plotly_white")
         return (
-            metric_card("Valor final", "0,00 €"),
-            metric_card("Total aportado", "0,00 €"),
-            metric_card("Ganancia", "0,00 €"),
+            metric_card("Valor final", "0 €"),
+            metric_card("Aportado", "0 €"),
+            metric_card("Ganancia", "0 €"),
             fig,
+            "",
         )
 
     anos = [x["año"] for x in evolucion]
@@ -137,22 +197,39 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
     total_aportado = aportado[-1]
     ganancia = valor_final - total_aportado
 
+    # GRÁFICO
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=anos, y=aportado, mode="lines", name="Capital aportado"))
-    fig.add_trace(go.Scatter(x=anos, y=total, mode="lines", name="Valor total"))
+    fig.add_trace(go.Scatter(x=anos, y=aportado, mode="lines", name="Invertido"))
+    fig.add_trace(go.Scatter(x=anos, y=total, mode="lines", name="Total"))
     fig.add_trace(go.Scatter(x=anos, y=real, mode="lines", name="Valor real"))
 
     fig.update_layout(
         template="plotly_white",
-        margin=dict(l=20, r=20, t=30, b=20),
+        margin=dict(l=10, r=10, t=30, b=10),
         xaxis_title="Años",
-        yaxis_title="Euros",
+        yaxis_title="€",
         legend_title="",
     )
 
+    # MENSAJE EMOCIONAL 🔥
+    mensaje = html.Div(
+        [
+            html.H4(
+                f"💰 Podrías tener {formatear_euros_es(valor_final)}",
+                className="fw-bold text-success"
+            ),
+            html.P(
+                f"Has invertido {formatear_euros_es(total_aportado)} y generado {formatear_euros_es(ganancia)} de beneficio.",
+                className="text-muted"
+            ),
+        ],
+        className="p-3 bg-light rounded-4",
+    )
+
     return (
-        metric_card("Valor final", formatear_euros_es(valor_final)),
-        metric_card("Total aportado", formatear_euros_es(total_aportado)),
-        metric_card("Ganancia", formatear_euros_es(ganancia)),
+        metric_card("Valor final", formatear_euros_es(valor_final), True),
+        metric_card("Aportado", formatear_euros_es(total_aportado)),
+        metric_card("Ganancia", formatear_euros_es(ganancia), True),
         fig,
+        mensaje,
     )
