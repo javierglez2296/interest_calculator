@@ -1,45 +1,97 @@
 import dash
-from dash import html
+from dash import html, dcc, Output, Input, clientside_callback
 import dash_bootstrap_components as dbc
 from components.disclaimer_afiliados import build_disclaimer
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
 # =========================================================
-# AMAZON AFILIADOS
+# CONFIG LIBROS
 # =========================================================
-# Sustituye estos links por tus enlaces reales de Amazon Afiliados
 BOOKS = [
     {
         "title": "Padre Rico, Padre Pobre",
         "subtitle": "El clásico para cambiar tu mentalidad sobre dinero, activos e ingresos.",
-        "tag": "Para empezar",
+        "note": "Ideal para empezar si todavía no piensas en términos de activos, ingresos y patrimonio.",
+        "tag": "Principiantes",
         "rating": "4,7/5",
-        "cta": "Ver en Amazon",
+        "cta": "Ver precio",
         "href": "https://www.amazon.es/",
         "image": "https://m.media-amazon.com/images/I/81bsw6fnUiL.jpg",
+        "featured": True,
+        "category": "empezar",
+    },
+    {
+        "title": "El hombre más rico de Babilonia",
+        "subtitle": "Un libro sencillo y muy efectivo para entender ahorro, disciplina y construcción de riqueza.",
+        "note": "Muy recomendable si quieres fundamentos simples y fáciles de recordar.",
+        "tag": "Principiantes",
+        "rating": "4,7/5",
+        "cta": "Ver libro",
+        "href": "https://www.amazon.es/",
+        "image": "https://m.media-amazon.com/images/I/71xLmdLOIVL.jpg",
+        "featured": False,
+        "category": "empezar",
     },
     {
         "title": "El inversor inteligente",
-        "subtitle": "Una referencia atemporal para entender inversión con criterio y disciplina.",
-        "tag": "Inversión clásica",
+        "subtitle": "Una referencia atemporal para invertir con criterio, paciencia y disciplina.",
+        "note": "Perfecto si quieres dejar de pensar como especulador y actuar más como inversor.",
+        "tag": "Inversión",
         "rating": "4,8/5",
-        "cta": "Ver en Amazon",
+        "cta": "Ver libro",
         "href": "https://www.amazon.es/",
         "image": "https://m.media-amazon.com/images/I/91+NBrXG-PL.jpg",
+        "featured": True,
+        "category": "inversion",
+    },
+    {
+        "title": "Un paso por delante de Wall Street",
+        "subtitle": "Peter Lynch explica cómo detectar buenas oportunidades con sentido común.",
+        "note": "Muy bueno para aprender a observar negocios reales sin complicarte de más.",
+        "tag": "Inversión",
+        "rating": "4,7/5",
+        "cta": "Ver precio",
+        "href": "https://www.amazon.es/",
+        "image": "https://m.media-amazon.com/images/I/81yovluA7SL.jpg",
+        "featured": False,
+        "category": "inversion",
     },
     {
         "title": "The Psychology of Money",
-        "subtitle": "Uno de los mejores libros para entender por qué invertimos como invertimos.",
+        "subtitle": "Uno de los mejores libros para entender el comportamiento detrás de tus decisiones financieras.",
+        "note": "Muy potente para mejorar mentalidad, evitar errores y pensar mejor a largo plazo.",
         "tag": "Mentalidad",
         "rating": "4,8/5",
-        "cta": "Ver en Amazon",
+        "cta": "Comprar en Amazon",
         "href": "https://www.amazon.es/",
         "image": "https://m.media-amazon.com/images/I/71g2ednj0JL.jpg",
+        "featured": True,
+        "category": "mentalidad",
+    },
+    {
+        "title": "Hábitos atómicos",
+        "subtitle": "No es un libro de inversión, pero sí una gran base para crear disciplina y consistencia.",
+        "note": "Muy útil si sabes lo que debes hacer, pero te cuesta mantenerlo en el tiempo.",
+        "tag": "Mentalidad",
+        "rating": "4,8/5",
+        "cta": "Ver libro",
+        "href": "https://www.amazon.es/",
+        "image": "https://m.media-amazon.com/images/I/91bYsX41DVL.jpg",
+        "featured": False,
+        "category": "mentalidad",
     },
 ]
 
+BOOK_TABS = [
+    ("empezar", "Empezar"),
+    ("inversion", "Inversión"),
+    ("mentalidad", "Mentalidad"),
+]
 
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 dash.register_page(
     __name__,
     path="/",
@@ -47,13 +99,21 @@ dash.register_page(
     name="Inicio",
     description=(
         "Descubre cuánto dinero puedes tener en el futuro. Calcula interés compuesto, "
-        "FIRE e hipoteca de forma rápida y gratuita."
+        "FIRE e hipoteca de forma rápida, clara y gratuita."
     ),
 )
 
 # =========================================================
-# COMPONENTES
+# HELPERS UI
 # =========================================================
+def section_badge(texto, color_class="text-primary"):
+    return html.Div(
+        texto,
+        className=f"small fw-bold {color_class} mb-2",
+        style={"letterSpacing": "0.08em", "textTransform": "uppercase"},
+    )
+
+
 def teaser_card(titulo, texto, href, boton_texto="Abrir", icono="→"):
     return dbc.Card(
         dbc.CardBody(
@@ -73,16 +133,37 @@ def teaser_card(titulo, texto, href, boton_texto="Abrir", icono="→"):
     )
 
 
-def book_card(book):
+def hero_metric(label, value):
+    return html.Div(
+        [
+            html.Div(label, className="hero-metric-label"),
+            html.Div(value, className="hero-metric-value"),
+        ],
+        className="hero-metric",
+    )
+
+
+def book_card_v3(book):
+    badges = []
+
+    if book.get("featured"):
+        badges.append(
+            html.Span("Más recomendado", className="book-featured-badge")
+        )
+
+    badges.extend(
+        [
+            html.Span(book["tag"], className="book-chip"),
+            html.Span(f"⭐ {book['rating']}", className="book-rating"),
+        ]
+    )
+
     return dbc.Card(
         dbc.CardBody(
             [
                 html.Div(
-                    [
-                        html.Span(book["tag"], className="book-chip"),
-                        html.Span(f"⭐ {book['rating']}", className="book-rating"),
-                    ],
-                    className="d-flex justify-content-between align-items-center mb-3",
+                    badges,
+                    className="d-flex flex-wrap align-items-center gap-2 mb-3",
                 ),
                 html.Div(
                     html.Img(
@@ -90,33 +171,47 @@ def book_card(book):
                         alt=book["title"],
                         className="img-fluid",
                         style={
-                            "maxHeight": "180px",
+                            "height": "210px",
+                            "width": "100%",
                             "objectFit": "contain",
-                            "borderRadius": "14px",
+                            "display": "block",
+                            "margin": "0 auto",
                         },
                     ),
-                    className="text-center mb-3",
+                    className="book-image-wrap mb-3",
                 ),
                 html.H3(book["title"], className="h5 fw-bold mb-2"),
-                html.P(book["subtitle"], className="text-muted small mb-4"),
+                html.P(book["subtitle"], className="text-muted small mb-2"),
+                html.P(
+                    book.get("note", ""),
+                    className="small fw-semibold book-note mb-4",
+                ),
                 dbc.Button(
                     [
-                        html.Span(book["cta"]),
+                        html.Span(book.get("cta", "Ver libro")),
                         html.Span(" →", className="ms-1"),
                     ],
                     href=book["href"],
                     target="_blank",
                     rel="sponsored noopener noreferrer",
                     color="dark",
-                    className="w-100 rounded-pill fw-semibold book-btn",
+                    className="w-100 rounded-pill fw-semibold book-btn-v3",
                 ),
             ]
         ),
-        className="book-card h-100 border-0 shadow-sm rounded-4",
+        className="book-card-v3 h-100 border-0 shadow-sm rounded-4",
     )
 
 
-def books_section():
+def build_books_grid(category):
+    filtered = [book for book in BOOKS if book["category"] == category]
+    return html.Div(
+        [book_card_v3(book) for book in filtered],
+        className="books-grid-v3",
+    )
+
+
+def books_section_v3():
     return html.Section(
         dbc.Container(
             [
@@ -124,15 +219,15 @@ def books_section():
                     [
                         dbc.Col(
                             [
-                                html.Div("RECOMENDADOS", className="section-kicker"),
+                                section_badge("Libros recomendados"),
                                 html.H2(
-                                    "Libros de finanzas e inversión que merecen la pena",
-                                    className="fw-bold display-6 mb-3",
+                                    "Aprende finanzas con una selección curada",
+                                    className="fw-bold mb-3",
+                                    style={"fontSize": "clamp(1.9rem, 4vw, 3rem)"},
                                 ),
                                 html.P(
-                                    "Si estás mejorando tus finanzas, aprendiendo a invertir o "
-                                    "buscando construir patrimonio a largo plazo, esta selección "
-                                    "te puede ahorrar años de errores.",
+                                    "No hace falta leer decenas de libros. Estos son algunos de los "
+                                    "más útiles para empezar, invertir mejor y desarrollar una mentalidad financiera sólida.",
                                     className="lead text-muted mb-0",
                                 ),
                             ],
@@ -140,43 +235,62 @@ def books_section():
                         ),
                         dbc.Col(
                             html.Div(
-                                dbc.Button(
-                                    "Ver más recomendaciones",
-                                    href="/blog",
-                                    color="light",
-                                    className="rounded-pill px-4 py-2 fw-semibold border",
-                                ),
-                                className="d-flex justify-content-lg-end align-items-lg-center h-100 mt-3 mt-lg-0",
+                                [
+                                    html.Div(
+                                        "Selección premium",
+                                        className="small fw-bold text-dark mb-1",
+                                    ),
+                                    html.Div(
+                                        "Ordenada por intención para que el usuario encuentre antes lo que busca.",
+                                        className="text-muted small",
+                                    ),
+                                ],
+                                className="books-side-note",
                             ),
                             lg=4,
+                            className="mt-4 mt-lg-0",
                         ),
                     ],
-                    className="align-items-center mb-4 mb-lg-5",
+                    className="align-items-end mb-4 mb-lg-5",
                 ),
-                dbc.Row(
-                    [dbc.Col(book_card(book), md=6, lg=4, className="mb-4") for book in BOOKS],
-                    className="g-4",
+
+                dcc.Tabs(
+                    id="books-tabs",
+                    value="empezar",
+                    className="books-tabs-wrapper",
+                    parent_className="books-tabs-parent",
+                    children=[
+                        dcc.Tab(
+                            label=label,
+                            value=value,
+                            className="books-tab",
+                            selected_className="books-tab books-tab-selected",
+                        )
+                        for value, label in BOOK_TABS
+                    ],
                 ),
-                dbc.Row(
-                    dbc.Col(
-                        dbc.Alert(
-                            [
-                                html.Span("Aviso: "),
-                                "algunos enlaces pueden ser de afiliado. Si compras a través de ellos, "
-                                "la web puede recibir una pequeña comisión sin coste extra para ti.",
-                            ],
-                            color="light",
-                            className="mt-4 rounded-4 border-0 small text-muted mb-0",
-                        ),
-                        width=12,
-                    )
+
+                html.Div(
+                    id="books-tab-content",
+                    className="mt-4",
+                    children=build_books_grid("empezar"),
+                ),
+
+                html.Div(
+                    "Desliza para ver más →",
+                    className="books-mobile-hint d-lg-none",
+                ),
+
+                dbc.Alert(
+                    "Algunos enlaces pueden ser de afiliado. Si compras a través de ellos, la web puede recibir una pequeña comisión sin coste extra para ti.",
+                    color="light",
+                    className="mt-4 rounded-4 border-0 small text-muted mb-0",
                 ),
             ],
             fluid=False,
         ),
-        className="books-premium-section py-5 py-lg-6",
+        className="books-premium-section-v3 py-5 py-lg-6",
     )
-
 
 # =========================================================
 # LAYOUT
@@ -188,7 +302,7 @@ layout = html.Div(
             .home-hero {
                 background:
                     radial-gradient(circle at top left, rgba(13,110,253,0.10), transparent 35%),
-                    radial-gradient(circle at top right, rgba(25,135,84,0.10), transparent 30%),
+                    radial-gradient(circle at top right, rgba(25,135,84,0.08), transparent 28%),
                     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
                 padding-top: 4rem;
                 padding-bottom: 4rem;
@@ -207,9 +321,10 @@ layout = html.Div(
             }
 
             .hero-title {
-                font-size: clamp(2.1rem, 5vw, 4.2rem);
+                font-size: clamp(2.15rem, 5vw, 4.25rem);
                 line-height: 1.05;
                 letter-spacing: -0.04em;
+                color: #101828;
             }
 
             .hero-subtitle {
@@ -226,7 +341,7 @@ layout = html.Div(
             }
 
             .hero-metric {
-                background: rgba(255,255,255,0.78);
+                background: rgba(255,255,255,0.82);
                 border: 1px solid rgba(15,23,42,0.06);
                 box-shadow: 0 10px 30px rgba(15,23,42,0.06);
                 border-radius: 18px;
@@ -252,7 +367,7 @@ layout = html.Div(
             }
 
             .feature-card:hover,
-            .book-card:hover {
+            .book-card-v3:hover {
                 transform: translateY(-4px);
                 box-shadow: 0 18px 45px rgba(15,23,42,0.10) !important;
             }
@@ -268,49 +383,147 @@ layout = html.Div(
                 font-size: 1.2rem;
             }
 
-            .books-premium-section {
+            .books-premium-section-v3 {
                 background:
+                    radial-gradient(circle at top left, rgba(13,110,253,0.08), transparent 30%),
                     linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             }
 
-            .section-kicker {
-                display: inline-block;
-                font-size: 0.78rem;
-                font-weight: 800;
-                letter-spacing: 0.08em;
-                color: #0d6efd;
-                margin-bottom: 0.85rem;
+            .books-side-note {
+                background: rgba(255,255,255,0.88);
+                border: 1px solid rgba(15,23,42,0.08);
+                border-radius: 18px;
+                padding: 1rem 1.1rem;
+                box-shadow: 0 10px 30px rgba(15,23,42,0.05);
             }
 
-            .book-card {
+            .books-tabs-parent {
+                margin-top: 1rem;
+            }
+
+            .books-tabs-wrapper {
+                border: none !important;
+            }
+
+            .books-tab {
+                background: #ffffff !important;
+                border: 1px solid rgba(15,23,42,0.08) !important;
+                color: #344054 !important;
+                border-radius: 999px !important;
+                padding: 0.7rem 1.15rem !important;
+                margin-right: 0.6rem !important;
+                font-weight: 700 !important;
+                transition: all 0.2s ease !important;
+            }
+
+            .books-tab:hover {
+                background: #f8fafc !important;
+            }
+
+            .books-tab-selected {
+                background: #111827 !important;
+                color: #ffffff !important;
+                border-color: #111827 !important;
+            }
+
+            .books-grid-v3 {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1.25rem;
+            }
+
+            .book-card-v3 {
                 background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
-                transition: all 0.22s ease;
+                transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+                overflow: hidden;
+            }
+
+            .book-image-wrap {
+                background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+                border: 1px solid rgba(15,23,42,0.05);
+                border-radius: 18px;
+                padding: 1rem;
+                min-height: 240px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .book-chip {
                 display: inline-flex;
                 align-items: center;
-                padding: 0.35rem 0.7rem;
+                padding: 0.38rem 0.72rem;
                 background: #eef4ff;
                 color: #0d6efd;
                 border-radius: 999px;
-                font-size: 0.75rem;
+                font-size: 0.74rem;
+                font-weight: 700;
+            }
+
+            .book-featured-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.38rem 0.72rem;
+                background: #111827;
+                color: #ffffff;
+                border-radius: 999px;
+                font-size: 0.74rem;
                 font-weight: 700;
             }
 
             .book-rating {
-                font-size: 0.8rem;
+                font-size: 0.78rem;
                 font-weight: 700;
                 color: #344054;
             }
 
-            .book-btn {
+            .book-note {
+                color: #344054;
+                line-height: 1.45;
+            }
+
+            .book-btn-v3 {
                 box-shadow: 0 8px 20px rgba(17,24,39,0.10);
+            }
+
+            .books-mobile-hint {
+                margin-top: 0.9rem;
+                font-size: 0.82rem;
+                color: #667085;
+                font-weight: 600;
+                text-align: center;
             }
 
             .soft-section {
                 padding-top: 4rem;
                 padding-bottom: 4rem;
+            }
+
+            @media (max-width: 991.98px) {
+                .books-grid-v3 {
+                    display: flex;
+                    gap: 1rem;
+                    overflow-x: auto;
+                    padding-bottom: 0.4rem;
+                    scroll-snap-type: x mandatory;
+                    -webkit-overflow-scrolling: touch;
+                }
+
+                .books-grid-v3::-webkit-scrollbar {
+                    height: 8px;
+                }
+
+                .books-grid-v3::-webkit-scrollbar-thumb {
+                    background: rgba(100,116,139,0.25);
+                    border-radius: 999px;
+                }
+
+                .books-grid-v3 > .card {
+                    min-width: 285px;
+                    max-width: 285px;
+                    flex: 0 0 auto;
+                    scroll-snap-align: start;
+                }
             }
 
             @media (max-width: 768px) {
@@ -331,6 +544,17 @@ layout = html.Div(
                     min-width: unset;
                 }
             }
+
+            @media (max-width: 576px) {
+                .books-grid-v3 > .card {
+                    min-width: 85%;
+                    max-width: 85%;
+                }
+
+                .book-image-wrap {
+                    min-height: 220px;
+                }
+            }
             """
         ),
 
@@ -342,9 +566,12 @@ layout = html.Div(
                         [
                             dbc.Col(
                                 [
-                                    html.Div("FINANZAS PERSONALES · INVERSIÓN · HIPOTECA", className="hero-badge mb-3"),
+                                    html.Div(
+                                        "FINANZAS PERSONALES · INVERSIÓN · HIPOTECA",
+                                        className="hero-badge mb-3",
+                                    ),
                                     html.H1(
-                                        "Calculadoras financieras claras, útiles y hechas para tomar mejores decisiones",
+                                        "Calculadoras financieras claras, útiles y pensadas para tomar mejores decisiones",
                                         className="hero-title fw-bold mb-3",
                                     ),
                                     html.P(
@@ -370,27 +597,9 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         [
-                                            html.Div(
-                                                [
-                                                    html.Div("Herramientas", className="hero-metric-label"),
-                                                    html.Div("3 calculadoras", className="hero-metric-value"),
-                                                ],
-                                                className="hero-metric",
-                                            ),
-                                            html.Div(
-                                                [
-                                                    html.Div("Uso", className="hero-metric-label"),
-                                                    html.Div("Gratis", className="hero-metric-value"),
-                                                ],
-                                                className="hero-metric",
-                                            ),
-                                            html.Div(
-                                                [
-                                                    html.Div("Enfoque", className="hero-metric-label"),
-                                                    html.Div("100% práctico", className="hero-metric-value"),
-                                                ],
-                                                className="hero-metric",
-                                            ),
+                                            hero_metric("Herramientas", "3 calculadoras"),
+                                            hero_metric("Uso", "Gratis"),
+                                            hero_metric("Enfoque", "100% práctico"),
                                         ],
                                         className="hero-metrics",
                                     ),
@@ -402,8 +611,14 @@ layout = html.Div(
                                 dbc.Card(
                                     dbc.CardBody(
                                         [
-                                            html.Div("Empieza por aquí", className="text-primary fw-bold small mb-2"),
-                                            html.H2("Tu hoja de ruta financiera", className="h4 fw-bold mb-3"),
+                                            html.Div(
+                                                "Empieza por aquí",
+                                                className="text-primary fw-bold small mb-2",
+                                            ),
+                                            html.H2(
+                                                "Tu hoja de ruta financiera",
+                                                className="h4 fw-bold mb-3",
+                                            ),
                                             html.P(
                                                 "Explora las tres áreas clave de la web: inversión, independencia "
                                                 "financiera y compra de vivienda.",
@@ -459,10 +674,10 @@ layout = html.Div(
             className="home-hero",
         ),
 
-        # BLOQUE PREMIUM LIBROS
-        books_section(),
+        # LIBROS V3
+        books_section_v3(),
 
-        # DISCLAIMER AFILIADOS
+        # DISCLAIMER
         dbc.Container(
             build_disclaimer(
                 text=(
@@ -475,3 +690,13 @@ layout = html.Div(
         ),
     ]
 )
+
+# =========================================================
+# CALLBACKS
+# =========================================================
+@dash.callback(
+    Output("books-tab-content", "children"),
+    Input("books-tabs", "value"),
+)
+def render_books_tab(tab_value):
+    return build_books_grid(tab_value)
