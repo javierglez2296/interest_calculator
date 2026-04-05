@@ -1637,88 +1637,21 @@ def descargar_csv(n_clicks, evolucion_data):
 
 
 # =========================================================
-# SCROLL SUAVE AL RESULTADO
-# =========================================================
-clientside_callback(
-    """
-    function(n_clicks) {
-        if (!n_clicks) {
-            return window.dash_clientside.no_update;
-        }
-
-        setTimeout(function() {
-            const target = document.getElementById("resultado-anchor");
-            if (target) {
-                target.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-        }, 150);
-
-        return "";
-    }
-    """,
-    Output("scroll-trigger", "children"),
-    Input("btn-calcular", "n_clicks"),
-)
-
-
-# =========================================================
-# SCROLL A LA CALCULADORA DESDE HERO CTA
-# =========================================================
-clientside_callback(
-    """
-    function(n_clicks) {
-        if (!n_clicks) {
-            return window.dash_clientside.no_update;
-        }
-
-        setTimeout(function() {
-            const target = document.getElementById("calculadora-anchor");
-            if (target) {
-                target.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-        }, 100);
-
-        return "";
-    }
-    """,
-    Output("scroll-calculadora-trigger", "children"),
-    Input("btn-ir-calculadora", "n_clicks"),
-)
-
-
-# =========================================================
-# AUTORRELLENO DE EJEMPLO
+# DESCARGA CSV
 # =========================================================
 @callback(
-    Output("capital-inicial", "value"),
-    Output("aportacion-mensual", "value"),
-    Output("rentabilidad-anual", "value"),
-    Output("anos", "value"),
-    Output("inflacion-anual", "value"),
-    Input("btn-ejemplo", "n_clicks"),
+    Output("ic-download-csv", "data"),
+    Input("ic-download-btn", "n_clicks"),
+    State("ic-evolucion-store", "data"),
     prevent_initial_call=True,
 )
-def cargar_ejemplo(n_clicks):
-    if not n_clicks:
+def descargar_csv(n_clicks, evolucion_data):
+    if not n_clicks or not evolucion_data:
         return dash.no_update
 
-    return "10.000", "300", "7", "20", "2"
-
-
-# =========================================================
-# RESET FORM
-# =========================================================
-@callback(
-    Output("capital-inicial", "value", allow_duplicate=True),
-    Output("aportacion-mensual", "value", allow_duplicate=True),
-    Output("rentabilidad-anual", "value", allow_duplicate=True),
-    Output("anos", "value", allow_duplicate=True),
-    Output("inflacion-anual", "value", allow_duplicate=True),
-    Input("btn-reset", "n_clicks"),
-    prevent_initial_call=True,
-)
-def reset_form(n_clicks):
-    if not n_clicks:
-        return dash.no_update
-
-    return "10.000", "300", "7", "20", "2"
+    df = evolution_to_dataframe(evolucion_data)
+    return dcc.send_data_frame(
+        df.to_csv,
+        "simulacion_interes_compuesto.csv",
+        index=False,
+    )
