@@ -5,6 +5,10 @@ from components.disclaimer_afiliados import build_disclaimer
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
+AMAZON_PADRE_RICO_URL = "https://amzn.to/41KFQzk"
+AMAZON_PSICOLOGIA_DINERO_URL = "https://amzn.to/4sVIcaE"
+AMAZON_WALL_STREET_URL = "https://amzn.to/3NONGEW"
+
 dash.register_page(
     __name__,
     path="/",
@@ -112,6 +116,46 @@ def article_card(top_label, title, text, href, featured=False):
             ]
         ),
         className="h-100 border-0 shadow-sm rounded-4 article-card",
+    )
+
+
+def book_card(icono, eyebrow, titulo, texto, href, button_id, featured=False):
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div(
+                    [
+                        html.Div(icono, className="book-icon-wrap me-3"),
+                        html.Div(
+                            [
+                                html.Div(eyebrow, className="small fw-bold text-primary mb-1"),
+                                html.H3(titulo, className="h5 fw-bold mb-0"),
+                            ]
+                        ),
+                    ],
+                    className="d-flex align-items-center mb-3",
+                ),
+                html.P(texto, className="text-muted small mb-4"),
+                dbc.Button(
+                    "Ver en Amazon",
+                    id=button_id,
+                    color="warning" if featured else "light",
+                    className=(
+                        "w-100 rounded-pill fw-semibold border-0"
+                        if featured else
+                        "w-100 rounded-pill fw-semibold border"
+                    ),
+                ),
+                html.Div(
+                    "Enlace de afiliado de Amazon.",
+                    className="small text-muted text-center mt-2",
+                ),
+            ]
+        ),
+        className=(
+            "h-100 border-0 shadow-sm rounded-4 book-card "
+            + ("book-card-featured" if featured else "")
+        ),
     )
 
 
@@ -551,6 +595,76 @@ calculadoras = dbc.Container(
 )
 
 # =========================================================
+# LIBROS RECOMENDADOS AMAZON
+# =========================================================
+
+books_section = dbc.Container(
+    [
+        section_badge("LIBROS RECOMENDADOS", "text-warning"),
+        html.H2("Empieza por estos 3 libros de finanzas", className="fw-bold mb-2 section-title"),
+        html.P(
+            "Si quieres mejorar tus finanzas de verdad, estos tres libros son un punto de partida excelente: "
+            "mentalidad, comportamiento e inversión.",
+            className="section-subtitle mb-4",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    book_card(
+                        "📘",
+                        "Mentalidad financiera",
+                        "Padre Rico, Padre Pobre",
+                        "Un clásico para empezar a pensar de otra forma sobre el dinero, los activos y la educación financiera.",
+                        AMAZON_PADRE_RICO_URL,
+                        "book-padre-rico",
+                        featured=True,
+                    ),
+                    md=4,
+                    className="mb-4",
+                ),
+                dbc.Col(
+                    book_card(
+                        "🧠",
+                        "Psicología del dinero",
+                        "La psicología del dinero",
+                        "Ideal para entender por qué las decisiones financieras dependen mucho más del comportamiento que de la teoría.",
+                        AMAZON_PSICOLOGIA_DINERO_URL,
+                        "book-psicologia-dinero",
+                    ),
+                    md=4,
+                    className="mb-4",
+                ),
+                dbc.Col(
+                    book_card(
+                        "📈",
+                        "Inversión práctica",
+                        "Un paso por delante de Wall Street",
+                        "Muy buen libro para empezar a entender la inversión en bolsa con un enfoque claro, práctico y aterrizado.",
+                        AMAZON_WALL_STREET_URL,
+                        "book-wall-street",
+                    ),
+                    md=4,
+                    className="mb-4",
+                ),
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.Div(
+                        "Algunos enlaces pueden ser de afiliado de Amazon. Si compras a través de ellos, la web puede recibir una pequeña comisión sin coste adicional para ti.",
+                        className="small text-muted text-center mt-2",
+                    ),
+                    width=12,
+                )
+            ]
+        ),
+    ],
+    fluid=True,
+    className="px-4 px-md-5 py-4 soft-section home-section",
+)
+
+# =========================================================
 # CTA AFILIADO PRINCIPAL
 # =========================================================
 
@@ -733,6 +847,9 @@ trackers = html.Div(
     [
         html.Div(id="home-cta-invest-tracker", style={"display": "none"}),
         html.Div(id="home-cta-mobile-tracker", style={"display": "none"}),
+        html.Div(id="book-padre-rico-tracker", style={"display": "none"}),
+        html.Div(id="book-psicologia-dinero-tracker", style={"display": "none"}),
+        html.Div(id="book-wall-street-tracker", style={"display": "none"}),
     ]
 )
 
@@ -780,6 +897,75 @@ clientside_callback(
     Input("home-cta-mobile", "n_clicks"),
 )
 
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_amazon_book', {{
+                    event_category: 'affiliate',
+                    event_label: 'amazon_padre_rico',
+                    value: 1
+                }});
+            }}
+            const newWindow = window.open("{AMAZON_PADRE_RICO_URL}", "_blank");
+            if (newWindow) {{
+                newWindow.opener = null;
+            }}
+        }}
+        return "";
+    }}
+    """,
+    Output("book-padre-rico-tracker", "children"),
+    Input("book-padre-rico", "n_clicks"),
+)
+
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_amazon_book', {{
+                    event_category: 'affiliate',
+                    event_label: 'amazon_psicologia_dinero',
+                    value: 1
+                }});
+            }}
+            const newWindow = window.open("{AMAZON_PSICOLOGIA_DINERO_URL}", "_blank");
+            if (newWindow) {{
+                newWindow.opener = null;
+            }}
+        }}
+        return "";
+    }}
+    """,
+    Output("book-psicologia-dinero-tracker", "children"),
+    Input("book-psicologia-dinero", "n_clicks"),
+)
+
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_amazon_book', {{
+                    event_category: 'affiliate',
+                    event_label: 'amazon_wall_street',
+                    value: 1
+                }});
+            }}
+            const newWindow = window.open("{AMAZON_WALL_STREET_URL}", "_blank");
+            if (newWindow) {{
+                newWindow.opener = null;
+            }}
+        }}
+        return "";
+    }}
+    """,
+    Output("book-wall-street-tracker", "children"),
+    Input("book-wall-street", "n_clicks"),
+)
+
 # =========================================================
 # LAYOUT FINAL
 # =========================================================
@@ -792,6 +978,7 @@ layout = html.Div(
         decision_block,
         comparativa,
         calculadoras,
+        books_section,
         cta_inversion,
         build_disclaimer(),
         articulos,
