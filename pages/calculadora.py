@@ -934,7 +934,7 @@ layout = dbc.Container(
                                                     id="ic-share-link",
                                                     type="text",
                                                     value="",
-                                                    readOnly=True,
+                                                    readonly=True,
                                                     className="rounded-4 py-3",
                                                     style={"background": "#f8fafc"},
                                                 ),
