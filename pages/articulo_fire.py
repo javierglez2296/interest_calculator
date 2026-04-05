@@ -20,6 +20,9 @@ HOME_URL = "/"
 
 ARTICLE_URL = "https://interescompuesto.app/blog/fire"
 SITE_NAME = "interescompuesto.app"
+ARTICLE_IMAGE = "https://interescompuesto.app/assets/fire-og.jpg"
+DATE_PUBLISHED = "2026-04-05"
+DATE_MODIFIED = "2026-04-05"
 
 # =========================================================
 # SEO STRUCTURED DATA
@@ -43,6 +46,9 @@ article_schema = {
     "mainEntityOfPage": ARTICLE_URL,
     "url": ARTICLE_URL,
     "inLanguage": "es",
+    "image": ARTICLE_IMAGE,
+    "datePublished": DATE_PUBLISHED,
+    "dateModified": DATE_MODIFIED,
     "keywords": [
         "FIRE",
         "movimiento FIRE",
@@ -157,10 +163,7 @@ def section_header(title, subtitle=None, section_id=None):
     if subtitle:
         children.append(html.P(subtitle, className="article-section-subtitle mb-0"))
 
-    return html.Div(
-        children,
-        className="mb-4 article-section"
-    )
+    return html.Div(children, className="mb-4 article-section")
 
 
 def hero_section():
@@ -227,15 +230,42 @@ def hero_section():
                                     dbc.Card(
                                         dbc.CardBody(
                                             [
-                                                html.Div("Visual rápido", className="article-label"),
+                                                html.Div("Resumen visual", className="article-label"),
                                                 html.Div("Gastos anuales × 25", className="h3 fw-bold mb-2"),
                                                 html.P(
-                                                    "es una forma orientativa de estimar tu número FIRE usando la regla del 4%",
+                                                    "estimación orientativa del patrimonio necesario según la regla del 4%",
                                                     className="text-muted mb-3"
                                                 ),
+                                                html.Hr(className="my-3"),
+                                                dbc.Row(
+                                                    [
+                                                        dbc.Col(
+                                                            [
+                                                                html.Div("Ahorro", className="small text-uppercase text-muted fw-semibold"),
+                                                                html.Div("Clave", className="fw-bold")
+                                                            ],
+                                                            xs=4
+                                                        ),
+                                                        dbc.Col(
+                                                            [
+                                                                html.Div("Tiempo", className="small text-uppercase text-muted fw-semibold"),
+                                                                html.Div("Compone", className="fw-bold")
+                                                            ],
+                                                            xs=4
+                                                        ),
+                                                        dbc.Col(
+                                                            [
+                                                                html.Div("Flexibilidad", className="small text-uppercase text-muted fw-semibold"),
+                                                                html.Div("Importa", className="fw-bold")
+                                                            ],
+                                                            xs=4
+                                                        ),
+                                                    ]
+                                                ),
+                                                html.Hr(className="my-3"),
                                                 html.Div("FIRE ≠ dejar de trabajar ya", className="h5 fw-bold mb-1"),
                                                 html.P(
-                                                    "para mucha gente significa ganar opciones, no retirarse de inmediato",
+                                                    "para mucha gente significa tener más opciones, no retirarse de inmediato",
                                                     className="text-muted mb-0"
                                                 ),
                                             ]
@@ -403,6 +433,102 @@ def quote_box():
     )
 
 
+def fire_types_table():
+    rows = [
+        ("Lean FIRE", "Gasto bajo", "Quien prioriza simplicidad y bajo coste de vida."),
+        ("Fat FIRE", "Gasto alto", "Quien quiere independencia con mayor margen y comodidad."),
+        ("Barista FIRE", "Parcial", "Quien combina inversiones con trabajo flexible o parcial."),
+        ("Coast FIRE", "Acumulación temprana", "Quien busca invertir fuerte al inicio y luego solo cubrir gastos."),
+    ]
+
+    body_rows = []
+    for fire_type, profile, description in rows:
+        body_rows.append(
+            html.Tr(
+                [
+                    html.Td(html.Strong(fire_type)),
+                    html.Td(profile),
+                    html.Td(description),
+                ]
+            )
+        )
+
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div("Comparativa rápida", className="article-label"),
+                html.H3("Tipos de FIRE de un vistazo", className="h5 fw-bold mb-3"),
+                dbc.Table(
+                    [
+                        html.Thead(
+                            html.Tr(
+                                [
+                                    html.Th("Tipo"),
+                                    html.Th("Enfoque"),
+                                    html.Th("Perfil habitual"),
+                                ]
+                            )
+                        ),
+                        html.Tbody(body_rows),
+                    ],
+                    bordered=False,
+                    hover=True,
+                    responsive=True,
+                    class_name="mb-0"
+                )
+            ]
+        ),
+        className="border-0 shadow-sm rounded-4 my-4 article-soft-card"
+    )
+
+
+def good_fit_box():
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div("En la práctica", className="article-label"),
+                html.H2("¿Para quién encaja mejor FIRE?", className="h4 fw-bold mb-3", id="para-quien"),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H3("Puede encajar si…", className="h5 fw-bold"),
+                                html.Ul(
+                                    [
+                                        html.Li("Quieres reducir dependencia del salario."),
+                                        html.Li("Te sientes cómodo ahorrando e invirtiendo a largo plazo."),
+                                        html.Li("Valoras más la libertad futura que el consumo inmediato."),
+                                        html.Li("Tienes constancia y visión de largo plazo."),
+                                    ],
+                                    className="mb-0"
+                                ),
+                            ],
+                            md=6
+                        ),
+                        dbc.Col(
+                            [
+                                html.H3("Puede costarte más si…", className="h5 fw-bold"),
+                                html.Ul(
+                                    [
+                                        html.Li("Necesitas objetivos financieros a muy corto plazo."),
+                                        html.Li("Tu nivel de gasto es difícil de ajustar."),
+                                        html.Li("Te cuesta mantener disciplina de ahorro."),
+                                        html.Li("Buscas resultados rápidos o poco realistas."),
+                                    ],
+                                    className="mb-0"
+                                ),
+                            ],
+                            md=6,
+                            className="mt-4 mt-md-0"
+                        ),
+                    ]
+                )
+            ]
+        ),
+        className="border-0 shadow-sm rounded-4 my-4 article-soft-card"
+    )
+
+
 def faq_item(question, answer):
     return dbc.Card(
         dbc.CardBody(
@@ -510,8 +636,10 @@ def table_of_contents():
         ("Número FIRE", "#numero-fire"),
         ("Variables clave", "#variables"),
         ("Tipos de FIRE", "#tipos-fire"),
+        ("Para quién encaja", "#para-quien"),
         ("Errores frecuentes", "#errores"),
         ("FAQ", "#faq"),
+        ("Conclusión", "#conclusion"),
     ]
 
     return dbc.Card(
@@ -702,6 +830,9 @@ def article_body():
                             className="article-content"
                         ),
 
+                        fire_types_table(),
+                        good_fit_box(),
+
                         html.Hr(className="article-divider"),
 
                         section_header(
@@ -730,7 +861,7 @@ def article_body():
 
                         html.Hr(className="article-divider"),
 
-                        section_header("Conclusión"),
+                        section_header("Conclusión", section_id="conclusion"),
                         html.Div(
                             [
                                 html.P(
