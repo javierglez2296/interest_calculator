@@ -1,5 +1,5 @@
 import dash
-from dash import html, dcc, Output, Input, clientside_callback
+from dash import html, dcc, Output, Input
 import dash_bootstrap_components as dbc
 from components.disclaimer_afiliados import build_disclaimer
 
@@ -147,9 +147,7 @@ def book_card_v3(book):
     badges = []
 
     if book.get("featured"):
-        badges.append(
-            html.Span("Más recomendado", className="book-featured-badge")
-        )
+        badges.append(html.Span("Más recomendado", className="book-featured-badge"))
 
     badges.extend(
         [
@@ -253,7 +251,6 @@ def books_section_v3():
                     ],
                     className="align-items-end mb-4 mb-lg-5",
                 ),
-
                 dcc.Tabs(
                     id="books-tabs",
                     value="empezar",
@@ -269,18 +266,15 @@ def books_section_v3():
                         for value, label in BOOK_TABS
                     ],
                 ),
-
                 html.Div(
                     id="books-tab-content",
                     className="mt-4",
                     children=build_books_grid("empezar"),
                 ),
-
                 html.Div(
                     "Desliza para ver más →",
                     className="books-mobile-hint d-lg-none",
                 ),
-
                 dbc.Alert(
                     "Algunos enlaces pueden ser de afiliado. Si compras a través de ellos, la web puede recibir una pequeña comisión sin coste extra para ti.",
                     color="light",
@@ -292,273 +286,12 @@ def books_section_v3():
         className="books-premium-section-v3 py-5 py-lg-6",
     )
 
+
 # =========================================================
 # LAYOUT
 # =========================================================
 layout = html.Div(
     [
-        html.Style(
-            """
-            .home-hero {
-                background:
-                    radial-gradient(circle at top left, rgba(13,110,253,0.10), transparent 35%),
-                    radial-gradient(circle at top right, rgba(25,135,84,0.08), transparent 28%),
-                    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-                padding-top: 4rem;
-                padding-bottom: 4rem;
-            }
-
-            .hero-badge {
-                display: inline-block;
-                background: #eef4ff;
-                color: #0d6efd;
-                border: 1px solid #d7e6ff;
-                padding: 0.45rem 0.85rem;
-                border-radius: 999px;
-                font-size: 0.82rem;
-                font-weight: 700;
-                letter-spacing: 0.02em;
-            }
-
-            .hero-title {
-                font-size: clamp(2.15rem, 5vw, 4.25rem);
-                line-height: 1.05;
-                letter-spacing: -0.04em;
-                color: #101828;
-            }
-
-            .hero-subtitle {
-                font-size: 1.05rem;
-                color: #5c667a;
-                max-width: 760px;
-            }
-
-            .hero-metrics {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.8rem;
-                margin-top: 1.5rem;
-            }
-
-            .hero-metric {
-                background: rgba(255,255,255,0.82);
-                border: 1px solid rgba(15,23,42,0.06);
-                box-shadow: 0 10px 30px rgba(15,23,42,0.06);
-                border-radius: 18px;
-                padding: 0.9rem 1rem;
-                min-width: 150px;
-            }
-
-            .hero-metric-label {
-                font-size: 0.78rem;
-                color: #667085;
-                margin-bottom: 0.25rem;
-            }
-
-            .hero-metric-value {
-                font-size: 1.1rem;
-                font-weight: 800;
-                color: #101828;
-            }
-
-            .feature-card {
-                transition: all 0.22s ease;
-                background: #ffffff;
-            }
-
-            .feature-card:hover,
-            .book-card-v3:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 18px 45px rgba(15,23,42,0.10) !important;
-            }
-
-            .feature-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 14px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: linear-gradient(135deg, #eef4ff 0%, #f5f8ff 100%);
-                font-size: 1.2rem;
-            }
-
-            .books-premium-section-v3 {
-                background:
-                    radial-gradient(circle at top left, rgba(13,110,253,0.08), transparent 30%),
-                    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-            }
-
-            .books-side-note {
-                background: rgba(255,255,255,0.88);
-                border: 1px solid rgba(15,23,42,0.08);
-                border-radius: 18px;
-                padding: 1rem 1.1rem;
-                box-shadow: 0 10px 30px rgba(15,23,42,0.05);
-            }
-
-            .books-tabs-parent {
-                margin-top: 1rem;
-            }
-
-            .books-tabs-wrapper {
-                border: none !important;
-            }
-
-            .books-tab {
-                background: #ffffff !important;
-                border: 1px solid rgba(15,23,42,0.08) !important;
-                color: #344054 !important;
-                border-radius: 999px !important;
-                padding: 0.7rem 1.15rem !important;
-                margin-right: 0.6rem !important;
-                font-weight: 700 !important;
-                transition: all 0.2s ease !important;
-            }
-
-            .books-tab:hover {
-                background: #f8fafc !important;
-            }
-
-            .books-tab-selected {
-                background: #111827 !important;
-                color: #ffffff !important;
-                border-color: #111827 !important;
-            }
-
-            .books-grid-v3 {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 1.25rem;
-            }
-
-            .book-card-v3 {
-                background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
-                transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-                overflow: hidden;
-            }
-
-            .book-image-wrap {
-                background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-                border: 1px solid rgba(15,23,42,0.05);
-                border-radius: 18px;
-                padding: 1rem;
-                min-height: 240px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .book-chip {
-                display: inline-flex;
-                align-items: center;
-                padding: 0.38rem 0.72rem;
-                background: #eef4ff;
-                color: #0d6efd;
-                border-radius: 999px;
-                font-size: 0.74rem;
-                font-weight: 700;
-            }
-
-            .book-featured-badge {
-                display: inline-flex;
-                align-items: center;
-                padding: 0.38rem 0.72rem;
-                background: #111827;
-                color: #ffffff;
-                border-radius: 999px;
-                font-size: 0.74rem;
-                font-weight: 700;
-            }
-
-            .book-rating {
-                font-size: 0.78rem;
-                font-weight: 700;
-                color: #344054;
-            }
-
-            .book-note {
-                color: #344054;
-                line-height: 1.45;
-            }
-
-            .book-btn-v3 {
-                box-shadow: 0 8px 20px rgba(17,24,39,0.10);
-            }
-
-            .books-mobile-hint {
-                margin-top: 0.9rem;
-                font-size: 0.82rem;
-                color: #667085;
-                font-weight: 600;
-                text-align: center;
-            }
-
-            .soft-section {
-                padding-top: 4rem;
-                padding-bottom: 4rem;
-            }
-
-            @media (max-width: 991.98px) {
-                .books-grid-v3 {
-                    display: flex;
-                    gap: 1rem;
-                    overflow-x: auto;
-                    padding-bottom: 0.4rem;
-                    scroll-snap-type: x mandatory;
-                    -webkit-overflow-scrolling: touch;
-                }
-
-                .books-grid-v3::-webkit-scrollbar {
-                    height: 8px;
-                }
-
-                .books-grid-v3::-webkit-scrollbar-thumb {
-                    background: rgba(100,116,139,0.25);
-                    border-radius: 999px;
-                }
-
-                .books-grid-v3 > .card {
-                    min-width: 285px;
-                    max-width: 285px;
-                    flex: 0 0 auto;
-                    scroll-snap-align: start;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .hero-title {
-                    font-size: 2.3rem;
-                }
-
-                .hero-subtitle {
-                    font-size: 1rem;
-                }
-
-                .hero-metrics {
-                    gap: 0.6rem;
-                }
-
-                .hero-metric {
-                    flex: 1 1 calc(50% - 0.6rem);
-                    min-width: unset;
-                }
-            }
-
-            @media (max-width: 576px) {
-                .books-grid-v3 > .card {
-                    min-width: 85%;
-                    max-width: 85%;
-                }
-
-                .book-image-wrap {
-                    min-height: 220px;
-                }
-            }
-            """
-        ),
-
-        # HERO
         html.Section(
             dbc.Container(
                 [
@@ -673,11 +406,7 @@ layout = html.Div(
             ),
             className="home-hero",
         ),
-
-        # LIBROS V3
         books_section_v3(),
-
-        # DISCLAIMER
         dbc.Container(
             build_disclaimer(
                 text=(
