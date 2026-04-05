@@ -1,5 +1,5 @@
 import dash
-from dash import html, dcc, Input, Output, callback
+from dash import html, dcc, Input, Output, callback, clientside_callback
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -91,7 +91,7 @@ layout = dbc.Container(
                 # RESULTADOS
                 dbc.Col(
                     [
-                        html.Div(id="scroll-target"),  # 🔥 para scroll
+                        html.Div(id="scroll-target"),
 
                         dbc.Row(
                             [
@@ -103,6 +103,8 @@ layout = dbc.Container(
 
                         html.Div(id="ic-mensaje-emocional", className="mb-3"),
 
+                        html.Div(id="ic-comparativa", className="mb-4"),
+
                         dbc.Card(
                             dbc.CardBody(
                                 dcc.Graph(id="ic-grafico", config={"displayModeBar": False})
@@ -110,7 +112,6 @@ layout = dbc.Container(
                             className="shadow-sm border-0 rounded-4 mb-4",
                         ),
 
-                        # 🔥 CTA DINERO
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -142,7 +143,27 @@ layout = dbc.Container(
 )
 
 # =========================================================
-# CALLBACK
+# SCROLL AUTOMÁTICO
+# =========================================================
+
+clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            const el = document.getElementById("scroll-target");
+            if (el) {
+                el.scrollIntoView({behavior: "smooth"});
+            }
+        }
+        return "";
+    }
+    """,
+    Output("scroll-target", "children"),
+    Input("ic-boton", "n_clicks"),
+)
+
+# =========================================================
+# CALLBACK PRINCIPAL
 # =========================================================
 
 @callback(
@@ -151,6 +172,7 @@ layout = dbc.Container(
     Output("ic-ganancia", "children"),
     Output("ic-grafico", "figure"),
     Output("ic-mensaje-emocional", "children"),
+    Output("ic-comparativa", "children"),
     Input("ic-boton", "n_clicks"),
     Input("ic-capital-inicial", "value"),
     Input("ic-aportacion", "value"),
@@ -186,6 +208,7 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
             metric_card("Ganancia", "0 €"),
             fig,
             "",
+            "",
         )
 
     anos = [x["año"] for x in evolucion]
@@ -196,6 +219,19 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
     valor_final = total[-1]
     total_aportado = aportado[-1]
     ganancia = valor_final - total_aportado
+
+    # COMPARATIVA +100€
+    evolucion_plus = calcular_interes_compuesto(
+        capital_inicial=capital_inicial,
+        aportacion_mensual=aportacion + 100,
+        años=anios,
+        rentabilidad_anual=rentabilidad,
+        inflacion=inflacion,
+        comision=comision,
+    )
+
+    valor_plus = evolucion_plus[-1]["total"] if evolucion_plus else 0
+    diferencia = valor_plus - valor_final
 
     # GRÁFICO
     fig = go.Figure()
@@ -211,7 +247,6 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
         legend_title="",
     )
 
-    # MENSAJE EMOCIONAL 🔥
     mensaje = html.Div(
         [
             html.H4(
@@ -226,10 +261,25 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
         className="p-3 bg-light rounded-4",
     )
 
+    comparativa = dbc.Card(
+        dbc.CardBody(
+            [
+                html.H5("📈 Si inviertes 100€ más al mes", className="fw-bold"),
+                html.P(f"Tendrías {formatear_euros_es(valor_plus)}"),
+                html.P(
+                    f"+{formatear_euros_es(diferencia)} extra",
+                    className="text-success fw-bold"
+                ),
+            ]
+        ),
+        className="shadow border-0 rounded-4",
+    )
+
     return (
         metric_card("Valor final", formatear_euros_es(valor_final), True),
         metric_card("Aportado", formatear_euros_es(total_aportado)),
         metric_card("Ganancia", formatear_euros_es(ganancia), True),
         fig,
         mensaje,
+        comparativa,
     )
