@@ -138,225 +138,6 @@ def seo_json_ld_block():
     )
 
 
-def article_styles():
-    return html.Style("""
-    :root {
-        --article-primary: #2563eb;
-        --article-primary-dark: #1d4ed8;
-        --article-success: #16a34a;
-        --article-text: #101828;
-        --article-text-soft: #667085;
-        --article-border: rgba(16,24,40,0.06);
-        --article-bg-soft: #f8fbff;
-    }
-
-    html {
-        scroll-behavior: smooth;
-    }
-
-    .article-shell {
-        max-width: 100%;
-    }
-
-    .article-hero-card {
-        background:
-            radial-gradient(circle at top left, rgba(37,99,235,0.14), transparent 32%),
-            linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-        border: 1px solid rgba(37,99,235,0.08);
-    }
-
-    .article-breadcrumb {
-        font-size: 0.9rem;
-    }
-
-    .article-breadcrumb a {
-        color: var(--article-primary-dark);
-        text-decoration: none;
-    }
-
-    .article-breadcrumb a:hover {
-        text-decoration: underline;
-    }
-
-    .article-title {
-        color: var(--article-text);
-        letter-spacing: -0.03em;
-        line-height: 1.05;
-    }
-
-    .article-lead {
-        color: var(--article-text-soft);
-        font-size: 1.08rem;
-        max-width: 880px;
-    }
-
-    .article-meta-badge .badge {
-        border-radius: 999px !important;
-    }
-
-    .article-soft-card,
-    .article-side-card,
-    .article-highlight-card,
-    .article-table-card,
-    .article-cta-card {
-        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-    }
-
-    .article-section {
-        scroll-margin-top: 110px;
-    }
-
-    .article-section-title {
-        color: var(--article-text);
-        letter-spacing: -0.02em;
-    }
-
-    .article-section-subtitle {
-        color: var(--article-text-soft);
-    }
-
-    .article-content p,
-    .article-content li {
-        color: #344054;
-        line-height: 1.85;
-        font-size: 1.04rem;
-    }
-
-    .article-content ul {
-        padding-left: 1.2rem;
-    }
-
-    .article-content li {
-        margin-bottom: 0.65rem;
-    }
-
-    .article-label {
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--article-primary-dark);
-        font-weight: 800;
-        margin-bottom: 0.55rem;
-    }
-
-    .article-side-sticky {
-        position: sticky;
-        top: 100px;
-    }
-
-    .article-toc a {
-        color: #475467;
-        text-decoration: none;
-    }
-
-    .article-toc a:hover {
-        color: var(--article-primary-dark);
-    }
-
-    .article-toc li {
-        margin-bottom: 0.55rem;
-    }
-
-    .article-quote {
-        font-size: 1.15rem;
-        line-height: 1.7;
-        color: var(--article-text);
-    }
-
-    .article-code-box {
-        background: #f8fafc;
-        border: 1px solid rgba(16,24,40,0.06);
-        border-radius: 1rem;
-    }
-
-    .article-inline-cta {
-        background:
-            linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(22,163,74,0.06) 100%),
-            #ffffff;
-        border: 1px solid rgba(37,99,235,0.08);
-    }
-
-    .article-affiliate-cta {
-        background:
-            linear-gradient(135deg, rgba(22,163,74,0.12) 0%, rgba(37,99,235,0.08) 100%),
-            #ffffff;
-        border: 1px solid rgba(16,24,40,0.06);
-    }
-
-    .article-divider {
-        margin: 3rem 0;
-        opacity: 0.08;
-    }
-
-    .article-related-card,
-    .article-insight-card,
-    .article-faq-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .article-related-card:hover,
-    .article-insight-card:hover,
-    .article-faq-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 34px rgba(16,24,40,0.10) !important;
-    }
-
-    [data-bs-theme="dark"] .article-title,
-    [data-bs-theme="dark"] .article-section-title,
-    [data-bs-theme="dark"] .article-quote {
-        color: #f8fafc;
-    }
-
-    [data-bs-theme="dark"] .article-lead,
-    [data-bs-theme="dark"] .article-section-subtitle,
-    [data-bs-theme="dark"] .article-content p,
-    [data-bs-theme="dark"] .article-content li,
-    [data-bs-theme="dark"] .article-toc a {
-        color: #cbd5e1;
-    }
-
-    [data-bs-theme="dark"] .article-hero-card,
-    [data-bs-theme="dark"] .article-soft-card,
-    [data-bs-theme="dark"] .article-side-card,
-    [data-bs-theme="dark"] .article-highlight-card,
-    [data-bs-theme="dark"] .article-table-card,
-    [data-bs-theme="dark"] .article-cta-card,
-    [data-bs-theme="dark"] .article-inline-cta,
-    [data-bs-theme="dark"] .article-affiliate-cta {
-        background: #111827;
-        border-color: rgba(255,255,255,0.08);
-    }
-
-    [data-bs-theme="dark"] .article-code-box {
-        background: #0f172a;
-        border-color: rgba(255,255,255,0.08);
-    }
-
-    @media (max-width: 991.98px) {
-        .article-side-sticky {
-            position: static;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .article-title {
-            font-size: 2.2rem !important;
-            line-height: 1.08;
-        }
-
-        .article-lead {
-            font-size: 1rem;
-        }
-
-        .article-content p,
-        .article-content li {
-            font-size: 1rem;
-            line-height: 1.8;
-        }
-    }
-    """)
-
-
 def premium_badge(text, color="light"):
     return dbc.Badge(
         text,
@@ -367,11 +148,14 @@ def premium_badge(text, color="light"):
 
 
 def section_header(title, subtitle=None, section_id=None):
+    children = [
+        html.H2(title, className="h3 fw-bold mb-2 article-section-title", id=section_id)
+    ]
+    if subtitle:
+        children.append(html.P(subtitle, className="article-section-subtitle mb-0"))
+
     return html.Div(
-        [
-            html.H2(title, className="h3 fw-bold mb-2 article-section-title", id=section_id),
-            html.P(subtitle, className="article-section-subtitle mb-0") if subtitle else None,
-        ],
+        children,
         className="mb-4 article-section"
     )
 
@@ -1069,7 +853,6 @@ def article_body():
 
 layout = dbc.Container(
     [
-        article_styles(),
         seo_json_ld_block(),
         hero_section(),
         article_body(),
