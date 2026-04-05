@@ -95,363 +95,53 @@ def badge(text, color="primary"):
     )
 
 
-# =========================================================
-# LAYOUT
-# =========================================================
+def build_fire_figure(capital_actual, aportacion, r, objetivo):
+    years, capital = generar_curva_fire(capital_actual, aportacion, r, objetivo, 60)
 
-layout = dbc.Container(
-    [
-        # HERO
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        badge("LIBERTAD FINANCIERA", "primary"),
-                        html.H1(
-                            "🔥 Calcula cuándo podrías alcanzar FIRE",
-                            className="fw-bold display-6 mb-3",
-                        ),
-                        html.P(
-                            "Descubre cuánto capital necesitas para vivir de tus inversiones, "
-                            "cuántos años tardarías en lograrlo y qué palancas tienen más impacto.",
-                            className="lead text-muted mb-0",
-                            style={"maxWidth": "900px"},
-                        ),
-                    ],
-                    width=12,
-                )
-            ],
-            className="mt-4 mb-4",
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=years,
+            y=capital,
+            mode="lines",
+            name="Capital estimado",
+            line=dict(width=4),
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=years,
+            y=[objetivo] * len(years),
+            mode="lines",
+            name="Objetivo FIRE",
+            line=dict(dash="dash", width=2),
+        )
+    )
+
+    fig.update_layout(
+        template="plotly_white",
+        height=420,
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis_title="Años",
+        yaxis_title="Patrimonio (€)",
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
         ),
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(gridcolor="rgba(0,0,0,0.06)")
 
-        dbc.Row(
-            [
-                # =========================================================
-                # COLUMNA IZQUIERDA
-                # =========================================================
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H4("Tus datos", className="fw-bold mb-3"),
-                                html.P(
-                                    "Usa cifras aproximadas. En segundos verás tu número FIRE y el tiempo estimado.",
-                                    className="text-muted small mb-4",
-                                ),
+    return fig
 
-                                input_block(
-                                    "Gastos mensuales (€)",
-                                    "fire-gastos",
-                                    "1500",
-                                    "Tu nivel de gasto mensual objetivo.",
-                                ),
-                                input_block(
-                                    "Tasa de retiro (%)",
-                                    "fire-tasa",
-                                    "4",
-                                    "La regla clásica suele usar 4%, aunque depende del caso.",
-                                ),
-                                input_block(
-                                    "Capital actual (€)",
-                                    "fire-capital-actual",
-                                    "25000",
-                                    "Todo lo que ya tienes invertido o reservado para este objetivo.",
-                                ),
-                                input_block(
-                                    "Aportación mensual (€)",
-                                    "fire-aportacion",
-                                    "600",
-                                    "Lo que puedes invertir cada mes.",
-                                ),
-                                input_block(
-                                    "Rentabilidad anual (%)",
-                                    "fire-rentabilidad",
-                                    "7",
-                                    "Estimación media anual de tu cartera a largo plazo.",
-                                ),
 
-                                dbc.Button(
-                                    "🔥 Calcular mi plan FIRE",
-                                    id="fire-boton",
-                                    color="primary",
-                                    className="w-100 rounded-3 fw-semibold py-2 mt-2",
-                                ),
-
-                                html.Hr(className="my-4"),
-
-                                dbc.Card(
-                                    dbc.CardBody(
-                                        [
-                                            html.Div("Empieza a invertir hoy", className="fw-bold mb-2"),
-                                            html.P(
-                                                "Una estrategia sencilla y constante puede marcar una diferencia enorme a 10, 20 o 30 años.",
-                                                className="small text-muted mb-3",
-                                            ),
-                                            html.Ul(
-                                                [
-                                                    html.Li("Sin complicarte con productos raros."),
-                                                    html.Li("Ideal para empezar con pequeñas cantidades."),
-                                                    html.Li("Cuanto antes empieces, antes trabaja el interés compuesto."),
-                                                ],
-                                                className="small text-muted mb-3 ps-3",
-                                            ),
-                                            dbc.Button(
-                                                "Empezar a invertir",
-                                                id="fire-cta-top",
-                                                color="success",
-                                                className="w-100 rounded-3 fw-semibold",
-                                            ),
-                                        ]
-                                    ),
-                                    className="border-0 bg-light rounded-4",
-                                ),
-                            ]
-                        ),
-                        className="shadow border-0 rounded-4 sticky-top",
-                        style={"top": "90px"},
-                    ),
-                    lg=4,
-                ),
-
-                # =========================================================
-                # COLUMNA DERECHA
-                # =========================================================
-                dbc.Col(
-                    [
-                        html.Div(id="fire-scroll"),
-
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Div(id="fire-objetivo"), md=4, className="mb-3"),
-                                dbc.Col(html.Div(id="fire-tiempo"), md=4, className="mb-3"),
-                                dbc.Col(html.Div(id="fire-aportacion-card"), md=4, className="mb-3"),
-                            ],
-                            className="mb-1",
-                        ),
-
-                        html.Div(id="fire-mensaje", className="mb-3"),
-
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Div(id="fire-comparativa"), md=6, className="mb-3"),
-                                dbc.Col(html.Div(id="fire-tarde"), md=6, className="mb-3"),
-                            ],
-                            className="mb-1",
-                        ),
-
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Div(id="fire-potencia"), md=6, className="mb-3"),
-                                dbc.Col(html.Div(id="fire-diagnostico"), md=6, className="mb-3"),
-                            ],
-                            className="mb-3",
-                        ),
-
-                        # CTA INTERMEDIO
-                        html.Div(id="fire-cta-intermedio", className="mb-4"),
-
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H4("Evolución estimada de tu patrimonio", className="fw-bold mb-1"),
-                                    html.P(
-                                        "Simulación anual hasta alcanzar tu objetivo FIRE.",
-                                        className="text-muted mb-3",
-                                    ),
-                                    dcc.Graph(id="fire-grafico", config={"displayModeBar": False}),
-                                ]
-                            ),
-                            className="shadow-sm border-0 rounded-4 mb-4",
-                        ),
-
-                        html.Div(id="fire-estrategia", className="mb-4"),
-
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H4("Recibe mejoras y nuevas calculadoras", className="fw-bold mb-2"),
-                                    html.P(
-                                        "Más adelante podrás recibir una guía práctica para acelerar tu libertad financiera.",
-                                        className="text-muted mb-3",
-                                    ),
-                                    dbc.Input(
-                                        placeholder="Tu email",
-                                        className="mb-2 rounded-3",
-                                        type="email",
-                                    ),
-                                    dbc.Button(
-                                        "Quiero recibir novedades",
-                                        color="primary",
-                                        className="w-100 rounded-3 fw-semibold",
-                                    ),
-                                ]
-                            ),
-                            className="shadow border-0 rounded-4 mb-3",
-                        ),
-                    ],
-                    lg=8,
-                ),
-            ],
-            className="gy-4",
-        ),
-
-        # trackers
-        html.Div(id="fire-cta-top-tracker", style={"display": "none"}),
-        html.Div(id="fire-cta-bottom-tracker", style={"display": "none"}),
-        html.Div(id="fire-cta-middle-tracker", style={"display": "none"}),
-
-        # sticky mobile CTA
-        html.Div(
-            dbc.Button(
-                "Empezar a invertir",
-                id="fire-cta-mobile",
-                color="success",
-                className="w-100 fw-bold rounded-3",
-            ),
-            className="d-md-none",
-            style={
-                "position": "fixed",
-                "left": "12px",
-                "right": "12px",
-                "bottom": "12px",
-                "zIndex": "1050",
-                "paddingBottom": "max(0px, env(safe-area-inset-bottom))",
-            },
-        ),
-        html.Div(id="fire-cta-mobile-tracker", style={"display": "none"}),
-    ],
-    fluid=True,
-    className="px-4 px-md-5 pb-5",
-)
-
-# =========================================================
-# SCROLL
-# =========================================================
-
-clientside_callback(
-    """
-    function(n_clicks) {
-        if (n_clicks) {
-            const el = document.getElementById("fire-scroll");
-            if (el) {
-                el.scrollIntoView({behavior: "smooth", block: "start"});
-            }
-        }
-        return "";
-    }
-    """,
-    Output("fire-scroll", "children"),
-    Input("fire-boton", "n_clicks"),
-)
-
-# =========================================================
-# TRACKING + APERTURA ENLACES
-# =========================================================
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_fire_cta_top', {{
-                    event_category: 'affiliate',
-                    event_label: 'myinvestor_fire_top',
-                    value: 1
-                }});
-            }}
-            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
-        }}
-        return "";
-    }}
-    """,
-    Output("fire-cta-top-tracker", "children"),
-    Input("fire-cta-top", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_fire_cta_bottom', {{
-                    event_category: 'affiliate',
-                    event_label: 'myinvestor_fire_bottom',
-                    value: 1
-                }});
-            }}
-            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
-        }}
-        return "";
-    }}
-    """,
-    Output("fire-cta-bottom-tracker", "children"),
-    Input("fire-cta-bottom", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_fire_cta_middle', {{
-                    event_category: 'affiliate',
-                    event_label: 'myinvestor_fire_middle',
-                    value: 1
-                }});
-            }}
-            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
-        }}
-        return "";
-    }}
-    """,
-    Output("fire-cta-middle-tracker", "children"),
-    Input("fire-cta-middle", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_fire_cta_mobile', {{
-                    event_category: 'affiliate',
-                    event_label: 'myinvestor_fire_mobile',
-                    value: 1
-                }});
-            }}
-            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
-        }}
-        return "";
-    }}
-    """,
-    Output("fire-cta-mobile-tracker", "children"),
-    Input("fire-cta-mobile", "n_clicks"),
-)
-
-# =========================================================
-# CALLBACK PRINCIPAL
-# =========================================================
-
-@callback(
-    Output("fire-objetivo", "children"),
-    Output("fire-tiempo", "children"),
-    Output("fire-aportacion-card", "children"),
-    Output("fire-mensaje", "children"),
-    Output("fire-comparativa", "children"),
-    Output("fire-tarde", "children"),
-    Output("fire-potencia", "children"),
-    Output("fire-diagnostico", "children"),
-    Output("fire-cta-intermedio", "children"),
-    Output("fire-grafico", "figure"),
-    Output("fire-estrategia", "children"),
-    Input("fire-boton", "n_clicks"),
-    Input("fire-gastos", "value"),
-    Input("fire-tasa", "value"),
-    Input("fire-capital-actual", "value"),
-    Input("fire-aportacion", "value"),
-    Input("fire-rentabilidad", "value"),
-)
-def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
+def render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad):
     # -----------------------------------------------------
     # sanitización
     # -----------------------------------------------------
@@ -461,16 +151,15 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
     aportacion = max(parse_number(aportacion), 0)
     rentabilidad_pct = parse_number(rentabilidad)
 
-    # límites razonables visuales
     if rentabilidad_pct < -99:
         rentabilidad_pct = -99
     if rentabilidad_pct > 50:
         rentabilidad_pct = 50
 
-    tasa = tasa_pct / 100
+    tasa_decimal = tasa_pct / 100
     r = rentabilidad_pct / 100
 
-    objetivo = calcular_fire(gastos, tasa)
+    objetivo = calcular_fire(gastos, tasa_decimal)
     anos = años_para_fire(capital_actual, aportacion, r, objetivo)
     anos_plus = años_para_fire(capital_actual, aportacion + 200, r, objetivo)
 
@@ -672,46 +361,7 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
     # -----------------------------------------------------
     # gráfico
     # -----------------------------------------------------
-    years, capital = generar_curva_fire(capital_actual, aportacion, r, objetivo, 60)
-
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=years,
-            y=capital,
-            mode="lines",
-            name="Capital estimado",
-            line=dict(width=4),
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=years,
-            y=[objetivo] * len(years),
-            mode="lines",
-            name="Objetivo FIRE",
-            line=dict(dash="dash", width=2),
-        )
-    )
-
-    fig.update_layout(
-        template="plotly_white",
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis_title="Años",
-        yaxis_title="Patrimonio (€)",
-        hovermode="x unified",
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="left",
-            x=0,
-        ),
-    )
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(gridcolor="rgba(0,0,0,0.06)")
+    fig = build_fire_figure(capital_actual, aportacion, r, objetivo)
 
     # -----------------------------------------------------
     # CTA dinámico final
@@ -772,7 +422,6 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
         ]
         cta_button_text = "Empezar hoy a construir mi libertad financiera"
 
-    # texto estratégico superior
     if math.isinf(anos):
         diagnostico_estrategia = "Ahora mismo tu prioridad no debería ser optimizar unas décimas de rentabilidad, sino construir hábito y capacidad de ahorro."
         accion_1 = "Revisar tus gastos fijos y elevar el margen mensual."
@@ -800,7 +449,6 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
                 badge("PLAN RECOMENDADO", "primary"),
                 html.H4("La estrategia que más puede acercarte a FIRE", className="fw-bold mb-3"),
                 html.P(diagnostico_estrategia, className="text-muted mb-4"),
-
                 dbc.Row(
                     [
                         dbc.Col(
@@ -845,7 +493,6 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
                     ],
                     className="mb-2",
                 ),
-
                 dbc.Card(
                     dbc.CardBody(
                         [
@@ -888,3 +535,364 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
         fig,
         estrategia,
     )
+
+
+initial_outputs = render_fire_outputs("1500", "4", "25000", "600", "7")
+
+# =========================================================
+# LAYOUT
+# =========================================================
+
+layout = dbc.Container(
+    [
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        badge("LIBERTAD FINANCIERA", "primary"),
+                        html.H1(
+                            "🔥 Calcula cuándo podrías alcanzar FIRE",
+                            className="fw-bold display-6 mb-3",
+                        ),
+                        html.P(
+                            "Descubre cuánto capital necesitas para vivir de tus inversiones, "
+                            "cuántos años tardarías en lograrlo y qué palancas tienen más impacto.",
+                            className="lead text-muted mb-0",
+                            style={"maxWidth": "900px"},
+                        ),
+                    ],
+                    width=12,
+                )
+            ],
+            className="mt-4 mb-4",
+        ),
+
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H4("Tus datos", className="fw-bold mb-3"),
+                                html.P(
+                                    "Usa cifras aproximadas. En segundos verás tu número FIRE y el tiempo estimado.",
+                                    className="text-muted small mb-4",
+                                ),
+                                input_block(
+                                    "Gastos mensuales (€)",
+                                    "fire-gastos",
+                                    "1500",
+                                    "Tu nivel de gasto mensual objetivo.",
+                                ),
+                                input_block(
+                                    "Tasa de retiro (%)",
+                                    "fire-tasa",
+                                    "4",
+                                    "La regla clásica suele usar 4%, aunque depende del caso.",
+                                ),
+                                input_block(
+                                    "Capital actual (€)",
+                                    "fire-capital-actual",
+                                    "25000",
+                                    "Todo lo que ya tienes invertido o reservado para este objetivo.",
+                                ),
+                                input_block(
+                                    "Aportación mensual (€)",
+                                    "fire-aportacion",
+                                    "600",
+                                    "Lo que puedes invertir cada mes.",
+                                ),
+                                input_block(
+                                    "Rentabilidad anual (%)",
+                                    "fire-rentabilidad",
+                                    "7",
+                                    "Estimación media anual de tu cartera a largo plazo.",
+                                ),
+                                dbc.Button(
+                                    "🔥 Calcular mi plan FIRE",
+                                    id="fire-boton",
+                                    color="primary",
+                                    className="w-100 rounded-3 fw-semibold py-2 mt-2",
+                                    n_clicks=0,
+                                ),
+                                html.Hr(className="my-4"),
+                                dbc.Card(
+                                    dbc.CardBody(
+                                        [
+                                            html.Div("Empieza a invertir hoy", className="fw-bold mb-2"),
+                                            html.P(
+                                                "Una estrategia sencilla y constante puede marcar una diferencia enorme a 10, 20 o 30 años.",
+                                                className="small text-muted mb-3",
+                                            ),
+                                            html.Ul(
+                                                [
+                                                    html.Li("Sin complicarte con productos raros."),
+                                                    html.Li("Ideal para empezar con pequeñas cantidades."),
+                                                    html.Li("Cuanto antes empieces, antes trabaja el interés compuesto."),
+                                                ],
+                                                className="small text-muted mb-3 ps-3",
+                                            ),
+                                            dbc.Button(
+                                                "Empezar a invertir",
+                                                id="fire-cta-top",
+                                                color="success",
+                                                className="w-100 rounded-3 fw-semibold",
+                                                n_clicks=0,
+                                            ),
+                                        ]
+                                    ),
+                                    className="border-0 bg-light rounded-4",
+                                ),
+                            ]
+                        ),
+                        className="shadow border-0 rounded-4 sticky-top",
+                        style={"top": "90px"},
+                    ),
+                    lg=4,
+                ),
+
+                dbc.Col(
+                    [
+                        html.Div(id="fire-scroll"),
+
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Div(initial_outputs[0], id="fire-objetivo"), md=4, className="mb-3"),
+                                dbc.Col(html.Div(initial_outputs[1], id="fire-tiempo"), md=4, className="mb-3"),
+                                dbc.Col(html.Div(initial_outputs[2], id="fire-aportacion-card"), md=4, className="mb-3"),
+                            ],
+                            className="mb-1",
+                        ),
+
+                        html.Div(initial_outputs[3], id="fire-mensaje", className="mb-3"),
+
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Div(initial_outputs[4], id="fire-comparativa"), md=6, className="mb-3"),
+                                dbc.Col(html.Div(initial_outputs[5], id="fire-tarde"), md=6, className="mb-3"),
+                            ],
+                            className="mb-1",
+                        ),
+
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Div(initial_outputs[6], id="fire-potencia"), md=6, className="mb-3"),
+                                dbc.Col(html.Div(initial_outputs[7], id="fire-diagnostico"), md=6, className="mb-3"),
+                            ],
+                            className="mb-3",
+                        ),
+
+                        html.Div(initial_outputs[8], id="fire-cta-intermedio", className="mb-4"),
+
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H4("Evolución estimada de tu patrimonio", className="fw-bold mb-1"),
+                                    html.P(
+                                        "Simulación anual hasta alcanzar tu objetivo FIRE.",
+                                        className="text-muted mb-3",
+                                    ),
+                                    dcc.Graph(
+                                        id="fire-grafico",
+                                        figure=initial_outputs[9],
+                                        config={"displayModeBar": False},
+                                        style={"height": "420px", "width": "100%"},
+                                    ),
+                                ]
+                            ),
+                            className="shadow-sm border-0 rounded-4 mb-4",
+                        ),
+
+                        html.Div(initial_outputs[10], id="fire-estrategia", className="mb-4"),
+
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H4("Recibe mejoras y nuevas calculadoras", className="fw-bold mb-2"),
+                                    html.P(
+                                        "Más adelante podrás recibir una guía práctica para acelerar tu libertad financiera.",
+                                        className="text-muted mb-3",
+                                    ),
+                                    dbc.Input(
+                                        placeholder="Tu email",
+                                        className="mb-2 rounded-3",
+                                        type="email",
+                                    ),
+                                    dbc.Button(
+                                        "Quiero recibir novedades",
+                                        color="primary",
+                                        className="w-100 rounded-3 fw-semibold",
+                                    ),
+                                ]
+                            ),
+                            className="shadow border-0 rounded-4 mb-3",
+                        ),
+                    ],
+                    lg=8,
+                ),
+            ],
+            className="gy-4",
+        ),
+
+        html.Div(id="fire-cta-top-tracker", style={"display": "none"}),
+        html.Div(id="fire-cta-bottom-tracker", style={"display": "none"}),
+        html.Div(id="fire-cta-middle-tracker", style={"display": "none"}),
+        html.Div(id="fire-cta-mobile-tracker", style={"display": "none"}),
+
+        html.Div(
+            dbc.Button(
+                "Empezar a invertir",
+                id="fire-cta-mobile",
+                color="success",
+                className="w-100 fw-bold rounded-3",
+                n_clicks=0,
+            ),
+            className="d-md-none",
+            style={
+                "position": "fixed",
+                "left": "12px",
+                "right": "12px",
+                "bottom": "12px",
+                "zIndex": "1050",
+                "paddingBottom": "max(0px, env(safe-area-inset-bottom))",
+            },
+        ),
+    ],
+    fluid=True,
+    className="px-4 px-md-5 pb-5",
+)
+
+# =========================================================
+# SCROLL
+# =========================================================
+
+clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks && n_clicks > 0) {
+            const el = document.getElementById("fire-scroll");
+            if (el) {
+                el.scrollIntoView({behavior: "smooth", block: "start"});
+            }
+        }
+        return "";
+    }
+    """,
+    Output("fire-scroll", "children"),
+    Input("fire-boton", "n_clicks"),
+)
+
+# =========================================================
+# TRACKING + APERTURA ENLACES
+# =========================================================
+
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks && n_clicks > 0) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_fire_cta_top', {{
+                    event_category: 'affiliate',
+                    event_label: 'myinvestor_fire_top',
+                    value: 1
+                }});
+            }}
+            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
+        }}
+        return "";
+    }}
+    """,
+    Output("fire-cta-top-tracker", "children"),
+    Input("fire-cta-top", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks && n_clicks > 0) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_fire_cta_bottom', {{
+                    event_category: 'affiliate',
+                    event_label: 'myinvestor_fire_bottom',
+                    value: 1
+                }});
+            }}
+            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
+        }}
+        return "";
+    }}
+    """,
+    Output("fire-cta-bottom-tracker", "children"),
+    Input("fire-cta-bottom", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks && n_clicks > 0) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_fire_cta_middle', {{
+                    event_category: 'affiliate',
+                    event_label: 'myinvestor_fire_middle',
+                    value: 1
+                }});
+            }}
+            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
+        }}
+        return "";
+    }}
+    """,
+    Output("fire-cta-middle-tracker", "children"),
+    Input("fire-cta-middle", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+clientside_callback(
+    f"""
+    function(n_clicks) {{
+        if (n_clicks && n_clicks > 0) {{
+            if (window.gtag) {{
+                window.gtag('event', 'click_fire_cta_mobile', {{
+                    event_category: 'affiliate',
+                    event_label: 'myinvestor_fire_mobile',
+                    value: 1
+                }});
+            }}
+            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
+        }}
+        return "";
+    }}
+    """,
+    Output("fire-cta-mobile-tracker", "children"),
+    Input("fire-cta-mobile", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+# =========================================================
+# CALLBACK PRINCIPAL
+# =========================================================
+
+@callback(
+    Output("fire-objetivo", "children"),
+    Output("fire-tiempo", "children"),
+    Output("fire-aportacion-card", "children"),
+    Output("fire-mensaje", "children"),
+    Output("fire-comparativa", "children"),
+    Output("fire-tarde", "children"),
+    Output("fire-potencia", "children"),
+    Output("fire-diagnostico", "children"),
+    Output("fire-cta-intermedio", "children"),
+    Output("fire-grafico", "figure"),
+    Output("fire-estrategia", "children"),
+    Input("fire-boton", "n_clicks"),
+    State("fire-gastos", "value"),
+    State("fire-tasa", "value"),
+    State("fire-capital-actual", "value"),
+    State("fire-aportacion", "value"),
+    State("fire-rentabilidad", "value"),
+    prevent_initial_call=True,
+)
+def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
+    return render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad)
