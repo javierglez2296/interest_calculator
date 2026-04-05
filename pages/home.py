@@ -1,13 +1,44 @@
 import dash
-from dash import html, Output, Input, clientside_callback
+from dash import html
 import dash_bootstrap_components as dbc
 from components.disclaimer_afiliados import build_disclaimer
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
-AMAZON_PADRE_RICO_URL = "https://amzn.to/41KFQzk"
-AMAZON_PSICOLOGIA_DINERO_URL = "https://amzn.to/4sVIcaE"
-AMAZON_WALL_STREET_URL = "https://amzn.to/3NONGEW"
+# =========================================================
+# AMAZON AFILIADOS
+# =========================================================
+# Sustituye estos links por tus enlaces reales de Amazon Afiliados
+BOOKS = [
+    {
+        "title": "Padre Rico, Padre Pobre",
+        "subtitle": "El clásico para cambiar tu mentalidad sobre dinero, activos e ingresos.",
+        "tag": "Para empezar",
+        "rating": "4,7/5",
+        "cta": "Ver en Amazon",
+        "href": "https://www.amazon.es/",
+        "image": "https://m.media-amazon.com/images/I/81bsw6fnUiL.jpg",
+    },
+    {
+        "title": "El inversor inteligente",
+        "subtitle": "Una referencia atemporal para entender inversión con criterio y disciplina.",
+        "tag": "Inversión clásica",
+        "rating": "4,8/5",
+        "cta": "Ver en Amazon",
+        "href": "https://www.amazon.es/",
+        "image": "https://m.media-amazon.com/images/I/91+NBrXG-PL.jpg",
+    },
+    {
+        "title": "The Psychology of Money",
+        "subtitle": "Uno de los mejores libros para entender por qué invertimos como invertimos.",
+        "tag": "Mentalidad",
+        "rating": "4,8/5",
+        "cta": "Ver en Amazon",
+        "href": "https://www.amazon.es/",
+        "image": "https://m.media-amazon.com/images/I/71g2ednj0JL.jpg",
+    },
+]
+
 
 dash.register_page(
     __name__,
@@ -16,974 +47,431 @@ dash.register_page(
     name="Inicio",
     description=(
         "Descubre cuánto dinero puedes tener en el futuro. Calcula interés compuesto, "
-        "FIRE e hipoteca de forma rápida, clara y gratuita."
+        "FIRE e hipoteca de forma rápida y gratuita."
     ),
 )
 
 # =========================================================
-# HELPERS
+# COMPONENTES
 # =========================================================
-
-def section_badge(texto, color_class="text-primary"):
-    return html.Div(
-        texto,
-        className=f"small fw-bold {color_class} mb-2",
-        style={"letterSpacing": "0.04em"},
-    )
-
-
-def teaser_card(titulo, texto, href, boton_texto="Abrir", badge=None, icono=None, featured=False):
-    header_items = [html.Span(icono or "✨", className="card-icon me-2")]
-    if badge:
-        header_items.append(html.Span(badge, className="mini-badge"))
-
+def teaser_card(titulo, texto, href, boton_texto="Abrir", icono="→"):
     return dbc.Card(
         dbc.CardBody(
             [
-                html.Div(header_items, className="d-flex align-items-center mb-3"),
-                html.H3(titulo, className="h5 fw-bold mb-2 text-dark"),
-                html.P(texto, className="text-muted small mb-4"),
+                html.Div(icono, className="feature-icon mb-3"),
+                html.H3(titulo, className="h5 fw-bold mb-2"),
+                html.P(texto, className="text-muted small mb-3"),
                 dbc.Button(
                     boton_texto,
                     href=href,
-                    color="primary" if featured else "light",
-                    className=(
-                        "w-100 rounded-pill fw-semibold border-0"
-                        if featured else
-                        "w-100 rounded-pill fw-semibold border"
-                    ),
-                ),
-            ]
-        ),
-        className=(
-            "h-100 shadow-sm border-0 rounded-4 teaser-card "
-            + ("teaser-card-featured" if featured else "")
-        ),
-    )
-
-
-def benefit_card(icono, titulo, texto):
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.Div(icono, className="benefit-icon mb-3"),
-                html.H3(titulo, className="h5 fw-bold mb-2"),
-                html.P(texto, className="text-muted small mb-0"),
-            ]
-        ),
-        className="h-100 border-0 shadow-sm rounded-4 benefit-card",
-    )
-
-
-def compare_card(icono, titulo, descripcion, bullets, href, boton, featured=False):
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.Div(icono, className="compare-icon mb-3"),
-                html.H3(titulo, className="h5 fw-bold mb-3"),
-                html.P(descripcion, className="text-muted small mb-3"),
-                html.Ul([html.Li(item) for item in bullets], className="compare-list mb-4"),
-                dbc.Button(
-                    boton,
-                    href=href,
-                    color="primary" if featured else "light",
-                    outline=not featured,
+                    color="primary",
                     className="w-100 rounded-pill fw-semibold",
                 ),
             ]
         ),
-        className="h-100 border-0 shadow-sm rounded-4 compare-card",
+        className="feature-card h-100 border-0 shadow-sm rounded-4",
     )
 
 
-def article_card(top_label, title, text, href, featured=False):
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.Div(top_label, className="article-top-label mb-2"),
-                html.H3(title, className="h5 fw-bold mb-2"),
-                html.P(text, className="text-muted small mb-4"),
-                dbc.Button(
-                    "Leer artículo",
-                    href=href,
-                    color="primary" if featured else "light",
-                    className=(
-                        "w-100 rounded-pill fw-semibold border-0"
-                        if featured else
-                        "w-100 rounded-pill fw-semibold border"
-                    ),
-                ),
-            ]
-        ),
-        className="h-100 border-0 shadow-sm rounded-4 article-card",
-    )
-
-
-def book_card(icono, eyebrow, titulo, texto, href, button_id, featured=False):
+def book_card(book):
     return dbc.Card(
         dbc.CardBody(
             [
                 html.Div(
                     [
-                        html.Div(icono, className="book-icon-wrap me-3"),
-                        html.Div(
-                            [
-                                html.Div(eyebrow, className="small fw-bold text-primary mb-1"),
-                                html.H3(titulo, className="h5 fw-bold mb-0"),
-                            ]
-                        ),
+                        html.Span(book["tag"], className="book-chip"),
+                        html.Span(f"⭐ {book['rating']}", className="book-rating"),
                     ],
-                    className="d-flex align-items-center mb-3",
-                ),
-                html.P(texto, className="text-muted small mb-4"),
-                dbc.Button(
-                    "Ver en Amazon",
-                    id=button_id,
-                    color="warning" if featured else "light",
-                    className=(
-                        "w-100 rounded-pill fw-semibold border-0"
-                        if featured else
-                        "w-100 rounded-pill fw-semibold border"
-                    ),
+                    className="d-flex justify-content-between align-items-center mb-3",
                 ),
                 html.Div(
-                    "Enlace de afiliado de Amazon.",
-                    className="small text-muted text-center mt-2",
+                    html.Img(
+                        src=book["image"],
+                        alt=book["title"],
+                        className="img-fluid",
+                        style={
+                            "maxHeight": "180px",
+                            "objectFit": "contain",
+                            "borderRadius": "14px",
+                        },
+                    ),
+                    className="text-center mb-3",
+                ),
+                html.H3(book["title"], className="h5 fw-bold mb-2"),
+                html.P(book["subtitle"], className="text-muted small mb-4"),
+                dbc.Button(
+                    [
+                        html.Span(book["cta"]),
+                        html.Span(" →", className="ms-1"),
+                    ],
+                    href=book["href"],
+                    target="_blank",
+                    rel="sponsored noopener noreferrer",
+                    color="dark",
+                    className="w-100 rounded-pill fw-semibold book-btn",
                 ),
             ]
         ),
-        className=(
-            "h-100 border-0 shadow-sm rounded-4 book-card "
-            + ("book-card-featured" if featured else "")
+        className="book-card h-100 border-0 shadow-sm rounded-4",
+    )
+
+
+def books_section():
+    return html.Section(
+        dbc.Container(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Div("RECOMENDADOS", className="section-kicker"),
+                                html.H2(
+                                    "Libros de finanzas e inversión que merecen la pena",
+                                    className="fw-bold display-6 mb-3",
+                                ),
+                                html.P(
+                                    "Si estás mejorando tus finanzas, aprendiendo a invertir o "
+                                    "buscando construir patrimonio a largo plazo, esta selección "
+                                    "te puede ahorrar años de errores.",
+                                    className="lead text-muted mb-0",
+                                ),
+                            ],
+                            lg=8,
+                        ),
+                        dbc.Col(
+                            html.Div(
+                                dbc.Button(
+                                    "Ver más recomendaciones",
+                                    href="/blog",
+                                    color="light",
+                                    className="rounded-pill px-4 py-2 fw-semibold border",
+                                ),
+                                className="d-flex justify-content-lg-end align-items-lg-center h-100 mt-3 mt-lg-0",
+                            ),
+                            lg=4,
+                        ),
+                    ],
+                    className="align-items-center mb-4 mb-lg-5",
+                ),
+                dbc.Row(
+                    [dbc.Col(book_card(book), md=6, lg=4, className="mb-4") for book in BOOKS],
+                    className="g-4",
+                ),
+                dbc.Row(
+                    dbc.Col(
+                        dbc.Alert(
+                            [
+                                html.Span("Aviso: "),
+                                "algunos enlaces pueden ser de afiliado. Si compras a través de ellos, "
+                                "la web puede recibir una pequeña comisión sin coste extra para ti.",
+                            ],
+                            color="light",
+                            className="mt-4 rounded-4 border-0 small text-muted mb-0",
+                        ),
+                        width=12,
+                    )
+                ),
+            ],
+            fluid=False,
         ),
+        className="books-premium-section py-5 py-lg-6",
     )
 
 
 # =========================================================
-# HERO
+# LAYOUT
 # =========================================================
+layout = html.Div(
+    [
+        html.Style(
+            """
+            .home-hero {
+                background:
+                    radial-gradient(circle at top left, rgba(13,110,253,0.10), transparent 35%),
+                    radial-gradient(circle at top right, rgba(25,135,84,0.10), transparent 30%),
+                    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+                padding-top: 4rem;
+                padding-bottom: 4rem;
+            }
 
-hero = dbc.Container(
-    dbc.Row(
-        [
-            dbc.Col(
+            .hero-badge {
+                display: inline-block;
+                background: #eef4ff;
+                color: #0d6efd;
+                border: 1px solid #d7e6ff;
+                padding: 0.45rem 0.85rem;
+                border-radius: 999px;
+                font-size: 0.82rem;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+            }
+
+            .hero-title {
+                font-size: clamp(2.1rem, 5vw, 4.2rem);
+                line-height: 1.05;
+                letter-spacing: -0.04em;
+            }
+
+            .hero-subtitle {
+                font-size: 1.05rem;
+                color: #5c667a;
+                max-width: 760px;
+            }
+
+            .hero-metrics {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                margin-top: 1.5rem;
+            }
+
+            .hero-metric {
+                background: rgba(255,255,255,0.78);
+                border: 1px solid rgba(15,23,42,0.06);
+                box-shadow: 0 10px 30px rgba(15,23,42,0.06);
+                border-radius: 18px;
+                padding: 0.9rem 1rem;
+                min-width: 150px;
+            }
+
+            .hero-metric-label {
+                font-size: 0.78rem;
+                color: #667085;
+                margin-bottom: 0.25rem;
+            }
+
+            .hero-metric-value {
+                font-size: 1.1rem;
+                font-weight: 800;
+                color: #101828;
+            }
+
+            .feature-card {
+                transition: all 0.22s ease;
+                background: #ffffff;
+            }
+
+            .feature-card:hover,
+            .book-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 18px 45px rgba(15,23,42,0.10) !important;
+            }
+
+            .feature-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #eef4ff 0%, #f5f8ff 100%);
+                font-size: 1.2rem;
+            }
+
+            .books-premium-section {
+                background:
+                    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            }
+
+            .section-kicker {
+                display: inline-block;
+                font-size: 0.78rem;
+                font-weight: 800;
+                letter-spacing: 0.08em;
+                color: #0d6efd;
+                margin-bottom: 0.85rem;
+            }
+
+            .book-card {
+                background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+                transition: all 0.22s ease;
+            }
+
+            .book-chip {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.35rem 0.7rem;
+                background: #eef4ff;
+                color: #0d6efd;
+                border-radius: 999px;
+                font-size: 0.75rem;
+                font-weight: 700;
+            }
+
+            .book-rating {
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: #344054;
+            }
+
+            .book-btn {
+                box-shadow: 0 8px 20px rgba(17,24,39,0.10);
+            }
+
+            .soft-section {
+                padding-top: 4rem;
+                padding-bottom: 4rem;
+            }
+
+            @media (max-width: 768px) {
+                .hero-title {
+                    font-size: 2.3rem;
+                }
+
+                .hero-subtitle {
+                    font-size: 1rem;
+                }
+
+                .hero-metrics {
+                    gap: 0.6rem;
+                }
+
+                .hero-metric {
+                    flex: 1 1 calc(50% - 0.6rem);
+                    min-width: unset;
+                }
+            }
+            """
+        ),
+
+        # HERO
+        html.Section(
+            dbc.Container(
                 [
-                    html.Div("Calculadoras financieras en español", className="hero-pill"),
-                    html.H1(
-                        "Entiende mejor tu dinero y decide con más criterio",
-                        className="display-4 fw-bold mb-3 hero-title",
-                    ),
-                    html.P(
-                        "Simula tu inversión, tu objetivo FIRE y tu hipoteca con herramientas claras, rápidas "
-                        "y pensadas para ayudarte a pasar de la teoría a la acción.",
-                        className="hero-subtitle mb-4",
-                    ),
-                    html.Div(
-                        [
-                            dbc.Button(
-                                "💰 Calcular mi dinero futuro",
-                                href="/calculadora",
-                                color="primary",
-                                size="lg",
-                                className="me-2 mb-2 px-4 rounded-pill fw-semibold",
-                            ),
-                            dbc.Button(
-                                "Ver calculadoras",
-                                href="#calculadoras-home",
-                                color="light",
-                                size="lg",
-                                className="mb-2 px-4 rounded-pill fw-semibold border",
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    html.Div(
-                        [
-                            html.Span("Sin registro", className="me-3"),
-                            html.Span("Gratis", className="me-3"),
-                            html.Span("Resultados inmediatos"),
-                        ],
-                        className="text-muted small mb-4",
-                    ),
                     dbc.Row(
                         [
                             dbc.Col(
-                                html.Div(
-                                    [
-                                        html.Div("3", className="hero-stat-number"),
-                                        html.P("calculadoras", className="hero-stat-label"),
-                                    ],
-                                    className="hero-stat",
-                                ),
-                                xs=4,
-                            ),
-                            dbc.Col(
-                                html.Div(
-                                    [
-                                        html.Div("Gratis", className="hero-stat-number"),
-                                        html.P("uso libre", className="hero-stat-label"),
-                                    ],
-                                    className="hero-stat",
-                                ),
-                                xs=4,
-                            ),
-                            dbc.Col(
-                                html.Div(
-                                    [
-                                        html.Div("1 min", className="hero-stat-number"),
-                                        html.P("para simular", className="hero-stat-label"),
-                                    ],
-                                    className="hero-stat",
-                                ),
-                                xs=4,
-                            ),
-                        ],
-                        className="g-2",
-                    ),
-                ],
-                lg=6,
-                className="py-5",
-            ),
-            dbc.Col(
-                [
-                    dbc.Card(
-                        [
-                            html.Div(
                                 [
-                                    html.Span(className="mockup-dot"),
-                                    html.Span(className="mockup-dot"),
-                                    html.Span(className="mockup-dot"),
-                                ],
-                                className="mockup-topbar",
-                            ),
-                            dbc.CardBody(
-                                [
-                                    html.Div("Simulación orientativa", className="mockup-badge mb-3"),
-                                    dbc.Row(
+                                    html.Div("FINANZAS PERSONALES · INVERSIÓN · HIPOTECA", className="hero-badge mb-3"),
+                                    html.H1(
+                                        "Calculadoras financieras claras, útiles y hechas para tomar mejores decisiones",
+                                        className="hero-title fw-bold mb-3",
+                                    ),
+                                    html.P(
+                                        "Simula tu interés compuesto, calcula tu objetivo FIRE y estima tu hipoteca "
+                                        "de forma sencilla. Todo en español, sin ruido y con enfoque práctico.",
+                                        className="hero-subtitle mb-4",
+                                    ),
+                                    html.Div(
                                         [
-                                            dbc.Col(
-                                                html.Div(
-                                                    [
-                                                        html.Div("Capital futuro", className="mockup-label"),
-                                                        html.P("154.320€", className="mockup-value"),
-                                                    ],
-                                                    className="mockup-box",
-                                                ),
-                                                md=6,
-                                                className="mb-3",
+                                            dbc.Button(
+                                                "Probar calculadora",
+                                                href="/calculadora",
+                                                color="primary",
+                                                className="rounded-pill px-4 py-2 fw-semibold me-2 mb-2",
                                             ),
-                                            dbc.Col(
-                                                html.Div(
-                                                    [
-                                                        html.Div("Aportación mensual", className="mockup-label"),
-                                                        html.P("300€/mes", className="mockup-value"),
-                                                    ],
-                                                    className="mockup-box",
-                                                ),
-                                                md=6,
-                                                className="mb-3",
+                                            dbc.Button(
+                                                "Ver calculadora hipoteca",
+                                                href="/hipoteca",
+                                                color="light",
+                                                className="rounded-pill px-4 py-2 fw-semibold border mb-2",
                                             ),
                                         ]
                                     ),
                                     html.Div(
                                         [
-                                            html.Div(className="mockup-chart-line-1"),
-                                            html.Div(className="mockup-chart-line-2"),
-                                        ],
-                                        className="mockup-chart mb-3",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Div("Visualiza escenarios", className="fw-semibold text-dark mb-1"),
                                             html.Div(
-                                                "Comprende mejor qué ocurre cuando cambias tiempo, rentabilidad o aportaciones.",
-                                                className="text-muted small",
+                                                [
+                                                    html.Div("Herramientas", className="hero-metric-label"),
+                                                    html.Div("3 calculadoras", className="hero-metric-value"),
+                                                ],
+                                                className="hero-metric",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Div("Uso", className="hero-metric-label"),
+                                                    html.Div("Gratis", className="hero-metric-value"),
+                                                ],
+                                                className="hero-metric",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Div("Enfoque", className="hero-metric-label"),
+                                                    html.Div("100% práctico", className="hero-metric-value"),
+                                                ],
+                                                className="hero-metric",
+                                            ),
+                                        ],
+                                        className="hero-metrics",
+                                    ),
+                                ],
+                                lg=7,
+                                className="mb-4 mb-lg-0",
+                            ),
+                            dbc.Col(
+                                dbc.Card(
+                                    dbc.CardBody(
+                                        [
+                                            html.Div("Empieza por aquí", className="text-primary fw-bold small mb-2"),
+                                            html.H2("Tu hoja de ruta financiera", className="h4 fw-bold mb-3"),
+                                            html.P(
+                                                "Explora las tres áreas clave de la web: inversión, independencia "
+                                                "financiera y compra de vivienda.",
+                                                className="text-muted small mb-4",
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    dbc.Col(
+                                                        teaser_card(
+                                                            "Interés compuesto",
+                                                            "Descubre cuánto puede crecer tu dinero con aportaciones periódicas.",
+                                                            "/calculadora",
+                                                            "Abrir calculadora",
+                                                            "📈",
+                                                        ),
+                                                        md=12,
+                                                        className="mb-3",
+                                                    ),
+                                                    dbc.Col(
+                                                        teaser_card(
+                                                            "FIRE",
+                                                            "Calcula cuánto necesitas para vivir de tus inversiones.",
+                                                            "/fire",
+                                                            "Ver FIRE",
+                                                            "🔥",
+                                                        ),
+                                                        md=12,
+                                                        className="mb-3",
+                                                    ),
+                                                    dbc.Col(
+                                                        teaser_card(
+                                                            "Hipoteca",
+                                                            "Estima cuota, coste total y esfuerzo financiero antes de comprar.",
+                                                            "/hipoteca",
+                                                            "Calcular hipoteca",
+                                                            "🏠",
+                                                        ),
+                                                        md=12,
+                                                    ),
+                                                ]
                                             ),
                                         ]
                                     ),
-                                ]
+                                    className="border-0 shadow-sm rounded-4 h-100",
+                                ),
+                                lg=5,
                             ),
                         ],
-                        className="hero-mockup rounded-4 border-0",
+                        className="align-items-center",
                     )
-                ],
-                lg=6,
-                className="d-flex align-items-center",
+                ]
             ),
-        ],
-        className="align-items-center",
-    ),
-    fluid=True,
-    className="px-4 px-md-5 py-5 gradient-hero home-section",
-)
+            className="home-hero",
+        ),
 
-# =========================================================
-# FRANJA DE CONFIANZA
-# =========================================================
+        # BLOQUE PREMIUM LIBROS
+        books_section(),
 
-trust_strip = dbc.Container(
-    dbc.Row(
-        [
-            dbc.Col(html.Div([html.Strong("Claro"), html.Span("explicaciones simples")], className="trust-item"), md=3, xs=6),
-            dbc.Col(html.Div([html.Strong("Rápido"), html.Span("simulación inmediata")], className="trust-item"), md=3, xs=6),
-            dbc.Col(html.Div([html.Strong("Útil"), html.Span("para invertir y vivienda")], className="trust-item"), md=3, xs=6),
-            dbc.Col(html.Div([html.Strong("Gratis"), html.Span("sin registro")], className="trust-item"), md=3, xs=6),
-        ],
-        className="py-3",
-    ),
-    fluid=True,
-    className="px-4 px-md-5 trust-strip home-section",
-)
-
-# =========================================================
-# BENEFICIOS
-# =========================================================
-
-benefits = dbc.Container(
-    [
-        html.Div(className="separator-space"),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        section_badge("POR QUÉ USARLA"),
-                        html.H2(
-                            "Todo lo que necesitas para tomar mejores decisiones financieras",
-                            className="fw-bold mb-2 section-title",
-                        ),
-                        html.P(
-                            "Herramientas claras, resultados rápidos y contenido útil para pasar de la teoría a la acción.",
-                            className="section-subtitle mb-4",
-                        ),
-                    ],
-                    width=12,
+        # DISCLAIMER AFILIADOS
+        dbc.Container(
+            build_disclaimer(
+                text=(
+                    "Algunos enlaces de esta web pueden ser de afiliado. Esto significa que "
+                    "podemos recibir una pequeña comisión si decides contratar o comprar desde ellos, "
+                    "sin coste adicional para ti."
                 )
-            ]
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    benefit_card(
-                        "📈",
-                        "Visualiza tu futuro",
-                        "Entiende cuánto puede crecer tu patrimonio con aportaciones periódicas y tiempo.",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    benefit_card(
-                        "🔥",
-                        "Planifica tu FIRE",
-                        "Calcula cuánto necesitas para acercarte a la libertad financiera y qué ritmo necesitas.",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    benefit_card(
-                        "🏠",
-                        "Decide mejor tu hipoteca",
-                        "Evita errores y comprende mejor el coste real de comprar vivienda.",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-            ]
-        ),
-    ],
-    fluid=True,
-    className="px-4 px-md-5 py-4 home-section",
-)
-
-# =========================================================
-# BLOQUE PRINCIPAL DE DECISIÓN
-# =========================================================
-
-decision_block = dbc.Container(
-    [
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        section_badge("EMPIEZA POR AQUÍ", "text-success"),
-                        html.H2(
-                            "Si estás empezando, la calculadora de interés compuesto es el mejor primer paso",
-                            className="fw-bold mb-3 section-title",
-                        ),
-                        html.P(
-                            "Es la forma más rápida de ver qué pasa si inviertes con constancia durante años.",
-                            className="lead text-muted mb-2",
-                        ),
-                        html.P(
-                            "Después podrás profundizar en FIRE o en la parte de hipoteca según tu situación.",
-                            className="text-muted mb-4",
-                        ),
-                        html.Ul(
-                            [
-                                html.Li("Ideal para entender el efecto del tiempo."),
-                                html.Li("Útil para comparar escenarios en menos de un minuto."),
-                                html.Li("La mejor puerta de entrada si aún no inviertes o quieres invertir mejor."),
-                            ],
-                            className="text-muted ps-3 mb-4",
-                        ),
-                    ],
-                    md=8,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button(
-                            "Ir a interés compuesto",
-                            href="/calculadora",
-                            color="primary",
-                            size="lg",
-                            className="w-100 rounded-pill fw-semibold mb-2",
-                        ),
-                        dbc.Button(
-                            "Ver FIRE",
-                            href="/fire",
-                            color="light",
-                            size="lg",
-                            className="w-100 rounded-pill fw-semibold border mb-2",
-                        ),
-                        dbc.Button(
-                            "Ver hipoteca",
-                            href="/hipoteca",
-                            color="light",
-                            size="lg",
-                            className="w-100 rounded-pill fw-semibold border",
-                        ),
-                    ],
-                    md=4,
-                    className="d-flex flex-column justify-content-center",
-                ),
-            ],
-            className="align-items-center emotional-box rounded-4 p-4 p-md-5 shadow-sm",
-        )
-    ],
-    fluid=True,
-    className="px-4 px-md-5 my-5 home-section",
-)
-
-# =========================================================
-# COMPARATIVA
-# =========================================================
-
-comparativa = dbc.Container(
-    [
-        section_badge("ELIGE TU HERRAMIENTA"),
-        html.H2("¿Qué calculadora necesitas ahora?", className="fw-bold mb-2 section-title"),
-        html.P(
-            "Cada herramienta responde a una pregunta distinta. Elige según tu objetivo actual.",
-            className="section-subtitle mb-4",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    compare_card(
-                        "💰",
-                        "Interés compuesto",
-                        "Para estimar cuánto puede crecer tu dinero con el tiempo.",
-                        [
-                            "Ideal si estás empezando a invertir",
-                            "Útil para comparar escenarios",
-                            "Muy visual y rápida de usar",
-                        ],
-                        "/calculadora",
-                        "Ir a la calculadora",
-                        featured=True,
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    compare_card(
-                        "🔥",
-                        "FIRE",
-                        "Para calcular cuánto patrimonio necesitas para vivir de tus inversiones.",
-                        [
-                            "Útil si buscas libertad financiera",
-                            "Te ayuda a definir una meta",
-                            "Buena para planificar a largo plazo",
-                        ],
-                        "/fire",
-                        "Ir a FIRE",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    compare_card(
-                        "🏠",
-                        "Hipoteca",
-                        "Para entender cuota mensual, intereses y coste real de comprar vivienda.",
-                        [
-                            "Perfecta antes de comprar casa",
-                            "Aclara el impacto del plazo",
-                            "Te ayuda a comparar opciones",
-                        ],
-                        "/hipoteca",
-                        "Ir a hipoteca",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-            ]
-        ),
-    ],
-    fluid=True,
-    className="px-4 px-md-5 py-4 soft-section home-section",
-    id="calculadoras-home",
-)
-
-# =========================================================
-# CALCULADORAS
-# =========================================================
-
-calculadoras = dbc.Container(
-    [
-        section_badge("ACCESO RÁPIDO"),
-        html.H2("Calculadoras", className="fw-bold mb-2 section-title"),
-        html.P(
-            "Accede directamente a la herramienta que quieras usar.",
-            className="section-subtitle mb-4",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    teaser_card(
-                        "Interés compuesto",
-                        "Descubre cuánto crecerá tu dinero con aportaciones mensuales, rentabilidad y tiempo.",
-                        "/calculadora",
-                        "Calcular",
-                        badge="Más usada",
-                        icono="💰",
-                        featured=True,
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    teaser_card(
-                        "FIRE",
-                        "Calcula cuánto necesitas para alcanzar la libertad financiera y vivir de tus inversiones.",
-                        "/fire",
-                        "Descubrir",
-                        badge="Objetivo",
-                        icono="🔥",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    teaser_card(
-                        "Hipoteca",
-                        "Simula tu cuota mensual y entiende el coste real de comprar una vivienda.",
-                        "/hipoteca",
-                        "Simular",
-                        badge="Vivienda",
-                        icono="🏠",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-            ]
-        ),
-    ],
-    fluid=True,
-    className="px-4 px-md-5 py-4 home-section",
-)
-
-# =========================================================
-# LIBROS RECOMENDADOS AMAZON
-# =========================================================
-
-books_section = dbc.Container(
-    [
-        section_badge("LIBROS RECOMENDADOS", "text-warning"),
-        html.H2("Empieza por estos 3 libros de finanzas", className="fw-bold mb-2 section-title"),
-        html.P(
-            "Si quieres mejorar tus finanzas de verdad, estos tres libros son un punto de partida excelente: "
-            "mentalidad, comportamiento e inversión.",
-            className="section-subtitle mb-4",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    book_card(
-                        "📘",
-                        "Mentalidad financiera",
-                        "Padre Rico, Padre Pobre",
-                        "Un clásico para empezar a pensar de otra forma sobre el dinero, los activos y la educación financiera.",
-                        AMAZON_PADRE_RICO_URL,
-                        "book-padre-rico",
-                        featured=True,
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    book_card(
-                        "🧠",
-                        "Psicología del dinero",
-                        "La psicología del dinero",
-                        "Ideal para entender por qué las decisiones financieras dependen mucho más del comportamiento que de la teoría.",
-                        AMAZON_PSICOLOGIA_DINERO_URL,
-                        "book-psicologia-dinero",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    book_card(
-                        "📈",
-                        "Inversión práctica",
-                        "Un paso por delante de Wall Street",
-                        "Muy buen libro para empezar a entender la inversión en bolsa con un enfoque claro, práctico y aterrizado.",
-                        AMAZON_WALL_STREET_URL,
-                        "book-wall-street",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-            ]
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div(
-                        "Algunos enlaces pueden ser de afiliado de Amazon. Si compras a través de ellos, la web puede recibir una pequeña comisión sin coste adicional para ti.",
-                        className="small text-muted text-center mt-2",
-                    ),
-                    width=12,
-                )
-            ]
-        ),
-    ],
-    fluid=True,
-    className="px-4 px-md-5 py-4 soft-section home-section",
-)
-
-# =========================================================
-# CTA AFILIADO PRINCIPAL
-# =========================================================
-
-cta_inversion = dbc.Container(
-    dbc.Row(
-        [
-            dbc.Col(
-                [
-                    section_badge("CUANDO QUIERAS PASAR A LA ACCIÓN", "text-success"),
-                    html.H3(
-                        "Cuando quieras pasar de simular a invertir, empieza por algo simple",
-                        className="fw-bold mb-3 section-title",
-                    ),
-                    html.P(
-                        "Primero entiende tus números. Después, si te encaja, puedes abrir una cuenta "
-                        "e invertir poco a poco con constancia.",
-                        className="text-muted mb-3",
-                    ),
-                    html.Ul(
-                        [
-                            html.Li("Pensado para empezar sin complicarte demasiado."),
-                            html.Li("Mejor una estrategia simple que esperar eternamente."),
-                            html.Li("Cuanto antes empieces, antes trabaja el interés compuesto."),
-                        ],
-                        className="text-muted ps-3 mb-0",
-                    ),
-                ],
-                md=8,
             ),
-            dbc.Col(
-                [
-                    dbc.Button(
-                        "Abrir cuenta gratis",
-                        id="home-cta-invest",
-                        color="success",
-                        size="lg",
-                        className="w-100 rounded-pill fw-semibold mb-2",
-                    ),
-                    html.Div(
-                        "El enlace puede ser afiliado.",
-                        className="small text-muted text-center",
-                    ),
-                ],
-                md=4,
-                className="d-flex flex-column justify-content-center",
-            ),
-        ],
-        className="align-items-center cta-invest rounded-4 p-4 p-md-5 shadow-sm",
-    ),
-    fluid=True,
-    className="px-4 px-md-5 my-5 home-section",
-)
-
-# =========================================================
-# ARTÍCULOS
-# =========================================================
-
-articulos = dbc.Container(
-    [
-        section_badge("APRENDE ANTES DE DECIDIR"),
-        html.H2("Aprende a invertir mejor", className="fw-bold mb-2 section-title"),
-        html.P(
-            "Guías sencillas para entender conceptos clave y tomar decisiones con más criterio.",
-            className="section-subtitle mb-4",
+            className="pb-4",
         ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    article_card(
-                        "Guía básica",
-                        "Qué es el interés compuesto",
-                        "Entiende el mecanismo que puede multiplicar tu dinero a largo plazo.",
-                        "/blog/interes-compuesto",
-                        featured=True,
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    article_card(
-                        "Libertad financiera",
-                        "Cuánto necesitas para FIRE",
-                        "Descubre cómo estimar tu número FIRE y qué variables influyen realmente.",
-                        "/blog/fire",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-                dbc.Col(
-                    article_card(
-                        "Vivienda",
-                        "Hipoteca: guía completa",
-                        "Evita errores frecuentes y calcula mejor el coste real de comprar vivienda.",
-                        "/blog/hipoteca",
-                    ),
-                    md=4,
-                    className="mb-4",
-                ),
-            ]
-        ),
-    ],
-    fluid=True,
-    className="px-4 px-md-5 py-4 home-section",
-)
-
-# =========================================================
-# CTA FINAL
-# =========================================================
-
-final_cta = dbc.Container(
-    dbc.Row(
-        [
-            dbc.Col(
-                [
-                    section_badge("DA EL PRIMER PASO", "text-primary"),
-                    html.H2("Empieza por entender tus números", className="fw-bold mb-3 section-title"),
-                    html.P(
-                        "No necesitas hacerlo todo hoy. Empieza por una simulación y toma mejores decisiones paso a paso.",
-                        className="text-muted mb-4",
-                    ),
-                    html.Div(
-                        [
-                            dbc.Button(
-                                "Ir a interés compuesto",
-                                href="/calculadora",
-                                color="primary",
-                                className="me-2 mb-2 rounded-pill fw-semibold px-4",
-                            ),
-                            dbc.Button(
-                                "Ver FIRE",
-                                href="/fire",
-                                color="light",
-                                className="me-2 mb-2 rounded-pill fw-semibold px-4 border",
-                            ),
-                            dbc.Button(
-                                "Ver hipoteca",
-                                href="/hipoteca",
-                                color="light",
-                                className="mb-2 rounded-pill fw-semibold px-4 border",
-                            ),
-                        ]
-                    ),
-                ],
-                md=12,
-            )
-        ],
-        className="final-cta-box rounded-4 p-4 p-md-5 shadow-sm",
-    ),
-    fluid=True,
-    className="px-4 px-md-5 my-5 home-section",
-)
-
-# =========================================================
-# STICKY CTA MÓVIL
-# =========================================================
-
-mobile_sticky_cta = html.Div(
-    dbc.Button(
-        "Empezar a invertir",
-        id="home-cta-mobile",
-        color="success",
-        className="w-100 fw-bold rounded-pill",
-    ),
-    className="d-md-none",
-    style={
-        "position": "fixed",
-        "left": "12px",
-        "right": "12px",
-        "bottom": "12px",
-        "zIndex": "1050",
-        "paddingBottom": "max(0px, env(safe-area-inset-bottom))",
-    },
-)
-
-# =========================================================
-# TRACKERS
-# =========================================================
-
-trackers = html.Div(
-    [
-        html.Div(id="home-cta-invest-tracker", style={"display": "none"}),
-        html.Div(id="home-cta-mobile-tracker", style={"display": "none"}),
-        html.Div(id="book-padre-rico-tracker", style={"display": "none"}),
-        html.Div(id="book-psicologia-dinero-tracker", style={"display": "none"}),
-        html.Div(id="book-wall-street-tracker", style={"display": "none"}),
-    ]
-)
-
-# =========================================================
-# TRACKING CALLBACKS
-# =========================================================
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_home_cta_invest', {{
-                    event_category: 'affiliate',
-                    event_label: 'myinvestor_home_main',
-                    value: 1
-                }});
-            }}
-            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
-        }}
-        return "";
-    }}
-    """,
-    Output("home-cta-invest-tracker", "children"),
-    Input("home-cta-invest", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_home_cta_mobile', {{
-                    event_category: 'affiliate',
-                    event_label: 'myinvestor_home_mobile',
-                    value: 1
-                }});
-            }}
-            window.open("{MYINVESTOR_AFFILIATE_URL}", "_blank");
-        }}
-        return "";
-    }}
-    """,
-    Output("home-cta-mobile-tracker", "children"),
-    Input("home-cta-mobile", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_amazon_book', {{
-                    event_category: 'affiliate',
-                    event_label: 'amazon_padre_rico',
-                    value: 1
-                }});
-            }}
-            const newWindow = window.open("{AMAZON_PADRE_RICO_URL}", "_blank");
-            if (newWindow) {{
-                newWindow.opener = null;
-            }}
-        }}
-        return "";
-    }}
-    """,
-    Output("book-padre-rico-tracker", "children"),
-    Input("book-padre-rico", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_amazon_book', {{
-                    event_category: 'affiliate',
-                    event_label: 'amazon_psicologia_dinero',
-                    value: 1
-                }});
-            }}
-            const newWindow = window.open("{AMAZON_PSICOLOGIA_DINERO_URL}", "_blank");
-            if (newWindow) {{
-                newWindow.opener = null;
-            }}
-        }}
-        return "";
-    }}
-    """,
-    Output("book-psicologia-dinero-tracker", "children"),
-    Input("book-psicologia-dinero", "n_clicks"),
-)
-
-clientside_callback(
-    f"""
-    function(n_clicks) {{
-        if (n_clicks) {{
-            if (window.gtag) {{
-                window.gtag('event', 'click_amazon_book', {{
-                    event_category: 'affiliate',
-                    event_label: 'amazon_wall_street',
-                    value: 1
-                }});
-            }}
-            const newWindow = window.open("{AMAZON_WALL_STREET_URL}", "_blank");
-            if (newWindow) {{
-                newWindow.opener = null;
-            }}
-        }}
-        return "";
-    }}
-    """,
-    Output("book-wall-street-tracker", "children"),
-    Input("book-wall-street", "n_clicks"),
-)
-
-# =========================================================
-# LAYOUT FINAL
-# =========================================================
-
-layout = html.Div(
-    [
-        hero,
-        trust_strip,
-        benefits,
-        decision_block,
-        comparativa,
-        calculadoras,
-        books_section,
-        cta_inversion,
-        build_disclaimer(),
-        articulos,
-        final_cta,
-        mobile_sticky_cta,
-        trackers,
     ]
 )
