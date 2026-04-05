@@ -1,21 +1,28 @@
+import math
 import dash
 from dash import html, dcc, Input, Output, callback, clientside_callback
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
-from helpers import parse_number, calcular_fire, años_para_fire, formatear_euros_es
+from helpers import (
+    parse_number,
+    calcular_fire,
+    años_para_fire,
+    generar_curva_fire,
+    capital_en_n_años,
+    formatear_euros_es
+)
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
 dash.register_page(
     __name__,
     path="/fire",
-    title="Calculadora FIRE | Cuándo podrás alcanzar la libertad financiera",
+    title="Calculadora FIRE | Libertad financiera",
     name="FIRE",
     description=(
         "Calcula cuánto dinero necesitas para alcanzar FIRE, "
-        "cuántos años tardarías en lograrlo y cómo cambian tus resultados "
-        "si aumentas tus aportaciones."
+        "cuántos años tardarías y cómo mejorar tu estrategia."
     ),
 )
 
@@ -27,59 +34,43 @@ def metric_card(title, value, subtitle=None, highlight=False, icon=None):
     return dbc.Card(
         dbc.CardBody(
             [
-                html.Div(
-                    [
-                        html.Span(icon or "", className="me-2"),
-                        html.Span(title, className="small text-muted fw-semibold"),
-                    ],
-                    className="mb-2"
-                ),
+                html.Div(f"{icon or ''} {title}", className="small text-muted fw-semibold mb-1"),
                 html.Div(
                     value,
                     className=f"fw-bold {'text-success' if highlight else ''}",
-                    style={"fontSize": "1.65rem", "lineHeight": "1.1"},
+                    style={"fontSize": "1.7rem", "lineHeight": "1.1"},
                 ),
-                html.Div(
-                    subtitle or "",
-                    className="small text-muted mt-1"
-                ),
+                html.Div(subtitle or "", className="small text-muted mt-1"),
             ]
         ),
         className="shadow-sm border-0 rounded-4 h-100",
     )
 
 
-def info_card(title, body, icon=None, color_class="text-dark"):
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.H5(
-                    [
-                        html.Span(icon or "", className="me-2"),
-                        title
-                    ],
-                    className=f"fw-bold mb-2 {color_class}",
-                ),
-                html.Div(body, className="text-muted"),
-            ]
-        ),
-        className="shadow-sm border-0 rounded-4 h-100",
-    )
-
-
-def input_block(label, input_id, value, placeholder=""):
+def input_block(label, input_id, value):
     return html.Div(
         [
-            dbc.Label(label, className="fw-semibold mb-2"),
+            dbc.Label(label, className="fw-semibold"),
             dbc.Input(
                 id=input_id,
                 value=value,
                 type="text",
-                placeholder=placeholder,
                 className="mb-3 rounded-3",
                 inputMode="numeric",
             ),
         ]
+    )
+
+
+def simple_info_card(title, children, icon=None):
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.H5(f"{icon or ''} {title}", className="fw-bold mb-2"),
+                children,
+            ]
+        ),
+        className="shadow-sm border-0 rounded-4 h-100",
     )
 
 
@@ -89,29 +80,10 @@ def input_block(label, input_id, value, placeholder=""):
 
 layout = dbc.Container(
     [
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        html.Div(
-                            "LIBERTAD FINANCIERA",
-                            className="small fw-bold text-primary mb-2"
-                        ),
-                        html.H1(
-                            "🔥 Calcula cuándo podrías alcanzar FIRE",
-                            className="fw-bold display-6 mb-3",
-                        ),
-                        html.P(
-                            "Descubre cuánto capital necesitas para vivir de tus inversiones, "
-                            "cuántos años tardarías en conseguirlo y cómo acelerar el proceso.",
-                            className="lead text-muted mb-4",
-                            style={"maxWidth": "850px"},
-                        ),
-                    ],
-                    width=12
-                )
-            ],
-            className="mt-4"
+        html.H1("🔥 Calcula cuándo puedes alcanzar FIRE", className="fw-bold mt-4"),
+        html.P(
+            "Simula cuánto necesitas para vivir de tus inversiones y cuánto tiempo tardarías en conseguirlo.",
+            className="text-muted mb-4",
         ),
 
         dbc.Row(
@@ -120,23 +92,18 @@ layout = dbc.Container(
                     dbc.Card(
                         dbc.CardBody(
                             [
-                                html.H4("Introduce tus datos", className="fw-bold mb-3"),
-                                html.P(
-                                    "Usa cifras aproximadas. En segundos verás tu número FIRE y el tiempo estimado.",
-                                    className="text-muted small mb-4",
-                                ),
-
-                                input_block("Gastos mensuales (€)", "fire-gastos", "1500", "Ej: 1500"),
-                                input_block("Tasa de retiro (%)", "fire-tasa", "4", "Ej: 4"),
-                                input_block("Capital actual (€)", "fire-capital-actual", "25000", "Ej: 25000"),
-                                input_block("Aportación mensual (€)", "fire-aportacion", "600", "Ej: 600"),
-                                input_block("Rentabilidad anual (%)", "fire-rentabilidad", "7", "Ej: 7"),
+                                html.H4("Tus datos", className="fw-bold mb-3"),
+                                input_block("Gastos mensuales (€)", "fire-gastos", "1500"),
+                                input_block("Tasa de retiro (%)", "fire-tasa", "4"),
+                                input_block("Capital actual (€)", "fire-capital-actual", "25000"),
+                                input_block("Aportación mensual (€)", "fire-aportacion", "600"),
+                                input_block("Rentabilidad anual (%)", "fire-rentabilidad", "7"),
 
                                 dbc.Button(
-                                    "🔥 Calcular mi libertad financiera",
+                                    "🔥 Calcular FIRE",
                                     id="fire-boton",
                                     color="primary",
-                                    className="w-100 rounded-3 fw-semibold mt-2 py-2",
+                                    className="w-100 mt-2 rounded-3 fw-semibold",
                                 ),
 
                                 html.Hr(className="my-4"),
@@ -144,13 +111,14 @@ layout = dbc.Container(
                                 dbc.Card(
                                     dbc.CardBody(
                                         [
-                                            html.Div("¿Quieres empezar a invertir?", className="fw-bold mb-2"),
+                                            html.Div("Empieza a invertir hoy", className="fw-bold mb-2"),
                                             html.P(
-                                                "Si aún no has dado el paso, puedes abrir cuenta y empezar con una estrategia sencilla.",
+                                                "Una cartera simple y constante puede marcar una diferencia enorme a 10, 20 o 30 años.",
                                                 className="small text-muted mb-3",
                                             ),
                                             dbc.Button(
                                                 "Abrir cuenta gratis",
+                                                id="fire-cta-top",
                                                 href=MYINVESTOR_AFFILIATE_URL,
                                                 target="_blank",
                                                 color="success",
@@ -176,7 +144,7 @@ layout = dbc.Container(
                             [
                                 dbc.Col(html.Div(id="fire-objetivo"), md=4, className="mb-3"),
                                 dbc.Col(html.Div(id="fire-tiempo"), md=4, className="mb-3"),
-                                dbc.Col(html.Div(id="fire-extra"), md=4, className="mb-3"),
+                                dbc.Col(html.Div(id="fire-aportacion"), md=4, className="mb-3"),
                             ],
                             className="mb-1"
                         ),
@@ -187,28 +155,17 @@ layout = dbc.Container(
                             [
                                 dbc.Col(html.Div(id="fire-comparativa"), md=6, className="mb-3"),
                                 dbc.Col(html.Div(id="fire-tarde"), md=6, className="mb-3"),
-                            ]
-                        ),
-
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Div(id="fire-perdida"), md=6, className="mb-3"),
-                                dbc.Col(html.Div(id="fire-ranking"), md=6, className="mb-3"),
-                            ]
+                            ],
+                            className="mb-3"
                         ),
 
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.Div(
-                                        [
-                                            html.H4("Evolución estimada de tu patrimonio", className="fw-bold mb-1"),
-                                            html.P(
-                                                "Simulación anual hasta alcanzar tu objetivo FIRE.",
-                                                className="text-muted mb-0"
-                                            ),
-                                        ],
-                                        className="mb-3"
+                                    html.H4("Evolución estimada de tu patrimonio", className="fw-bold mb-1"),
+                                    html.P(
+                                        "Simulación anual hasta alcanzar tu objetivo FIRE.",
+                                        className="text-muted mb-3",
                                     ),
                                     dcc.Graph(id="fire-grafico", config={"displayModeBar": False}),
                                 ]
@@ -216,12 +173,14 @@ layout = dbc.Container(
                             className="shadow-sm border-0 rounded-4 mb-4",
                         ),
 
+                        html.Div(id="fire-estrategia", className="mb-4"),
+
                         dbc.Card(
                             dbc.CardBody(
                                 [
                                     html.H4("Recibe tu plan FIRE", className="fw-bold mb-2"),
                                     html.P(
-                                        "Próximamente podrás recibir una guía práctica con pasos para acelerar tu libertad financiera.",
+                                        "Próximamente podrás recibir una guía práctica para acelerar tu libertad financiera.",
                                         className="text-muted mb-3",
                                     ),
                                     dbc.Input(
@@ -244,6 +203,9 @@ layout = dbc.Container(
             ],
             className="gy-4",
         ),
+
+        html.Div(id="fire-cta-top-tracker", style={"display": "none"}),
+        html.Div(id="fire-cta-bottom-tracker", style={"display": "none"}),
     ],
     fluid=True,
     className="px-4 px-md-5 pb-5",
@@ -270,19 +232,60 @@ clientside_callback(
 )
 
 # =========================================================
+# TRACKING ANALYTICS
+# =========================================================
+
+clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            if (window.gtag) {
+                window.gtag('event', 'click_fire_cta_top', {
+                    event_category: 'affiliate',
+                    event_label: 'myinvestor_fire_top',
+                    value: 1
+                });
+            }
+        }
+        return "";
+    }
+    """,
+    Output("fire-cta-top-tracker", "children"),
+    Input("fire-cta-top", "n_clicks"),
+)
+
+clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            if (window.gtag) {
+                window.gtag('event', 'click_fire_cta_bottom', {
+                    event_category: 'affiliate',
+                    event_label: 'myinvestor_fire_bottom',
+                    value: 1
+                });
+            }
+        }
+        return "";
+    }
+    """,
+    Output("fire-cta-bottom-tracker", "children"),
+    Input("fire-cta-bottom", "n_clicks"),
+)
+
+# =========================================================
 # CALLBACK
 # =========================================================
 
 @callback(
     Output("fire-objetivo", "children"),
     Output("fire-tiempo", "children"),
-    Output("fire-extra", "children"),
+    Output("fire-aportacion", "children"),
     Output("fire-mensaje", "children"),
     Output("fire-comparativa", "children"),
     Output("fire-tarde", "children"),
-    Output("fire-perdida", "children"),
-    Output("fire-ranking", "children"),
     Output("fire-grafico", "figure"),
+    Output("fire-estrategia", "children"),
     Input("fire-boton", "n_clicks"),
     Input("fire-gastos", "value"),
     Input("fire-tasa", "value"),
@@ -291,6 +294,7 @@ clientside_callback(
     Input("fire-rentabilidad", "value"),
 )
 def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
+
     gastos = max(parse_number(gastos), 0)
     tasa_pct = max(parse_number(tasa), 0.1)
     capital_actual = max(parse_number(capital_actual), 0)
@@ -300,151 +304,98 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
     tasa = tasa_pct / 100
     r = rentabilidad_pct / 100
 
-    objetivo = calcular_fire(gastos_mensuales=gastos, tasa_retiro=tasa)
-    anos = max(años_para_fire(capital_actual, aportacion, r, objetivo), 0)
+    objetivo = calcular_fire(gastos, tasa)
+    anos = años_para_fire(capital_actual, aportacion, r, objetivo)
+    anos_plus = años_para_fire(capital_actual, aportacion + 200, r, objetivo)
 
-    aportacion_plus = aportacion + 200
-    anos_plus = max(años_para_fire(capital_actual, aportacion_plus, r, objetivo), 0)
-
-    # Escenario empezar 5 años tarde:
-    # simulamos que mantienes todo igual pero pierdes 5 años de aportación e interés compuesto
-    capital_despues_5 = capital_actual
-    for _i in range(5):
-        capital_despues_5 = capital_despues_5 * (1 + r) + aportacion * 12
-
-    anos_desde_hoy_si_empezaras_tarde = 5 + max(
-        años_para_fire(capital_actual, aportacion, r, objetivo),
-        0
-    )
-
-    # coste aproximado de retrasar 5 años = diferencia entre capital que tendrías en 5 años
-    # si empiezas hoy vs seguir en 0 progreso sobre el plan durante 5 años
-    coste_retraso = max(capital_despues_5 - capital_actual, 0)
-
-    # mensaje principal
-    if anos <= 10:
-        titular = f"🔥 Podrías alcanzar FIRE en unos {round(anos)} años"
-        subtitular = "Vas por un camino muy sólido."
-        color_class = "text-success"
-    elif anos <= 20:
-        titular = f"🔥 Podrías alcanzar FIRE en unos {round(anos)} años"
-        subtitular = "Tu objetivo es realista si mantienes la constancia."
-        color_class = "text-primary"
+    if math.isinf(anos):
+        anos_texto = "No alcanzable con estos datos"
     else:
-        titular = f"🔥 Podrías alcanzar FIRE en unos {round(anos)} años"
-        subtitular = "Tu objetivo sigue siendo posible, pero acelerar el ahorro tendría mucho impacto."
-        color_class = "text-warning"
+        anos_texto = f"{round(anos)} años"
+
+    if math.isinf(anos):
+        mensaje_titulo = "⚠️ Con esta combinación, FIRE no parece alcanzable"
+        mensaje_texto = (
+            "Con tu capital, aportación y rentabilidad estimada actuales, tardarías demasiado en alcanzar el objetivo. "
+            "La forma más potente de mejorar el resultado suele ser aumentar la aportación mensual o reducir gastos futuros."
+        )
+        mensaje_color = "text-warning"
+    else:
+        mensaje_titulo = f"🔥 Podrías alcanzar FIRE en aproximadamente {round(anos)} años"
+        mensaje_texto = (
+            f"Para cubrir unos gastos mensuales de {formatear_euros_es(gastos)}, "
+            f"necesitarías alrededor de {formatear_euros_es(objetivo)}."
+        )
+        mensaje_color = "text-success"
 
     mensaje = dbc.Card(
         dbc.CardBody(
             [
-                html.H3(titular, className=f"fw-bold mb-2 {color_class}"),
-                html.P(
-                    f"Con unos gastos mensuales de {formatear_euros_es(gastos)}, "
-                    f"necesitarías aproximadamente {formatear_euros_es(objetivo)} "
-                    f"para cubrir tu nivel de vida con una tasa de retiro del {tasa_pct:.1f}%.",
-                    className="mb-0 text-muted",
-                ),
-                html.Div(subtitular, className="small mt-2 fw-semibold"),
+                html.H4(mensaje_titulo, className=f"fw-bold {mensaje_color}"),
+                html.P(mensaje_texto, className="mb-0 text-muted"),
             ]
         ),
         className="shadow border-0 rounded-4",
     )
 
-    ahorro_extra_anos = max(anos - anos_plus, 0)
-
-    comparativa = info_card(
-        "Si ahorras 200€ más al mes",
-        [
-            html.Div(
-                f"Podrías llegar en {round(anos_plus)} años en lugar de {round(anos)}.",
-                className="mb-1",
+    if not math.isinf(anos) and not math.isinf(anos_plus):
+        mejora_anos = max(round(anos - anos_plus), 0)
+        comparativa_texto = [
+            html.P(
+                f"Si aumentas tu aportación a {formatear_euros_es(aportacion + 200)} al mes, "
+                f"podrías llegar en unos {round(anos_plus)} años.",
+                className="mb-2",
             ),
-            html.Div(
-                f"Eso te adelantaría aproximadamente {round(ahorro_extra_anos)} años.",
-                className="fw-semibold text-success",
-            ),
-        ],
-        icon="📈",
-    )
-
-    tarde = info_card(
-        "Si empiezas 5 años más tarde",
-        [
-            html.Div(
-                f"Tu horizonte total podría irse a unos {round(anos_desde_hoy_si_empezaras_tarde)} años desde hoy.",
-                className="mb-1",
-            ),
-            html.Div(
-                "El interés compuesto premia mucho empezar pronto, incluso con cantidades modestas.",
-                className="small",
-            ),
-        ],
-        icon="⏳",
-    )
-
-    perdida = info_card(
-        "Coste estimado de retrasar el plan",
-        [
-            html.Div(
-                f"Esperar 5 años puede costarte alrededor de {formatear_euros_es(coste_retraso)} en patrimonio potencial acumulado.",
-                className="mb-1 fw-semibold text-danger",
-            ),
-            html.Div(
-                "No es una pérdida real en efectivo, sino una oportunidad perdida por no poner a trabajar antes tu capital.",
-                className="small",
-            ),
-        ],
-        icon="⚠️",
-        color_class="text-danger",
-    )
-
-    if aportacion <= 300:
-        consejo = "Tu mayor palanca probablemente es aumentar la aportación mensual."
-    elif rentabilidad_pct < 5:
-        consejo = "Tu simulación usa una rentabilidad conservadora; revisa si refleja bien tu estrategia real."
+            html.P(f"Eso supone aproximadamente {mejora_anos} años antes.", className="text-success fw-bold mb-0"),
+        ]
     else:
-        consejo = "Tu combinación de ahorro y rentabilidad ya tiene buena base a largo plazo."
+        comparativa_texto = [
+            html.P(
+                "Subir la aportación mensual sigue siendo la palanca más fuerte para acercarte a FIRE.",
+                className="mb-0",
+            )
+        ]
 
-    ranking = info_card(
-        "Lectura rápida de tu plan",
-        [
-            html.Div(consejo, className="mb-2"),
-            html.Div(
-                f"Hoy ahorras {formatear_euros_es(aportacion)} al mes con una hipótesis de rentabilidad del {rentabilidad_pct:.1f}% anual.",
-                className="small",
-            ),
-        ],
-        icon="🧭",
+    comparativa = simple_info_card(
+        "Si ahorras 200€ más al mes",
+        comparativa_texto,
+        "📈"
     )
 
-    # gráfico
-    years = list(range(0, int(round(anos)) + 1))
-    capital = [capital_actual]
-    c = capital_actual
+    capital_5 = capital_en_n_años(capital_actual, aportacion, r, 5)
+    coste_retraso = max(capital_5 - capital_actual, 0)
 
-    for _year in years[1:]:
-        c = c * (1 + r) + aportacion * 12
-        capital.append(c)
+    tarde = simple_info_card(
+        "El coste de esperar 5 años",
+        [
+            html.P(
+                f"Retrasar tu plan puede suponer renunciar a unos {formatear_euros_es(coste_retraso)} de patrimonio potencial acumulado.",
+                className="mb-2",
+            ),
+            html.P(
+                "No es dinero perdido directamente, pero sí tiempo que el interés compuesto deja de trabajar a tu favor.",
+                className="text-muted small mb-0",
+            ),
+        ],
+        "⏳"
+    )
 
-    objetivo_line = [objetivo] * len(years)
+    years, capital = generar_curva_fire(capital_actual, aportacion, r, objetivo, 60)
 
     fig = go.Figure()
-
     fig.add_trace(
         go.Scatter(
             x=years,
             y=capital,
             mode="lines",
-            name="Patrimonio estimado",
+            name="Capital estimado",
             line=dict(width=4),
         )
     )
-
     fig.add_trace(
         go.Scatter(
             x=years,
-            y=objetivo_line,
+            y=[objetivo] * len(years),
             mode="lines",
             name="Objetivo FIRE",
             line=dict(dash="dash", width=2),
@@ -454,41 +405,132 @@ def actualizar_fire(_, gastos, tasa, capital_actual, aportacion, rentabilidad):
     fig.update_layout(
         template="plotly_white",
         margin=dict(l=20, r=20, t=20, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
         xaxis_title="Años",
         yaxis_title="Patrimonio (€)",
         hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     )
-
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(gridcolor="rgba(0,0,0,0.06)")
 
+    if math.isinf(anos):
+        diagnostico = "Ahora mismo tu prioridad no debería ser optimizar un 0,5% de rentabilidad extra, sino aumentar capacidad de ahorro."
+        accion_1 = "Revisar tus gastos fijos y elevar el margen mensual."
+        accion_2 = "Empezar cuanto antes con una rutina de inversión constante."
+        accion_3 = "Usar una cartera sencilla para no quedarte paralizado."
+    elif anos <= 10:
+        diagnostico = "Tu plan ya tiene muy buena base. El foco ahora es mantener la constancia y evitar errores."
+        accion_1 = "No interrumpir aportaciones cuando caiga el mercado."
+        accion_2 = "Mantener comisiones bajas y estrategia simple."
+        accion_3 = "Aumentar aportación cuando suban tus ingresos."
+    elif anos <= 20:
+        diagnostico = "Estás en una zona muy razonable. Un pequeño aumento en aportación puede recortar varios años."
+        accion_1 = "Intentar subir tu aportación mensual de forma progresiva."
+        accion_2 = "No sobrecomplicar la cartera."
+        accion_3 = "Automatizar inversión para mantener disciplina."
+    else:
+        diagnostico = "Tu objetivo es viable, pero todavía dependes mucho de aumentar el ahorro mensual."
+        accion_1 = "Priorizar una tasa de ahorro más alta."
+        accion_2 = "Evitar estar demasiado tiempo en liquidez sin invertir."
+        accion_3 = "Revisar si tus gastos objetivo en FIRE son realistas."
+
+    estrategia = dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div("PLAN RECOMENDADO", className="small fw-bold text-primary mb-2"),
+                html.H4("La estrategia que más puede acercarte a FIRE", className="fw-bold mb-3"),
+                html.P(diagnostico, className="text-muted mb-4"),
+
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dbc.Card(
+                                dbc.CardBody(
+                                    [
+                                        html.Div("1", className="fw-bold fs-4 mb-2 text-primary"),
+                                        html.Div(accion_1, className="fw-semibold"),
+                                    ]
+                                ),
+                                className="border-0 bg-light rounded-4 h-100",
+                            ),
+                            md=4,
+                            className="mb-3",
+                        ),
+                        dbc.Col(
+                            dbc.Card(
+                                dbc.CardBody(
+                                    [
+                                        html.Div("2", className="fw-bold fs-4 mb-2 text-primary"),
+                                        html.Div(accion_2, className="fw-semibold"),
+                                    ]
+                                ),
+                                className="border-0 bg-light rounded-4 h-100",
+                            ),
+                            md=4,
+                            className="mb-3",
+                        ),
+                        dbc.Col(
+                            dbc.Card(
+                                dbc.CardBody(
+                                    [
+                                        html.Div("3", className="fw-bold fs-4 mb-2 text-primary"),
+                                        html.Div(accion_3, className="fw-semibold"),
+                                    ]
+                                ),
+                                className="border-0 bg-light rounded-4 h-100",
+                            ),
+                            md=4,
+                            className="mb-3",
+                        ),
+                    ],
+                    className="mb-2"
+                ),
+
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H5("Empieza antes de que pase otro año", className="fw-bold mb-2"),
+                            html.P(
+                                "La mayoría de personas no fracasan por elegir mal un fondo. "
+                                "Fracasan por tardar demasiado en empezar o por no mantener constancia.",
+                                className="text-muted mb-3",
+                            ),
+                            html.Ul(
+                                [
+                                    html.Li("Sin papeleo complejo ni estrategia rara."),
+                                    html.Li("Ideal para empezar con una cartera sencilla."),
+                                    html.Li("Cuanto antes empieces, antes trabaja el interés compuesto."),
+                                ],
+                                className="text-muted mb-3",
+                            ),
+                            dbc.Button(
+                                "Abrir cuenta y empezar a invertir",
+                                id="fire-cta-bottom",
+                                href=MYINVESTOR_AFFILIATE_URL,
+                                target="_blank",
+                                color="success",
+                                className="w-100 rounded-3 fw-semibold py-2",
+                            ),
+                            html.Div(
+                                "Invertir conlleva riesgos. Este contenido es informativo y no constituye asesoramiento financiero personalizado.",
+                                className="small text-muted mt-3",
+                            ),
+                        ]
+                    ),
+                    className="border-0 rounded-4 bg-light",
+                ),
+            ]
+        ),
+        className="shadow border-0 rounded-4",
+    )
+
     return (
-        metric_card(
-            "Capital FIRE",
-            formatear_euros_es(objetivo),
-            "Patrimonio objetivo",
-            True,
-            "🎯",
-        ),
-        metric_card(
-            "Tiempo estimado",
-            f"{round(anos)} años",
-            "Hasta alcanzar FIRE",
-            False,
-            "⏱️",
-        ),
-        metric_card(
-            "Aportación mensual",
-            formatear_euros_es(aportacion),
-            "Tu ritmo actual",
-            False,
-            "💶",
-        ),
+        metric_card("Capital FIRE", formatear_euros_es(objetivo), "Objetivo estimado", True, "🎯"),
+        metric_card("Tiempo estimado", anos_texto, "Hasta alcanzar FIRE", False, "⏱️"),
+        metric_card("Aportación mensual", formatear_euros_es(aportacion), "Tu ritmo actual", False, "💰"),
         mensaje,
         comparativa,
         tarde,
-        perdida,
-        ranking,
         fig,
+        estrategia,
     )
