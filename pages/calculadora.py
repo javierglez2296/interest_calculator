@@ -1645,13 +1645,3 @@ def descargar_csv(n_clicks, evolucion_data):
     State("ic-evolucion-store", "data"),
     prevent_initial_call=True,
 )
-def descargar_csv(n_clicks, evolucion_data):
-    if not n_clicks or not evolucion_data:
-        return dash.no_update
-
-    df = evolution_to_dataframe(evolucion_data)
-    return dcc.send_data_frame(
-        df.to_csv,
-        "simulacion_interes_compuesto.csv",
-        index=False,
-    )
