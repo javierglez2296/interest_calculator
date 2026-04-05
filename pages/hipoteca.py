@@ -1353,4 +1353,3 @@ def update_capacidad_compra(
     fig = crear_figura_capacidad_compra(precio_objetivo, data["precio_max_comprable"])
 
     return metrics, data["factor_limitante"], fig
-                
