@@ -6,6 +6,7 @@ NAV_LINKS = [
     ("Interés compuesto", "/calculadora"),
     ("FIRE", "/fire"),
     ("Hipoteca", "/hipoteca"),
+    ("Comparador", "/comparador"),
     ("Blog", "/blog"),
 ]
 
