@@ -212,3 +212,14 @@ html {
         line-height: 1.8;
     }
 }
+.article-warning-cta {
+    background:
+        linear-gradient(135deg, rgba(220,38,38,0.08) 0%, rgba(37,99,235,0.05) 100%),
+        #ffffff;
+    border: 1px solid rgba(220,38,38,0.10);
+}
+
+[data-bs-theme="dark"] .article-warning-cta {
+    background: #111827;
+    border-color: rgba(255,255,255,0.08);
+}
