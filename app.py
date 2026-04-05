@@ -16,7 +16,7 @@ SITE_DESCRIPTION = (
 )
 
 # PON AQUÍ TU ID REAL DE GOOGLE ANALYTICS 4
-GA_MEASUREMENT_ID = "G-XXXXXXXXXX"
+GA_MEASUREMENT_ID = "G-VJS7ZLKTBX"
 
 # =========================================================
 # APP
