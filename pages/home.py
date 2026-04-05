@@ -210,7 +210,7 @@ def build_books_grid(category):
 
 
 def books_section_v3():
-    return html.Section(
+    return html.Div(
         dbc.Container(
             [
                 dbc.Row(
@@ -292,7 +292,7 @@ def books_section_v3():
 # =========================================================
 layout = html.Div(
     [
-        html.Section(
+        html.Div(
             dbc.Container(
                 [
                     dbc.Row(
