@@ -407,16 +407,7 @@ layout = html.Div(
             className="home-hero",
         ),
         books_section_v3(),
-        dbc.Container(
-            build_disclaimer(
-                text=(
-                    "Algunos enlaces de esta web pueden ser de afiliado. Esto significa que "
-                    "podemos recibir una pequeña comisión si decides contratar o comprar desde ellos, "
-                    "sin coste adicional para ti."
-                )
-            ),
-            className="pb-4",
-        ),
+        build_disclaimer(title="Empieza a dar el siguiente paso"),
     ]
 )
 
