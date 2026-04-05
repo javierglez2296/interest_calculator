@@ -49,6 +49,15 @@
     margin-bottom: 0.5rem;
 }
 
+.cmp-mini-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #1d4ed8;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
 .cmp-input {
     border-radius: 0.9rem;
     border: 1px solid rgba(16,24,40,0.10);
@@ -74,7 +83,7 @@
 .cmp-metric-value {
     color: #101828;
     font-weight: 800;
-    font-size: 1.7rem;
+    font-size: 1.55rem;
     letter-spacing: -0.02em;
     line-height: 1.1;
 }
@@ -130,13 +139,14 @@
 }
 
 .cmp-result-value-small {
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     font-weight: 700;
     line-height: 1.1;
     color: #101828;
 }
 
-.cmp-result-card {
+.cmp-result-card,
+.cmp-metric-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -144,6 +154,10 @@
 .cmp-metric-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 16px 34px rgba(16,24,40,0.08) !important;
+}
+
+.cmp-inner-soft-card {
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
 }
 
 @media (max-width: 991.98px) {
@@ -164,6 +178,10 @@
 
     .cmp-recommendation-value,
     .cmp-metric-value {
-        font-size: 1.55rem;
+        font-size: 1.45rem;
+    }
+
+    .cmp-result-value {
+        font-size: 1.35rem;
     }
 }
