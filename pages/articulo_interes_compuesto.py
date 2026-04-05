@@ -148,11 +148,19 @@ def premium_badge(text, color="light"):
 
 
 def section_header(title, subtitle=None, section_id=None):
-    children = [
-        html.H2(title, className="h3 fw-bold mb-2 article-section-title", id=section_id)
-    ]
+    h2_kwargs = {
+        "className": "h3 fw-bold mb-2 article-section-title"
+    }
+
+    if section_id is not None:
+        h2_kwargs["id"] = section_id
+
+    children = [html.H2(title, **h2_kwargs)]
+
     if subtitle:
-        children.append(html.P(subtitle, className="article-section-subtitle mb-0"))
+        children.append(
+            html.P(subtitle, className="article-section-subtitle mb-0")
+        )
 
     return html.Div(
         children,
@@ -623,9 +631,11 @@ def table_of_contents():
         ("Interés simple vs compuesto", "#comparativa"),
         ("Ejemplo sencillo", "#ejemplo"),
         ("Variables clave", "#variables"),
+        ("Por qué empezar pronto", "#empezar-pronto"),
         ("Errores frecuentes", "#errores"),
         ("Fórmula", "#formula"),
         ("FAQ", "#faq"),
+        ("Conclusión", "#conclusion"),
     ]
 
     return dbc.Card(
@@ -772,7 +782,8 @@ def article_body():
 
                         section_header(
                             "Por qué empezar pronto marca tanta diferencia",
-                            "La ventaja no siempre está en aportar más, sino en dejar más tiempo."
+                            "La ventaja no siempre está en aportar más, sino en dejar más tiempo.",
+                            "empezar-pronto"
                         ),
                         html.Div(
                             [
@@ -815,7 +826,7 @@ def article_body():
 
                         html.Hr(className="article-divider"),
 
-                        section_header("Conclusión"),
+                        section_header("Conclusión", section_id="conclusion"),
                         html.Div(
                             [
                                 html.P(
