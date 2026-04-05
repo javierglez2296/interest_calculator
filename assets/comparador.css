@@ -1,0 +1,169 @@
+.cmp-hero-card {
+    background:
+        radial-gradient(circle at top left, rgba(37,99,235,0.12), transparent 30%),
+        linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.cmp-hero-badge {
+    display: inline-block;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(37,99,235,0.10);
+    color: #1d4ed8;
+    font-weight: 700;
+    font-size: 0.82rem;
+    margin-bottom: 1rem;
+}
+
+.cmp-hero-title {
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    max-width: 900px;
+}
+
+.cmp-hero-subtitle {
+    color: #667085;
+    font-size: 1.05rem;
+    max-width: 760px;
+}
+
+.cmp-form-card,
+.cmp-recommendation-card,
+.cmp-banner-card,
+.cmp-result-card,
+.cmp-metric-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+}
+
+.cmp-form-card {
+    position: sticky;
+    top: 90px;
+}
+
+.cmp-section-kicker {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #1d4ed8;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.cmp-input {
+    border-radius: 0.9rem;
+    border: 1px solid rgba(16,24,40,0.10);
+    min-height: 48px;
+}
+
+.cmp-input:focus {
+    border-color: rgba(37,99,235,0.45);
+    box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.10);
+}
+
+.cmp-input-hint {
+    color: #667085;
+    font-size: 0.82rem;
+}
+
+.cmp-metric-label {
+    color: #667085;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+}
+
+.cmp-metric-value {
+    color: #101828;
+    font-weight: 800;
+    font-size: 1.7rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.cmp-metric-value-highlight {
+    color: #16a34a;
+}
+
+.cmp-metric-subtitle {
+    color: #667085;
+    font-size: 0.82rem;
+    margin-top: 0.5rem;
+}
+
+.cmp-recommendation-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #16a34a;
+    letter-spacing: -0.03em;
+}
+
+.cmp-banner-card {
+    background:
+        linear-gradient(135deg, rgba(22,163,74,0.10) 0%, rgba(37,99,235,0.08) 100%),
+        #ffffff;
+}
+
+.cmp-rank-number {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #1d4ed8;
+}
+
+.cmp-rank-label {
+    color: #667085;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
+}
+
+.cmp-result-label {
+    color: #667085;
+    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
+}
+
+.cmp-result-value {
+    font-size: 1.55rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #101828;
+}
+
+.cmp-result-value-small {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #101828;
+}
+
+.cmp-result-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cmp-result-card:hover,
+.cmp-metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgba(16,24,40,0.08) !important;
+}
+
+@media (max-width: 991.98px) {
+    .cmp-form-card {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .cmp-hero-title {
+        font-size: 2rem !important;
+        line-height: 1.08;
+    }
+
+    .cmp-hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .cmp-recommendation-value,
+    .cmp-metric-value {
+        font-size: 1.55rem;
+    }
+}
