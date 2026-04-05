@@ -162,11 +162,19 @@ def premium_badge(text, color="light"):
 
 
 def section_header(title, subtitle=None, section_id=None):
-    children = [
-        html.H2(title, className="h3 fw-bold mb-2 article-section-title", id=section_id)
-    ]
+    h2_kwargs = {
+        "className": "h3 fw-bold mb-2 article-section-title"
+    }
+
+    if section_id is not None:
+        h2_kwargs["id"] = section_id
+
+    children = [html.H2(title, **h2_kwargs)]
+
     if subtitle:
-        children.append(html.P(subtitle, className="article-section-subtitle mb-0"))
+        children.append(
+            html.P(subtitle, className="article-section-subtitle mb-0")
+        )
 
     return html.Div(
         children,
@@ -562,12 +570,15 @@ def related_articles():
 def table_of_contents():
     items = [
         ("Cómo se calcula", "#como-se-calcula"),
+        ("Los 4 datos básicos", "#datos-basicos"),
         ("Ahorro previo", "#ahorro-previo"),
         ("Gastos reales", "#gastos-reales"),
         ("Cuota prudente", "#cuota-prudente"),
         ("Fija vs variable", "#fija-vs-variable"),
+        ("Errores frecuentes", "#errores"),
         ("Alquilar o comprar", "#alquilar-o-comprar"),
         ("FAQ", "#faq"),
+        ("Conclusión", "#conclusion"),
     ]
 
     return dbc.Card(
@@ -675,7 +686,8 @@ def article_body():
 
                         section_header(
                             "Los 4 datos básicos que necesitas",
-                            "Sin estos datos, cualquier cálculo queda cojo."
+                            "Sin estos datos, cualquier cálculo queda cojo.",
+                            "datos-basicos"
                         ),
                         html.Div(
                             [
@@ -774,7 +786,7 @@ def article_body():
 
                         html.Hr(className="article-divider"),
 
-                        section_header("Conclusión"),
+                        section_header("Conclusión", section_id="conclusion"),
                         html.Div(
                             [
                                 html.P(
