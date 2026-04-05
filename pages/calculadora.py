@@ -66,227 +66,10 @@ def scenario_card(title, amount, extra=None, highlight=False):
 
 
 # =========================================================
-# ESTILOS
-# =========================================================
-custom_styles = html.Style("""
-:root {
-    --ic-primary: #2563eb;
-    --ic-primary-soft: rgba(37, 99, 235, 0.10);
-    --ic-success: #16a34a;
-    --ic-success-soft: rgba(22, 163, 74, 0.10);
-    --ic-text: #101828;
-    --ic-text-soft: #667085;
-    --ic-border: rgba(16, 24, 40, 0.06);
-    --ic-bg-soft: #f8fbff;
-}
-
-.calculator-hero {
-    background:
-        radial-gradient(circle at top left, rgba(37,99,235,0.14), transparent 28%),
-        linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-    border: 1px solid rgba(37,99,235,0.08);
-}
-
-.hero-badge {
-    display: inline-block;
-    padding: 0.45rem 0.8rem;
-    border-radius: 999px;
-    background: rgba(37,99,235,0.10);
-    color: #1d4ed8;
-    font-weight: 700;
-    font-size: 0.82rem;
-    margin-bottom: 1rem;
-}
-
-.hero-title {
-    color: var(--ic-text);
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-}
-
-.hero-subtitle {
-    color: var(--ic-text-soft);
-    font-size: 1.05rem;
-    max-width: 760px;
-}
-
-.form-card,
-.chart-card,
-.message-card,
-.interpretation-card,
-.cta-card {
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-}
-
-.form-card {
-    position: sticky;
-    top: 90px;
-}
-
-.section-title-small {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #1d4ed8;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-}
-
-.custom-input {
-    border-radius: 0.9rem;
-    border: 1px solid rgba(16,24,40,0.10);
-    padding-top: 0.8rem;
-    padding-bottom: 0.8rem;
-}
-
-.custom-input:focus {
-    border-color: rgba(37,99,235,0.45);
-    box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.10);
-}
-
-.input-hint {
-    color: var(--ic-text-soft);
-    font-size: 0.82rem;
-}
-
-.metric-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.metric-card:hover,
-.scenario-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 16px 34px rgba(16,24,40,0.08) !important;
-}
-
-.metric-label {
-    color: var(--ic-text-soft);
-    font-size: 0.85rem;
-    margin-bottom: 0.4rem;
-}
-
-.metric-value {
-    color: var(--ic-text);
-    font-weight: 800;
-    font-size: 1.7rem;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-}
-
-.metric-value-highlight {
-    color: var(--ic-success);
-}
-
-.metric-subtitle {
-    color: var(--ic-text-soft);
-    font-size: 0.82rem;
-    margin-top: 0.5rem;
-}
-
-.result-banner {
-    background:
-        linear-gradient(135deg, rgba(22,163,74,0.10) 0%, rgba(37,99,235,0.08) 100%),
-        #ffffff;
-    border: 1px solid rgba(16,24,40,0.06);
-}
-
-.result-banner-title {
-    color: var(--ic-success);
-    letter-spacing: -0.02em;
-}
-
-.result-banner-text {
-    color: var(--ic-text-soft);
-    margin-bottom: 0;
-}
-
-.interpretation-card {
-    border: 1px solid rgba(37,99,235,0.08);
-}
-
-.interpretation-list {
-    padding-left: 1.1rem;
-    color: #475467;
-    margin-bottom: 0;
-}
-
-.interpretation-list li {
-    margin-bottom: 0.6rem;
-}
-
-.scenario-card {
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.scenario-label {
-    color: var(--ic-text-soft);
-    font-size: 0.84rem;
-    margin-bottom: 0.4rem;
-}
-
-.scenario-value {
-    color: var(--ic-text);
-    font-weight: 800;
-    font-size: 1.35rem;
-    line-height: 1.1;
-}
-
-.scenario-extra {
-    color: var(--ic-text-soft);
-    font-size: 0.82rem;
-    margin-top: 0.5rem;
-}
-
-.cta-card {
-    background:
-        linear-gradient(135deg, rgba(22,163,74,0.12) 0%, rgba(37,99,235,0.08) 100%),
-        #ffffff;
-    border: 1px solid rgba(16,24,40,0.06);
-}
-
-.cta-title {
-    color: var(--ic-text);
-    letter-spacing: -0.02em;
-}
-
-.cta-subtext {
-    color: var(--ic-text-soft);
-}
-
-.anchor-spacer {
-    scroll-margin-top: 100px;
-}
-
-@media (max-width: 991.98px) {
-    .form-card {
-        position: static;
-    }
-}
-
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 2rem !important;
-        line-height: 1.08;
-    }
-
-    .hero-subtitle {
-        font-size: 1rem;
-    }
-
-    .metric-value {
-        font-size: 1.5rem;
-    }
-}
-""")
-
-# =========================================================
 # LAYOUT
 # =========================================================
 layout = dbc.Container(
     [
-        custom_styles,
-
         # HERO
         dbc.Row(
             [
@@ -541,7 +324,6 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
     total_aportado = aportado_hist[-1]
     ganancia = valor_final - total_aportado
 
-    # ESCENARIOS
     evolucion_100 = calcular_interes_compuesto(
         capital_inicial=capital_inicial,
         aportacion_mensual=aportacion + 100,
@@ -566,7 +348,6 @@ def actualizar_calculadora(_, capital_inicial, aportacion, anios, rentabilidad, 
     diferencia_100 = valor_100 - valor_final
     diferencia_200 = valor_200 - valor_final
 
-    # GRAFICO
     fig.add_trace(go.Scatter(
         x=anos,
         y=aportado_hist,
