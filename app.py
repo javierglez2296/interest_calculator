@@ -15,6 +15,9 @@ SITE_DESCRIPTION = (
     "Simula tu inversión, libertad financiera y cuota hipotecaria."
 )
 
+# PON AQUÍ TU ID REAL DE GOOGLE ANALYTICS 4
+GA_MEASUREMENT_ID = "G-XXXXXXXXXX"
+
 # =========================================================
 # APP
 # =========================================================
@@ -83,6 +86,15 @@ app.index_string = f"""
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{SITE_NAME}">
         <meta name="twitter:description" content="{SITE_DESCRIPTION}">
+
+        <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){{dataLayer.push(arguments);}}
+            window.gtag = gtag;
+            gtag('js', new Date());
+            gtag('config', '{GA_MEASUREMENT_ID}');
+        </script>
 
         <script type="application/ld+json">
             {json.dumps(website_json_ld, ensure_ascii=False)}
