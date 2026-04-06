@@ -455,24 +455,18 @@ def grafico_comparativa(
     usar_hipoteca,
 ):
     valor_sin_deuda = inversion_total * (1 + rent_neta_sin_deuda / 100.0)
-    valor_sp500_sin_deuda = inversion_total * (1 + sp500_return / 100.0)
+    valor_sp500 = inversion_total * (1 + sp500_return / 100.0)
 
     x = ["Alquiler sin deuda", "S&P 500"]
-    y = [valor_sin_deuda, valor_sp500_sin_deuda]
-    texts = [fmt_eur(valor_sin_deuda, 0), fmt_eur(valor_sp500_sin_deuda, 0)]
+    y = [valor_sin_deuda, valor_sp500]
+    texts = [fmt_eur(valor_sin_deuda, 0), fmt_eur(valor_sp500, 0)]
 
     if usar_hipoteca:
         valor_con_hipoteca = capital_aportado * (1 + rent_sobre_capital / 100.0)
-        valor_sp500_con_deuda = capital_aportado * (1 + sp500_return / 100.0)
 
-        x = ["Alquiler sin deuda", "Alquiler con deuda", "S&P 500 sin deuda", "S&P 500 con mismo capital"]
-        y = [valor_sin_deuda, valor_con_hipoteca, valor_sp500_sin_deuda, valor_sp500_con_deuda]
-        texts = [
-            fmt_eur(valor_sin_deuda, 0),
-            fmt_eur(valor_con_hipoteca, 0),
-            fmt_eur(valor_sp500_sin_deuda, 0),
-            fmt_eur(valor_sp500_con_deuda, 0),
-        ]
+        x.insert(1, "Alquiler con deuda")
+        y.insert(1, valor_con_hipoteca)
+        texts.insert(1, fmt_eur(valor_con_hipoteca, 0))
 
     fig = go.Figure()
     fig.add_bar(x=x, y=y, text=texts, textposition="outside")
@@ -485,7 +479,6 @@ def grafico_comparativa(
         yaxis_title="Valor orientativo tras 1 año",
     )
     return fig
-
 
 def pro_card():
     return dbc.Card(
@@ -1234,6 +1227,35 @@ clientside_callback(
     Input("años_hipoteca", "value"),
     Input("sp500_return", "value"),
 )
+@callback(
+    Output("metric_bruta", "children"),
+    Output("metric_neta", "children"),
+    Output("metric_cashflow", "children"),
+    Output("metric_desembolso", "children"),
+    Output("metric_cuota", "children"),
+    Output("metric_capital", "children"),
+    Output("signal_badge", "children"),
+    Output("signal_text", "children"),
+    Output("breakdown_chart", "figure"),
+    Output("compare_chart", "figure"),
+    Output("insights_wrap", "children"),
+    Input("precio_compra", "value"),
+    Input("gastos_compra", "value"),
+    Input("reforma", "value"),
+    Input("alquiler_mensual", "value"),
+    Input("ocupacion", "value"),
+    Input("ibi", "value"),
+    Input("comunidad", "value"),
+    Input("seguro", "value"),
+    Input("mantenimiento", "value"),
+    Input("gestion_pct", "value"),
+    Input("irpf_pct", "value"),
+    Input("usar_hipoteca", "value"),
+    Input("ltv_pct", "value"),
+    Input("interes_hipoteca", "value"),
+    Input("años_hipoteca", "value"),
+    Input("sp500_return", "value"),
+)
 def update_calculator(
     precio_compra,
     gastos_compra,
@@ -1283,18 +1305,32 @@ def update_calculator(
     )
 
     usar_deuda = usar_hipoteca == "si"
+
     capital_hipoteca = precio_compra * (ltv_pct / 100.0) if usar_deuda else 0.0
-    cuota_mensual = cuota_hipoteca_mensual(capital_hipoteca, interes_hipoteca, años_hipoteca) if usar_deuda else 0.0
+    cuota_mensual = (
+        cuota_hipoteca_mensual(capital_hipoteca, interes_hipoteca, años_hipoteca)
+        if usar_deuda
+        else 0.0
+    )
     cuota_anual = cuota_mensual * 12.0
 
     capital_aportado = base["inversion_total"] - capital_hipoteca if usar_deuda else base["inversion_total"]
     capital_aportado = max(capital_aportado, 0.0)
 
+    # =====================================================
+    # SEPARACIÓN CORRECTA:
+    # - cashflow: resta toda la cuota
+    # - rentabilidad económica: resta solo intereses estimados
+    # =====================================================
+    intereses_anuales_estimados = capital_hipoteca * (interes_hipoteca / 100.0) if usar_deuda else 0.0
+
     cashflow_despues_hipoteca = base["cashflow_mensual"] - cuota_mensual
     beneficio_neto_despues_hipoteca = base["beneficio_neto"] - cuota_anual
 
+    beneficio_neto_economico_con_deuda = base["beneficio_neto"] - intereses_anuales_estimados
+
     rent_sobre_capital = (
-        (beneficio_neto_despues_hipoteca / capital_aportado) * 100.0
+        (beneficio_neto_economico_con_deuda / capital_aportado) * 100.0
         if capital_aportado > 0
         else 0.0
     )
@@ -1310,15 +1346,16 @@ def update_calculator(
     )
 
     metric_neta = metric_card(
-        "Rentabilidad mostrada",
+        "Rentabilidad neta",
         fmt_pct(base["rent_neta"]) if not usar_deuda else fmt_pct(rent_sobre_capital),
-        "Neta total" if not usar_deuda else "Sobre capital aportado",
+        "Sin deuda" if not usar_deuda else "Sobre capital aportado (restando intereses)",
+        accent=True if rent_mostrar >= 5 else False,
     )
 
     metric_cashflow = metric_card(
         "Cashflow mensual",
         fmt_eur(base["cashflow_mensual"]) if not usar_deuda else fmt_eur(cashflow_despues_hipoteca),
-        "Sin deuda" if not usar_deuda else "Después de hipoteca",
+        "Sin deuda" if not usar_deuda else "Después de cuota hipotecaria",
     )
 
     metric_desembolso = metric_card(
@@ -1341,11 +1378,34 @@ def update_calculator(
 
     signal_text = html.Div(
         [
-            html.P([html.Strong("Ingresos anuales: "), fmt_eur(base["ingresos_anuales"])], className="mb-2"),
-            html.P([html.Strong("Gastos + IRPF: "), fmt_eur(base["gastos_anuales"] + base["irpf"])], className="mb-2"),
+            html.P(
+                [html.Strong("Ingresos anuales: "), fmt_eur(base["ingresos_anuales"])],
+                className="mb-2",
+            ),
+            html.P(
+                [html.Strong("Gastos + IRPF: "), fmt_eur(base["gastos_anuales"] + base["irpf"])],
+                className="mb-2",
+            ),
             html.P(
                 [
-                    html.Strong("Resultado anual mostrado: "),
+                    html.Strong("Intereses anuales estimados: "),
+                    fmt_eur(intereses_anuales_estimados),
+                ] if usar_deuda else [
+                    html.Strong("Intereses anuales estimados: "),
+                    "No aplica",
+                ],
+                className="mb-2",
+            ),
+            html.P(
+                [
+                    html.Strong("Resultado económico anual: "),
+                    fmt_eur(base["beneficio_neto"]) if not usar_deuda else fmt_eur(beneficio_neto_economico_con_deuda),
+                ],
+                className="mb-2",
+            ),
+            html.P(
+                [
+                    html.Strong("Cashflow anual después de cuota: "),
                     fmt_eur(base["beneficio_neto"]) if not usar_deuda else fmt_eur(beneficio_neto_despues_hipoteca),
                 ],
                 className="mb-2",
@@ -1359,11 +1419,44 @@ def update_calculator(
     ]
 
     if usar_deuda:
+        spread_apalancamiento = base["rent_neta"] - interes_hipoteca
+
         insights += [
             html.Li(f"Cuota hipotecaria mensual estimada: {fmt_eur(cuota_mensual)}.", className="mb-2"),
+            html.Li(f"Intereses anuales estimados: {fmt_eur(intereses_anuales_estimados)}.", className="mb-2"),
             html.Li(f"Cashflow mensual después de hipoteca: {fmt_eur(cashflow_despues_hipoteca)}.", className="mb-2"),
-            html.Li(f"Rentabilidad sobre capital aportado: {fmt_pct(rent_sobre_capital)}.", className="mb-2"),
+            html.Li(
+                f"Rentabilidad sobre capital aportado: {fmt_pct(rent_sobre_capital)}.",
+                className="mb-2",
+            ),
+            html.Li(
+                f"Spread de apalancamiento: {fmt_pct(spread_apalancamiento)} "
+                f"(rentabilidad neta sin deuda menos interés hipotecario).",
+                className="mb-2",
+            ),
         ]
+
+        if spread_apalancamiento > 1:
+            insights.append(
+                html.Li(
+                    "La deuda parece aportar valor: la rentabilidad neta del activo supera con margen el coste financiero.",
+                    className="mb-2",
+                )
+            )
+        elif spread_apalancamiento > 0:
+            insights.append(
+                html.Li(
+                    "La deuda podría ayudar, pero el margen es estrecho y los gastos pueden comerse buena parte de la ventaja.",
+                    className="mb-2",
+                )
+            )
+        else:
+            insights.append(
+                html.Li(
+                    "La deuda está penalizando la operación: el coste financiero supera la rentabilidad neta del activo.",
+                    className="mb-2",
+                )
+            )
 
     if rent_mostrar >= sp500_return:
         insights.append(
@@ -1382,7 +1475,10 @@ def update_calculator(
 
     if usar_deuda and cashflow_despues_hipoteca < 0:
         insights.append(
-            html.Li("Con hipoteca, el flujo mensual sale negativo con estos supuestos.", className="mb-2")
+            html.Li(
+                "Con hipoteca, el flujo mensual sale negativo con estos supuestos.",
+                className="mb-2",
+            )
         )
 
     return (
@@ -1396,13 +1492,13 @@ def update_calculator(
         signal_text,
         grafico_breakdown(base, cuota_anual if usar_deuda else 0.0),
         grafico_comparativa(
-    base["inversion_total"],
-    capital_aportado,
-    base["rent_neta"],
-    rent_sobre_capital,
-    sp500_return,
-    usar_deuda,
-),
+            base["inversion_total"],
+            capital_aportado,
+            base["rent_neta"],
+            rent_sobre_capital,
+            sp500_return,
+            usar_deuda,
+        ),
         html.Ul(insights, className="mb-0"),
     )
 
