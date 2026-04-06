@@ -284,6 +284,7 @@ def build_pro_table(rows):
         class_name="align-middle mb-0",
     )
 
+
 def calc_payback_years(inversion_inicial, beneficio_neto_anual):
     if beneficio_neto_anual <= 0:
         return None
@@ -362,7 +363,8 @@ def build_payback_card(payback_years):
         "Tiempo orientativo para recuperar la inversión inicial",
         accent=True if payback_years <= 15 else False,
     )
-    
+
+
 def calc_operacion(
     precio_compra,
     gastos_compra,
@@ -479,7 +481,7 @@ def pro_card():
                 section_eyebrow("VERSIÓN PRO"),
                 html.H3("Desbloquea el análisis completo", className="h4 fw-bold mb-3"),
                 html.P(
-                    "La parte gratuita te sirve para filtrar. La PRO te ayudaría a decidir si comprar o no.",
+                    "La parte gratuita te sirve para filtrar. La PRO te ayuda a decidir si comprar o no al instante.",
                     className="text-muted mb-3",
                 ),
                 html.Div(
@@ -513,6 +515,7 @@ def pro_card():
                     id="open-pro-modal-btn",
                     color="primary",
                     className="rounded-pill px-4",
+                    n_clicks=0,
                 ),
             ]
         ),
@@ -563,6 +566,7 @@ def locked_preview():
                     id="open-pro-modal-btn-2",
                     color="dark",
                     className="rounded-pill px-4 mt-4 w-100",
+                    n_clicks=0,
                 ),
             ]
         ),
@@ -574,10 +578,10 @@ def email_capture_box():
     return dbc.Card(
         dbc.CardBody(
             [
-                section_eyebrow("CAPTACIÓN"),
-                html.H3("Déjame tu email y te aviso cuando esté lista la PRO", className="h5 fw-bold mb-3"),
+                section_eyebrow("DESBLOQUEO PRO"),
+                html.H3("Introduce tu email y desbloquea el análisis completo", className="h5 fw-bold mb-3"),
                 html.P(
-                    "Perfecto para validar interés antes de montar pagos o acceso privado.",
+                    "Te muestro al instante la versión PRO con comparativa a 10 años, payback y recomendación final.",
                     className="text-muted mb-3",
                 ),
                 dbc.InputGroup(
@@ -589,16 +593,17 @@ def email_capture_box():
                             class_name="rounded-start-pill",
                         ),
                         dbc.Button(
-                            "Avisadme",
+                            "Ver análisis PRO",
                             id="email-pro-submit-btn",
                             color="primary",
                             className="rounded-end-pill px-4",
+                            n_clicks=0,
                         ),
                     ],
                     class_name="mb-2",
                 ),
                 html.Div(
-                    "Puedes usar este bloque primero como captación y luego cambiarlo por pago o login.",
+                    "Acceso inmediato. Sin esperas.",
                     className="text-muted small",
                 ),
             ]
@@ -614,19 +619,19 @@ def pro_modal():
             dbc.ModalBody(
                 [
                     html.P(
-                        "Aquí puedes convertir el interés en lead o venta. Primero te recomiendo medir cuánta gente hace clic aquí.",
+                        "Introduce tu email y desbloquea ahora el análisis avanzado.",
                         className="text-muted",
                     ),
                     html.Div(
                         [
-                            html.Div("Qué incluiría la PRO", className="fw-bold mb-2"),
+                            html.Div("Qué incluye la versión PRO", className="fw-bold mb-2"),
                             html.Ul(
                                 [
-                                    html.Li("Rentabilidad a 10 años"),
-                                    html.Li("Escenarios conservador / base / optimista"),
-                                    html.Li("Amortización hipotecaria"),
-                                    html.Li("Revalorización del inmueble"),
-                                    html.Li("PDF descargable"),
+                                    html.Li("Comparativa inmueble vs S&P 500 a 10 años"),
+                                    html.Li("Payback estimado"),
+                                    html.Li("Recomendación final: comprar / dudoso / no comprar"),
+                                    html.Li("Escenario más realista de rentabilidad"),
+                                    html.Li("Tabla anual resumida"),
                                 ],
                                 className="text-muted",
                             ),
@@ -640,10 +645,11 @@ def pro_modal():
                         class_name="mb-3",
                     ),
                     dbc.Button(
-                        "Quiero acceso prioritario",
+                        "Ver análisis PRO",
                         id="modal-email-submit-btn",
                         color="primary",
                         className="rounded-pill px-4 w-100",
+                        n_clicks=0,
                     ),
                 ]
             ),
@@ -695,7 +701,7 @@ layout = dbc.Container(
                         ),
                         html.P(
                             "Analiza una vivienda en alquiler con o sin hipoteca. "
-                            "Obtén una primera lectura gratis y reserva el análisis profundo para una versión premium.",
+                            "Obtén una primera lectura gratis y desbloquea el análisis profundo al instante.",
                             className="lead text-muted mb-4",
                             style={"maxWidth": "760px"},
                         ),
@@ -902,6 +908,7 @@ layout = dbc.Container(
                         dbc.CardBody(
                             [
                                 section_eyebrow("ANÁLISIS PRO"),
+                                html.Div(id="pro-unlock-feedback", className="mb-3"),
                                 html.Div(id="pro-content"),
                             ]
                         ),
@@ -992,6 +999,7 @@ layout = dbc.Container(
                                 id="sticky-pro-cta",
                                 color="primary",
                                 className="rounded-pill w-100",
+                                n_clicks=0,
                             ),
                             xs=5,
                             md=4,
@@ -1015,6 +1023,7 @@ layout = dbc.Container(
             },
         ),
 
+        html.Div(id="pro-scroll-trigger", style={"display": "none"}),
         html.Div(style={"height": "88px"}),
 
         build_disclaimer() if callable(build_disclaimer) else html.Div(),
@@ -1032,11 +1041,20 @@ layout = dbc.Container(
     Input("open-pro-modal-btn", "n_clicks"),
     Input("open-pro-modal-btn-2", "n_clicks"),
     Input("sticky-pro-cta", "n_clicks"),
+    Input("modal-email-submit-btn", "n_clicks"),
     State("pro-modal", "is_open"),
     prevent_initial_call=True,
 )
-def toggle_modal(btn1, btn2, btn3, is_open):
-    return not is_open
+def toggle_modal(btn1, btn2, btn3, modal_submit, is_open):
+    triggered = dash.callback_context.triggered_id
+
+    if triggered in ["open-pro-modal-btn", "open-pro-modal-btn-2", "sticky-pro-cta"]:
+        return True
+
+    if triggered == "modal-email-submit-btn":
+        return False
+
+    return is_open
 
 
 @callback(
@@ -1059,11 +1077,63 @@ def track_pro_interest(btn1, btn2, btn3):
     prevent_initial_call=True,
 )
 def track_email_interest(btn1, btn2, email1, email2):
-    email = email2 if email2 else email1
+    triggered = dash.callback_context.triggered_id
+    email = email1 if triggered == "email-pro-submit-btn" else email2
+    email = (email or "").strip()
+
     return {
         "event": "submit_rentabilidad_pro_email",
         "has_email": bool(email),
     }
+
+
+@callback(
+    Output("pro-unlocked", "data"),
+    Output("pro-unlock-feedback", "children"),
+    Output("pro-scroll-trigger", "children"),
+    Input("email-pro-submit-btn", "n_clicks"),
+    Input("modal-email-submit-btn", "n_clicks"),
+    Input("url", "search"),
+    State("email-pro-input", "value"),
+    State("modal-email-input", "value"),
+    prevent_initial_call=False,
+)
+def unlock_pro(email_btn_clicks, modal_btn_clicks, search, email1, email2):
+    ctx = dash.callback_context
+    triggered = ctx.triggered_id
+
+    if triggered == "url":
+        if not search:
+            return False, html.Div(), ""
+        params = parse_qs(search.lstrip("?"))
+        unlocked_from_url = params.get("pro", ["0"])[0] == "1"
+        if unlocked_from_url:
+            return True, html.Div(), "scroll"
+        return False, html.Div(), ""
+
+    email = email1 if triggered == "email-pro-submit-btn" else email2
+    email = (email or "").strip()
+
+    if not email or "@" not in email or "." not in email:
+        return (
+            False,
+            dbc.Alert(
+                "Introduce un email válido para desbloquear la versión PRO.",
+                color="danger",
+                className="rounded-4 mb-0",
+            ),
+            "",
+        )
+
+    return (
+        True,
+        dbc.Alert(
+            "✅ Análisis PRO desbloqueado correctamente.",
+            color="success",
+            className="rounded-4 mb-0",
+        ),
+        "scroll",
+    )
 
 
 clientside_callback(
@@ -1097,6 +1167,25 @@ clientside_callback(
     """,
     Output("hero-cta-hipoteca", "title"),
     Input("gtag-email-submit-store", "data"),
+)
+
+clientside_callback(
+    """
+    function(trigger) {
+        if (!trigger) {
+            return window.dash_clientside.no_update;
+        }
+        const el = document.getElementById("pro-content");
+        if (el) {
+            setTimeout(function() {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 150);
+        }
+        return "";
+    }
+    """,
+    Output("pro-scroll-trigger", "title"),
+    Input("pro-scroll-trigger", "children"),
 )
 
 
@@ -1297,20 +1386,10 @@ def update_calculator(
         html.Ul(insights, className="mb-0"),
     )
 
+
 # =========================================================
 # CALLBACKS PRO
 # =========================================================
-@callback(
-    Output("pro-unlocked", "data"),
-    Input("url", "search"),
-)
-def unlock_pro_from_url(search):
-    if not search:
-        return False
-    params = parse_qs(search.lstrip("?"))
-    return params.get("pro", ["0"])[0] == "1"
-
-
 @callback(
     Output("pro-content", "children"),
     Input("pro-unlocked", "data"),
