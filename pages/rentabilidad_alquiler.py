@@ -1341,7 +1341,6 @@ def render_pro_content(
     gestion_pct,
     irpf_pct,
     sp500_return,
-    
 ):
     if not unlocked:
         return html.Div(
@@ -1400,116 +1399,112 @@ def render_pro_content(
         crecimiento_gastos_pct=2.0,
         revalorizacion_inmueble_pct=2.0,
         sp500_pct=sp500_return,
-        
     )
+
     inmueble_final = inmueble_vals[-1]
     sp500_final = sp500_vals[-1]
     beneficio_neto_anual_base = rows[0]["beneficio_neto"] if rows else 0
     payback_years = calc_payback_years(inversion_inicial, beneficio_neto_anual_base)
 
-   return html.Div(
-    [
-        html.H3("Versión PRO desbloqueada", className="h5 fw-bold mb-3"),
-        html.P(
-            "Aquí ya ves una lectura mucho más útil para decidir si el inmueble merece la pena o no.",
-            className="text-muted mb-4",
-        ),
-
-        dbc.Row(
-            [
-                dbc.Col(
-                    build_pro_decision_card(
-                        inmueble_final=inmueble_final,
-                        sp500_final=sp500_final,
-                        payback_years=payback_years,
-                        beneficio_neto_anual=beneficio_neto_anual_base,
-                    ),
-                    lg=4,
-                ),
-                dbc.Col(
-                    build_coste_oportunidad_card(
-                        inmueble_final=inmueble_final,
-                        sp500_final=sp500_final,
-                    ),
-                    lg=4,
-                ),
-                dbc.Col(
-                    build_payback_card(payback_years),
-                    lg=4,
-                ),
-            ],
-            class_name="g-4 mb-4",
-        ),
-
-        dbc.Row(
-            [
-                dbc.Col(
-                    metric_card(
-                        "Valor inmueble año 10",
-                        fmt_eur(inmueble_final, 0),
-                        "Incluye revalorización + cashflow acumulado",
-                        accent=True,
-                    ),
-                    md=4,
-                ),
-                dbc.Col(
-                    metric_card(
-                        "Valor S&P 500 año 10",
-                        fmt_eur(sp500_final, 0),
-                        "Capital inicial capitalizado",
-                    ),
-                    md=4,
-                ),
-                dbc.Col(
-                    metric_card(
-                        "Diferencia final",
-                        fmt_eur(inmueble_final - sp500_final, 0),
-                        "Inmueble - S&P 500",
-                    ),
-                    md=4,
-                ),
-            ],
-            class_name="g-4 mb-4",
-        ),
-
-        dbc.Card(
-            dbc.CardBody(
-                dcc.Graph(
-                    figure=build_pro_years_chart(years, inmueble_vals, sp500_vals),
-                    config={"displayModeBar": False},
-                )
+    return html.Div(
+        [
+            html.H3("Versión PRO desbloqueada", className="h5 fw-bold mb-3"),
+            html.P(
+                "Aquí ya ves una lectura mucho más útil para decidir si el inmueble merece la pena o no.",
+                className="text-muted mb-4",
             ),
-            className="border-0 shadow-sm rounded-4 mb-4",
-        ),
-
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                section_eyebrow("RESUMEN"),
-                                build_pro_summary(rows),
-                            ]
+            dbc.Row(
+                [
+                    dbc.Col(
+                        build_pro_decision_card(
+                            inmueble_final=inmueble_final,
+                            sp500_final=sp500_final,
+                            payback_years=payback_years,
+                            beneficio_neto_anual=beneficio_neto_anual_base,
                         ),
-                        className="border-0 shadow-sm rounded-4 h-100",
+                        lg=4,
                     ),
-                    lg=5,
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                section_eyebrow("TABLA ANUAL"),
-                                build_pro_table(rows),
-                            ]
+                    dbc.Col(
+                        build_coste_oportunidad_card(
+                            inmueble_final=inmueble_final,
+                            sp500_final=sp500_final,
                         ),
-                        className="border-0 shadow-sm rounded-4 h-100",
+                        lg=4,
                     ),
-                    lg=7,
+                    dbc.Col(
+                        build_payback_card(payback_years),
+                        lg=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        metric_card(
+                            "Valor inmueble año 10",
+                            fmt_eur(inmueble_final, 0),
+                            "Incluye revalorización + cashflow acumulado",
+                            accent=True,
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Valor S&P 500 año 10",
+                            fmt_eur(sp500_final, 0),
+                            "Capital inicial capitalizado",
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Diferencia final",
+                            fmt_eur(inmueble_final - sp500_final, 0),
+                            "Inmueble - S&P 500",
+                        ),
+                        md=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+            dbc.Card(
+                dbc.CardBody(
+                    dcc.Graph(
+                        figure=build_pro_years_chart(years, inmueble_vals, sp500_vals),
+                        config={"displayModeBar": False},
+                    )
                 ),
-            ],
-            class_name="g-4",
-        ),
-    ]
-)
+                className="border-0 shadow-sm rounded-4 mb-4",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    section_eyebrow("RESUMEN"),
+                                    build_pro_summary(rows),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 h-100",
+                        ),
+                        lg=5,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    section_eyebrow("TABLA ANUAL"),
+                                    build_pro_table(rows),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 h-100",
+                        ),
+                        lg=7,
+                    ),
+                ],
+                class_name="g-4",
+            ),
+        ]
+    )
