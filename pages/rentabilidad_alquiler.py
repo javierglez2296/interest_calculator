@@ -2,7 +2,7 @@ import dash
 from dash import html, dcc, Input, Output, State, callback, clientside_callback
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-
+from urllib.parse import parse_qs
 from components.disclaimer_afiliados import build_disclaimer
 
 dash.register_page(
@@ -140,6 +140,149 @@ def cuota_hipoteca_mensual(capital, interes_anual_pct, años):
     if r == 0:
         return capital / n
     return capital * (r * (1 + r) ** n) / ((1 + r) ** n - 1)
+
+
+def fmt_num(value, dec=2):
+    try:
+        return f"{float(value):,.{dec}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return "0,00"
+
+
+def build_pro_years_chart(years, inmueble_vals, sp500_vals):
+    fig = go.Figure()
+    fig.add_scatter(x=years, y=inmueble_vals, mode="lines+markers", name="Inmueble")
+    fig.add_scatter(x=years, y=sp500_vals, mode="lines+markers", name="S&P 500")
+    fig.update_layout(
+        height=360,
+        margin=dict(l=20, r=20, t=10, b=20),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        yaxis_title="Valor acumulado (€)",
+        xaxis_title="Año",
+        legend_title="",
+    )
+    return fig
+
+
+def proyeccion_10_anios(
+    inversion_inicial,
+    alquiler_mensual,
+    ocupacion_pct,
+    gastos_anuales,
+    irpf_pct,
+    crecimiento_alquiler_pct,
+    crecimiento_gastos_pct,
+    revalorizacion_inmueble_pct,
+    sp500_pct,
+):
+    years = list(range(1, 11))
+    alquiler_actual = alquiler_mensual
+    gastos_actuales = gastos_anuales
+    valor_inmueble = inversion_inicial
+    valor_sp500 = inversion_inicial
+
+    inmueble_vals = []
+    sp500_vals = []
+    rows = []
+
+    cash_acumulado = 0.0
+
+    for y in years:
+        ingresos = alquiler_actual * 12 * (ocupacion_pct / 100.0)
+        beneficio_antes_irpf = ingresos - gastos_actuales
+        irpf = max(beneficio_antes_irpf, 0) * (irpf_pct / 100.0)
+        beneficio_neto = beneficio_antes_irpf - irpf
+
+        cash_acumulado += beneficio_neto
+        valor_inmueble = valor_inmueble * (1 + revalorizacion_inmueble_pct / 100.0)
+        valor_total_inmueble = valor_inmueble + cash_acumulado
+        valor_sp500 = valor_sp500 * (1 + sp500_pct / 100.0)
+
+        inmueble_vals.append(valor_total_inmueble)
+        sp500_vals.append(valor_sp500)
+
+        rows.append(
+            {
+                "anio": y,
+                "ingresos": ingresos,
+                "gastos": gastos_actuales,
+                "beneficio_neto": beneficio_neto,
+                "valor_total_inmueble": valor_total_inmueble,
+                "valor_sp500": valor_sp500,
+            }
+        )
+
+        alquiler_actual *= (1 + crecimiento_alquiler_pct / 100.0)
+        gastos_actuales *= (1 + crecimiento_gastos_pct / 100.0)
+
+    return years, inmueble_vals, sp500_vals, rows
+
+
+def build_pro_summary(rows):
+    final = rows[-1]
+    diff = final["valor_total_inmueble"] - final["valor_sp500"]
+
+    if diff > 0:
+        lectura = f"En esta simulación, el inmueble termina por encima del S&P 500 por {fmt_eur(diff)}."
+    elif diff < 0:
+        lectura = f"En esta simulación, el S&P 500 termina por encima del inmueble por {fmt_eur(abs(diff))}."
+    else:
+        lectura = "En esta simulación, ambas alternativas terminan prácticamente iguales."
+
+    return html.Div(
+        [
+            html.P(
+                [
+                    html.Strong("Valor total estimado del inmueble en año 10: "),
+                    fmt_eur(final["valor_total_inmueble"]),
+                ],
+                className="mb-2",
+            ),
+            html.P(
+                [
+                    html.Strong("Valor estimado del S&P 500 en año 10: "),
+                    fmt_eur(final["valor_sp500"]),
+                ],
+                className="mb-2",
+            ),
+            html.P(lectura, className="mb-0"),
+        ]
+    )
+
+
+def build_pro_table(rows):
+    return dbc.Table(
+        [
+            html.Thead(
+                html.Tr(
+                    [
+                        html.Th("Año"),
+                        html.Th("Beneficio neto"),
+                        html.Th("Valor inmueble"),
+                        html.Th("Valor S&P 500"),
+                    ]
+                )
+            ),
+            html.Tbody(
+                [
+                    html.Tr(
+                        [
+                            html.Td(r["anio"]),
+                            html.Td(fmt_eur(r["beneficio_neto"], 0)),
+                            html.Td(fmt_eur(r["valor_total_inmueble"], 0)),
+                            html.Td(fmt_eur(r["valor_sp500"], 0)),
+                        ]
+                    )
+                    for r in rows
+                ]
+            ),
+        ],
+        bordered=False,
+        hover=True,
+        responsive=True,
+        class_name="align-middle mb-0",
+    )
 
 
 def calc_operacion(
@@ -439,8 +582,10 @@ def pro_modal():
 # =========================================================
 layout = dbc.Container(
     [
+        dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
         dcc.Store(id="gtag-email-submit-store"),
+        dcc.Store(id="pro-unlocked", data=False),
 
         dbc.Row(
             [
@@ -674,6 +819,24 @@ layout = dbc.Container(
 
         dbc.Row(
             [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                section_eyebrow("ANÁLISIS PRO"),
+                                html.Div(id="pro-content"),
+                            ]
+                        ),
+                        className="border-0 shadow-sm rounded-4",
+                    ),
+                    lg=12,
+                ),
+            ],
+            class_name="pb-4",
+        ),
+
+        dbc.Row(
+            [
                 dbc.Col(email_capture_box(), lg=5),
                 dbc.Col(
                     dbc.Card(
@@ -781,7 +944,6 @@ layout = dbc.Container(
     fluid=True,
     class_name="px-3 px-lg-4",
 )
-
 
 # =========================================================
 # CALLBACKS UI
@@ -1024,11 +1186,17 @@ def update_calculator(
 
     if rent_mostrar >= sp500_return:
         insights.append(
-            html.Li(f"La rentabilidad mostrada supera la referencia del S&P 500 ({fmt_pct(sp500_return)}).", className="mb-2")
+            html.Li(
+                f"La rentabilidad mostrada supera la referencia del S&P 500 ({fmt_pct(sp500_return)}).",
+                className="mb-2",
+            )
         )
     else:
         insights.append(
-            html.Li(f"La rentabilidad mostrada queda por debajo de la referencia del S&P 500 ({fmt_pct(sp500_return)}).", className="mb-2")
+            html.Li(
+                f"La rentabilidad mostrada queda por debajo de la referencia del S&P 500 ({fmt_pct(sp500_return)}).",
+                className="mb-2",
+            )
         )
 
     if usar_deuda and cashflow_despues_hipoteca < 0:
@@ -1048,4 +1216,187 @@ def update_calculator(
         grafico_breakdown(base, cuota_anual if usar_deuda else 0.0),
         grafico_comparativa(base["inversion_total"], base["rent_neta"], rent_sobre_capital, sp500_return, usar_deuda),
         html.Ul(insights, className="mb-0"),
+    )
+
+
+# =========================================================
+# CALLBACKS PRO
+# =========================================================
+@callback(
+    Output("pro-unlocked", "data"),
+    Input("url", "search"),
+)
+def unlock_pro_from_url(search):
+    if not search:
+        return False
+    params = parse_qs(search.lstrip("?"))
+    return params.get("pro", ["0"])[0] == "1"
+
+
+@callback(
+    Output("pro-content", "children"),
+    Input("pro-unlocked", "data"),
+    Input("precio_compra", "value"),
+    Input("gastos_compra", "value"),
+    Input("reforma", "value"),
+    Input("alquiler_mensual", "value"),
+    Input("ocupacion", "value"),
+    Input("ibi", "value"),
+    Input("comunidad", "value"),
+    Input("seguro", "value"),
+    Input("mantenimiento", "value"),
+    Input("gestion_pct", "value"),
+    Input("irpf_pct", "value"),
+    Input("sp500_return", "value"),
+)
+def render_pro_content(
+    unlocked,
+    precio_compra,
+    gastos_compra,
+    reforma,
+    alquiler_mensual,
+    ocupacion,
+    ibi,
+    comunidad,
+    seguro,
+    mantenimiento,
+    gestion_pct,
+    irpf_pct,
+    sp500_return,
+):
+    if not unlocked:
+        return html.Div(
+            [
+                html.H3("Desbloquea la versión PRO", className="h5 fw-bold mb-3"),
+                html.P(
+                    "Incluye proyección a 10 años, comparativa acumulada contra S&P 500 y tabla anual.",
+                    className="text-muted mb-3",
+                ),
+                html.Div(
+                    [
+                        html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
+                        html.Div("12,84 %", className="display-6 fw-bold text-primary"),
+                        html.P(
+                            "Gráfico y resultados avanzados bloqueados.",
+                            className="text-muted mt-3 mb-0",
+                        ),
+                    ],
+                    style={
+                        "padding": "1rem",
+                        "borderRadius": "16px",
+                        "background": "#f8fafc",
+                        "border": "1px dashed #cbd5e1",
+                        "filter": "blur(2px)",
+                        "opacity": 0.8,
+                    },
+                ),
+            ]
+        )
+
+    precio_compra = safe_float(precio_compra)
+    gastos_compra = safe_float(gastos_compra)
+    reforma = safe_float(reforma)
+    alquiler_mensual = safe_float(alquiler_mensual)
+    ocupacion = safe_float(ocupacion, 95)
+    ibi = safe_float(ibi)
+    comunidad = safe_float(comunidad)
+    seguro = safe_float(seguro)
+    mantenimiento = safe_float(mantenimiento)
+    gestion_pct = safe_float(gestion_pct)
+    irpf_pct = safe_float(irpf_pct)
+    sp500_return = safe_float(sp500_return, SP500_RETURN_DEFAULT)
+
+    inversion_inicial = precio_compra + gastos_compra + reforma
+    ingresos_base = alquiler_mensual * 12 * (ocupacion / 100.0)
+    gasto_gestion = ingresos_base * (gestion_pct / 100.0)
+    gastos_anuales = ibi + comunidad + seguro + mantenimiento + gasto_gestion
+
+    years, inmueble_vals, sp500_vals, rows = proyeccion_10_anios(
+        inversion_inicial=inversion_inicial,
+        alquiler_mensual=alquiler_mensual,
+        ocupacion_pct=ocupacion,
+        gastos_anuales=gastos_anuales,
+        irpf_pct=irpf_pct,
+        crecimiento_alquiler_pct=2.0,
+        crecimiento_gastos_pct=2.0,
+        revalorizacion_inmueble_pct=2.0,
+        sp500_pct=sp500_return,
+    )
+
+    return html.Div(
+        [
+            html.H3("Versión PRO desbloqueada", className="h5 fw-bold mb-3"),
+            html.P(
+                "Aquí ya ves la proyección acumulada a 10 años y la comparativa frente a una alternativa indexada.",
+                className="text-muted mb-4",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        metric_card(
+                            "Valor inmueble año 10",
+                            fmt_eur(inmueble_vals[-1], 0),
+                            "Incluye revalorización + cashflow acumulado",
+                            accent=True,
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Valor S&P 500 año 10",
+                            fmt_eur(sp500_vals[-1], 0),
+                            "Capital inicial capitalizado",
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Diferencia final",
+                            fmt_eur(inmueble_vals[-1] - sp500_vals[-1], 0),
+                            "Inmueble - S&P 500",
+                        ),
+                        md=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+            dbc.Card(
+                dbc.CardBody(
+                    dcc.Graph(
+                        figure=build_pro_years_chart(years, inmueble_vals, sp500_vals),
+                        config={"displayModeBar": False},
+                    )
+                ),
+                className="border-0 shadow-sm rounded-4 mb-4",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    section_eyebrow("RESUMEN"),
+                                    build_pro_summary(rows),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 h-100",
+                        ),
+                        lg=5,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    section_eyebrow("TABLA ANUAL"),
+                                    build_pro_table(rows),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 h-100",
+                        ),
+                        lg=7,
+                    ),
+                ],
+                class_name="g-4",
+            ),
+        ]
     )
