@@ -6,10 +6,10 @@ NAV_LINKS = [
     ("Interés compuesto", "/calculadora"),
     ("FIRE", "/fire"),
     ("Hipoteca", "/hipoteca"),
+    ("Rentabilidad alquiler", "/rentabilidad-alquiler"),
     ("Comparador", "/comparador"),
     ("Blog", "/blog"),
 ]
-
 
 def _build_nav_links(class_name=""):
     return [
