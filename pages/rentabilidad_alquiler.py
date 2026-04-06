@@ -1,7 +1,5 @@
-import math
-
 import dash
-from dash import html, dcc, Input, Output, callback
+from dash import html, dcc, Input, Output, State, callback, clientside_callback
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -38,7 +36,7 @@ def safe_float(value, default=0.0):
 def fmt_eur(value, dec=2):
     try:
         value = float(value)
-        fmt = f"{{:,.{dec}f}f}}"
+        fmt = f"{{:,.{dec}f}}"
         txt = fmt.format(value)
         txt = txt.replace(",", "X").replace(".", ",").replace("X", ".")
         return f"{txt} €"
@@ -73,7 +71,11 @@ def metric_card(title, value, subtitle=None, accent=False):
                 html.Div(
                     value,
                     className=f"fw-bold {'text-primary' if accent else ''}",
-                    style={"fontSize": "2rem", "lineHeight": "1.0", "letterSpacing": "-0.03em"},
+                    style={
+                        "fontSize": "2rem",
+                        "lineHeight": "1.0",
+                        "letterSpacing": "-0.03em",
+                    },
                 ),
                 html.Div(subtitle, className="text-muted small mt-2") if subtitle else None,
             ]
@@ -285,7 +287,12 @@ def pro_card():
                     },
                     className="mb-4",
                 ),
-                dbc.Button("Desbloquear análisis completo", color="primary", className="rounded-pill px-4"),
+                dbc.Button(
+                    "Desbloquear análisis completo",
+                    id="open-pro-modal-btn",
+                    color="primary",
+                    className="rounded-pill px-4",
+                ),
             ]
         ),
         className="border-0 shadow-sm rounded-4 h-100",
@@ -324,19 +331,17 @@ def locked_preview():
                         ),
                     ],
                     style={
-                        "position": "relative",
                         "borderRadius": "18px",
                         "padding": "1rem",
                         "background": "#f8fafc",
                         "border": "1px solid #e9eef5",
                     },
                 ),
-                html.Div(
-                    dbc.Button(
-                        "Quiero la versión PRO",
-                        color="dark",
-                        className="rounded-pill px-4 mt-4 w-100",
-                    )
+                dbc.Button(
+                    "Quiero la versión PRO",
+                    id="open-pro-modal-btn-2",
+                    color="dark",
+                    className="rounded-pill px-4 mt-4 w-100",
                 ),
             ]
         ),
@@ -351,18 +356,20 @@ def email_capture_box():
                 section_eyebrow("CAPTACIÓN"),
                 html.H3("Déjame tu email y te aviso cuando esté lista la PRO", className="h5 fw-bold mb-3"),
                 html.P(
-                    "Perfecto si quieres validar interés antes de montar pagos o acceso privado.",
+                    "Perfecto para validar interés antes de montar pagos o acceso privado.",
                     className="text-muted mb-3",
                 ),
                 dbc.InputGroup(
                     [
                         dbc.Input(
+                            id="email-pro-input",
                             type="email",
                             placeholder="Tu email",
                             class_name="rounded-start-pill",
                         ),
                         dbc.Button(
                             "Avisadme",
+                            id="email-pro-submit-btn",
                             color="primary",
                             className="rounded-end-pill px-4",
                         ),
@@ -379,11 +386,62 @@ def email_capture_box():
     )
 
 
+def pro_modal():
+    return dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.ModalTitle("Desbloquear análisis PRO")),
+            dbc.ModalBody(
+                [
+                    html.P(
+                        "Aquí puedes convertir el interés en lead o venta. Primero te recomiendo medir cuánta gente hace clic aquí.",
+                        className="text-muted",
+                    ),
+                    html.Div(
+                        [
+                            html.Div("Qué incluiría la PRO", className="fw-bold mb-2"),
+                            html.Ul(
+                                [
+                                    html.Li("Rentabilidad a 10 años"),
+                                    html.Li("Escenarios conservador / base / optimista"),
+                                    html.Li("Amortización hipotecaria"),
+                                    html.Li("Revalorización del inmueble"),
+                                    html.Li("PDF descargable"),
+                                ],
+                                className="text-muted",
+                            ),
+                        ],
+                        className="mb-3",
+                    ),
+                    dbc.Input(
+                        id="modal-email-input",
+                        type="email",
+                        placeholder="Tu email",
+                        class_name="mb-3",
+                    ),
+                    dbc.Button(
+                        "Quiero acceso prioritario",
+                        id="modal-email-submit-btn",
+                        color="primary",
+                        className="rounded-pill px-4 w-100",
+                    ),
+                ]
+            ),
+        ],
+        id="pro-modal",
+        is_open=False,
+        centered=True,
+        size="lg",
+    )
+
+
 # =========================================================
 # LAYOUT
 # =========================================================
 layout = dbc.Container(
     [
+        dcc.Store(id="gtag-pro-open-store"),
+        dcc.Store(id="gtag-email-submit-store"),
+
         dbc.Row(
             [
                 dbc.Col(
@@ -422,12 +480,14 @@ layout = dbc.Container(
                             [
                                 dbc.Button(
                                     "Probar gratis",
+                                    id="hero-cta-gratis",
                                     href="#calculadora-rentabilidad",
                                     color="primary",
                                     className="rounded-pill px-4 me-2 mb-2",
                                 ),
                                 dbc.Button(
                                     "Ver hipoteca",
+                                    id="hero-cta-hipoteca",
                                     href=HIPOTECA_URL,
                                     color="light",
                                     className="rounded-pill px-4 border mb-2",
@@ -663,8 +723,58 @@ layout = dbc.Container(
                     lg=12,
                 ),
             ],
-            class_name="pb-4",
+            class_name="pb-5",
         ),
+
+        pro_modal(),
+
+        html.Div(
+            dbc.Container(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.Div(
+                                [
+                                    html.Div("¿Quieres el análisis completo?", className="fw-bold"),
+                                    html.Div(
+                                        "Desbloquea la versión PRO con escenarios, amortización y PDF.",
+                                        className="small text-muted",
+                                    ),
+                                ]
+                            ),
+                            xs=7,
+                            md=8,
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Quiero la PRO",
+                                id="sticky-pro-cta",
+                                color="primary",
+                                className="rounded-pill w-100",
+                            ),
+                            xs=5,
+                            md=4,
+                        ),
+                    ],
+                    class_name="align-items-center g-2",
+                ),
+                fluid=False,
+            ),
+            style={
+                "position": "fixed",
+                "left": "0",
+                "right": "0",
+                "bottom": "0",
+                "zIndex": "1030",
+                "background": "rgba(255,255,255,0.96)",
+                "backdropFilter": "blur(8px)",
+                "borderTop": "1px solid #e9eef5",
+                "padding": "0.8rem 0.9rem",
+                "boxShadow": "0 -6px 24px rgba(16,24,40,0.08)",
+            },
+        ),
+
+        html.Div(style={"height": "88px"}),
 
         build_disclaimer() if callable(build_disclaimer) else html.Div(),
     ],
@@ -674,7 +784,83 @@ layout = dbc.Container(
 
 
 # =========================================================
-# CALLBACK
+# CALLBACKS UI
+# =========================================================
+@callback(
+    Output("pro-modal", "is_open"),
+    Input("open-pro-modal-btn", "n_clicks"),
+    Input("open-pro-modal-btn-2", "n_clicks"),
+    Input("sticky-pro-cta", "n_clicks"),
+    State("pro-modal", "is_open"),
+    prevent_initial_call=True,
+)
+def toggle_modal(btn1, btn2, btn3, is_open):
+    return not is_open
+
+
+@callback(
+    Output("gtag-pro-open-store", "data"),
+    Input("open-pro-modal-btn", "n_clicks"),
+    Input("open-pro-modal-btn-2", "n_clicks"),
+    Input("sticky-pro-cta", "n_clicks"),
+    prevent_initial_call=True,
+)
+def track_pro_interest(btn1, btn2, btn3):
+    return {"event": "click_rentabilidad_pro"}
+
+
+@callback(
+    Output("gtag-email-submit-store", "data"),
+    Input("email-pro-submit-btn", "n_clicks"),
+    Input("modal-email-submit-btn", "n_clicks"),
+    State("email-pro-input", "value"),
+    State("modal-email-input", "value"),
+    prevent_initial_call=True,
+)
+def track_email_interest(btn1, btn2, email1, email2):
+    email = email2 if email2 else email1
+    return {
+        "event": "submit_rentabilidad_pro_email",
+        "has_email": bool(email),
+    }
+
+
+clientside_callback(
+    """
+    function(data) {
+        if (!data) { return window.dash_clientside.no_update; }
+        if (window.gtag) {
+            window.gtag('event', data.event, {
+                page: 'rentabilidad_alquiler'
+            });
+        }
+        return '';
+    }
+    """,
+    Output("hero-cta-gratis", "title"),
+    Input("gtag-pro-open-store", "data"),
+)
+
+clientside_callback(
+    """
+    function(data) {
+        if (!data) { return window.dash_clientside.no_update; }
+        if (window.gtag) {
+            window.gtag('event', data.event, {
+                page: 'rentabilidad_alquiler',
+                has_email: data.has_email ? 'yes' : 'no'
+            });
+        }
+        return '';
+    }
+    """,
+    Output("hero-cta-hipoteca", "title"),
+    Input("gtag-email-submit-store", "data"),
+)
+
+
+# =========================================================
+# CALLBACK PRINCIPAL
 # =========================================================
 @callback(
     Output("metric_bruta", "children"),
