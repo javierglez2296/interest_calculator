@@ -446,20 +446,33 @@ def grafico_breakdown(data, cuota_anual_hipoteca=0):
     )
     return fig
 
-
-def grafico_comparativa(inversion_total, rent_neta_sin_deuda, rent_sobre_capital, sp500_return, usar_hipoteca):
+def grafico_comparativa(
+    inversion_total,
+    capital_aportado,
+    rent_neta_sin_deuda,
+    rent_sobre_capital,
+    sp500_return,
+    usar_hipoteca,
+):
     valor_sin_deuda = inversion_total * (1 + rent_neta_sin_deuda / 100.0)
-    valor_sp500 = inversion_total * (1 + sp500_return / 100.0)
+    valor_sp500_sin_deuda = inversion_total * (1 + sp500_return / 100.0)
 
     x = ["Alquiler sin deuda", "S&P 500"]
-    y = [valor_sin_deuda, valor_sp500]
-    texts = [fmt_eur(valor_sin_deuda, 0), fmt_eur(valor_sp500, 0)]
+    y = [valor_sin_deuda, valor_sp500_sin_deuda]
+    texts = [fmt_eur(valor_sin_deuda, 0), fmt_eur(valor_sp500_sin_deuda, 0)]
 
     if usar_hipoteca:
-        valor_con_hipoteca = inversion_total * (1 + rent_sobre_capital / 100.0)
-        x.insert(1, "Alquiler con deuda")
-        y.insert(1, valor_con_hipoteca)
-        texts.insert(1, fmt_eur(valor_con_hipoteca, 0))
+        valor_con_hipoteca = capital_aportado * (1 + rent_sobre_capital / 100.0)
+        valor_sp500_con_deuda = capital_aportado * (1 + sp500_return / 100.0)
+
+        x = ["Alquiler sin deuda", "Alquiler con deuda", "S&P 500 sin deuda", "S&P 500 con mismo capital"]
+        y = [valor_sin_deuda, valor_con_hipoteca, valor_sp500_sin_deuda, valor_sp500_con_deuda]
+        texts = [
+            fmt_eur(valor_sin_deuda, 0),
+            fmt_eur(valor_con_hipoteca, 0),
+            fmt_eur(valor_sp500_sin_deuda, 0),
+            fmt_eur(valor_sp500_con_deuda, 0),
+        ]
 
     fig = go.Figure()
     fig.add_bar(x=x, y=y, text=texts, textposition="outside")
@@ -1382,7 +1395,14 @@ def update_calculator(
         badge_estado(etiqueta, color),
         signal_text,
         grafico_breakdown(base, cuota_anual if usar_deuda else 0.0),
-        grafico_comparativa(base["inversion_total"], base["rent_neta"], rent_sobre_capital, sp500_return, usar_deuda),
+        grafico_comparativa(
+    base["inversion_total"],
+    capital_aportado,
+    base["rent_neta"],
+    rent_sobre_capital,
+    sp500_return,
+    usar_deuda,
+),
         html.Ul(insights, className="mb-0"),
     )
 
