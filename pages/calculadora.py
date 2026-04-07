@@ -1098,143 +1098,31 @@ clientside_callback(
 )
 
 # =========================================================
-# CARGA DESDE URL
+# GUARDAR SIMULACIONES
 # =========================================================
 @callback(
-    Output("ic-capital-inicial", "value"),
-    Output("ic-aportacion", "value"),
-    Output("ic-aportacion-tipo", "value"),
-    Output("ic-anios", "value"),
-    Output("ic-rentabilidad", "value"),
-    Output("ic-inflacion", "value"),
-    Output("ic-comision", "value"),
-    Output("ic-scenario", "value"),
-    Input("ic-url", "search"),
-    prevent_initial_call=False,
-)
-def cargar_desde_url(search):
-    defaults = {
-        "capital": "10000",
-        "aportacion": "300",
-        "tipo": "mensual",
-        "anios": "20",
-        "rent": "7",
-        "infl": "2",
-        "fee": "0.2",
-        "escenario": "base",
-    }
-
-    if not search:
-        return (
-            defaults["capital"],
-            defaults["aportacion"],
-            defaults["tipo"],
-            defaults["anios"],
-            defaults["rent"],
-            defaults["infl"],
-            defaults["fee"],
-            defaults["escenario"],
-        )
-
-    qs = parse_qs(search.lstrip("?"))
-
-    capital = qs.get("capital", [defaults["capital"]])[0]
-    aportacion = qs.get("aportacion", [defaults["aportacion"]])[0]
-    tipo = qs.get("tipo", [defaults["tipo"]])[0]
-    anios = qs.get("anios", [defaults["anios"]])[0]
-    rent = qs.get("rent", [defaults["rent"]])[0]
-    infl = qs.get("infl", [defaults["infl"]])[0]
-    fee = qs.get("fee", [defaults["fee"]])[0]
-    escenario = qs.get("escenario", [defaults["escenario"]])[0]
-
-    if tipo not in {"mensual", "anual"}:
-        tipo = defaults["tipo"]
-    if escenario not in {"conservador", "base", "optimista"}:
-        escenario = defaults["escenario"]
-
-    return capital, aportacion, tipo, anios, rent, infl, fee, escenario
-
-
-# =========================================================
-# PRESETS DE ESCENARIO
-# =========================================================
-@callback(
-    Output("ic-rentabilidad", "value", allow_duplicate=True),
-    Output("ic-inflacion", "value", allow_duplicate=True),
-    Output("ic-comision", "value", allow_duplicate=True),
-    Input("ic-scenario", "value"),
+    Output("saved-simulations-store", "data"),
+    Output("save-simulation-message", "children"),
+    Output("save-simulation-name", "value"),
+    Input("save-simulation-btn", "n_clicks"),
+    State("saved-simulations-store", "data"),
+    State("save-simulation-name", "value"),
+    State("ic-capital-inicial", "value"),
+    State("ic-aportacion", "value"),
+    State("ic-aportacion-tipo", "value"),
+    State("ic-anios", "value"),
+    State("ic-rentabilidad", "value"),
+    State("ic-inflacion", "value"),
+    State("ic-comision", "value"),
+    State("ic-scenario", "value"),
     prevent_initial_call=True,
 )
-def aplicar_escenario(scenario):
-    preset = scenario_defaults(scenario)
-    return preset["rentabilidad"], preset["inflacion"], preset["comision"]
-
-
-# =========================================================
-# ENLACE COMPARTIBLE
-# =========================================================
-@callback(
-    Output("ic-share-link", "value"),
-    Input("ic-capital-inicial", "value"),
-    Input("ic-aportacion", "value"),
-    Input("ic-aportacion-tipo", "value"),
-    Input("ic-anios", "value"),
-    Input("ic-rentabilidad", "value"),
-    Input("ic-inflacion", "value"),
-    Input("ic-comision", "value"),
-    Input("ic-scenario", "value"),
-)
-def generar_share_link(capital, aportacion, aportacion_tipo, anios, rentabilidad, inflacion, comision, scenario):
-    params = {
-        "capital": capital or "",
-        "aportacion": aportacion or "",
-        "tipo": aportacion_tipo or "mensual",
-        "anios": anios or "",
-        "rent": rentabilidad or "",
-        "infl": inflacion or "",
-        "fee": comision or "",
-        "escenario": scenario or "base",
-    }
-    return f"https://interescompuesto.app/calculadora?{urlencode(params)}"
-
-
-# =========================================================
-# CALLBACK PRINCIPAL
-# =========================================================
-@callback(
-    Output("ic-quick-stat-1", "children"),
-    Output("ic-quick-stat-2", "children"),
-    Output("ic-quick-stat-3", "children"),
-    Output("ic-quick-stat-4", "children"),
-    Output("ic-resultado-final", "children"),
-    Output("ic-total-aportado", "children"),
-    Output("ic-ganancia", "children"),
-    Output("ic-grafico", "figure"),
-    Output("ic-mensaje-emocional", "children"),
-    Output("ic-comparativa", "children"),
-    Output("ic-start-delay-comparison", "children"),
-    Output("ic-interpretacion", "children"),
-    Output("ic-tabla-anual", "children"),
-    Output("ic-donut", "figure"),
-    Output("ic-insights", "children"),
-    Output("ic-breakdown-bars", "figure"),
-    Output("ic-cash-comparison-copy", "children"),
-    Output("ic-advice-block", "children"),
-    Output("ic-evolucion-store", "data"),
-    Input("ic-boton", "n_clicks"),
-    Input("ic-capital-inicial", "value"),
-    Input("ic-aportacion", "value"),
-    Input("ic-aportacion-tipo", "value"),
-    Input("ic-anios", "value"),
-    Input("ic-rentabilidad", "value"),
-    Input("ic-inflacion", "value"),
-    Input("ic-comision", "value"),
-    Input("ic-scenario", "value"),
-)
-def actualizar_calculadora(
-    _,
+def save_interes_compuesto_simulation(
+    n_clicks,
+    store,
+    nombre,
     capital_inicial,
-    aportacion_input,
+    aportacion,
     aportacion_tipo,
     anios,
     rentabilidad,
@@ -1242,426 +1130,103 @@ def actualizar_calculadora(
     comision,
     scenario,
 ):
-    capital_inicial = parse_number(capital_inicial)
-    aportacion_raw = parse_number(aportacion_input)
-    anios = int(anios or 0)
-    rentabilidad_pct = parse_number(rentabilidad)
-    inflacion_pct = parse_number(inflacion)
-    comision_pct = parse_number(comision)
+    if not n_clicks:
+        return no_update, no_update, no_update
 
-    rentabilidad = rentabilidad_pct / 100
-    inflacion = inflacion_pct / 100
-    comision = comision_pct / 100
+    data = {
+        "capital_inicial": capital_inicial,
+        "aportacion": aportacion,
+        "aportacion_tipo": aportacion_tipo,
+        "anios": anios,
+        "rentabilidad": rentabilidad,
+        "inflacion": inflacion,
+        "comision": comision,
+        "scenario": scenario,
+    }
 
-    aportacion_mensual = aportacion_raw / 12 if aportacion_tipo == "anual" else aportacion_raw
-    aportacion_anual_equiv = aportacion_mensual * 12
-
-    evolucion = calcular_interes_compuesto(
-        capital_inicial=capital_inicial,
-        aportacion_mensual=aportacion_mensual,
-        años=anios,
-        rentabilidad_anual=rentabilidad,
-        inflacion=inflacion,
-        comision=comision,
+    updated_store = add_simulation(
+        store=store,
+        calculator_key="interes_compuesto",
+        nombre=nombre,
+        data=data,
     )
-
-    if not evolucion:
-        empty = html.Div()
-        empty_fig = build_empty_figure("Introduce datos válidos para ver la evolución")
-        return (
-            summary_stat_card("Capital inicial", "0 €"),
-            summary_stat_card("Aportación", "0 €"),
-            summary_stat_card("Rentabilidad", "0 %"),
-            summary_stat_card("Horizonte", "0 años"),
-            metric_card("Valor final", "0 €", "Estimación nominal final"),
-            metric_card("Total aportado", "0 €", "Lo que habrías invertido"),
-            metric_card("Ganancia potencial", "0 €", "Crecimiento estimado"),
-            empty_fig,
-            "",
-            "",
-            "",
-            "",
-            empty,
-            build_empty_figure("Calcula tu simulación para ver la composición final", height=320),
-            "",
-            build_empty_figure("Calcula tu simulación para comparar alternativas", height=360),
-            "",
-            "",
-            [],
-        )
-
-    anos = [x["año"] for x in evolucion]
-    total = [x["total"] for x in evolucion]
-    aportado_hist = [x["aportado"] for x in evolucion]
-    real = [x["real"] for x in evolucion]
-
-    valor_final = total[-1]
-    total_aportado = aportado_hist[-1]
-    ganancia = valor_final - total_aportado
-
-    evolucion_100 = calcular_interes_compuesto(
-        capital_inicial=capital_inicial,
-        aportacion_mensual=aportacion_mensual + 100,
-        años=anios,
-        rentabilidad_anual=rentabilidad,
-        inflacion=inflacion,
-        comision=comision,
-    )
-
-    evolucion_200 = calcular_interes_compuesto(
-        capital_inicial=capital_inicial,
-        aportacion_mensual=aportacion_mensual + 200,
-        años=anios,
-        rentabilidad_anual=rentabilidad,
-        inflacion=inflacion,
-        comision=comision,
-    )
-
-    valor_100 = evolucion_100[-1]["total"] if evolucion_100 else 0
-    valor_200 = evolucion_200[-1]["total"] if evolucion_200 else 0
-
-    diferencia_100 = valor_100 - valor_final
-    diferencia_200 = valor_200 - valor_final
-
-    anios_espera = 5
-    anios_retrasados = max(anios - anios_espera, 0)
-
-    evolucion_tarde = (
-        calcular_interes_compuesto(
-            capital_inicial=capital_inicial,
-            aportacion_mensual=aportacion_mensual,
-            años=anios_retrasados,
-            rentabilidad_anual=rentabilidad,
-            inflacion=inflacion,
-            comision=comision,
-        )
-        if anios_retrasados > 0
-        else []
-    )
-
-    valor_tarde = evolucion_tarde[-1]["total"] if evolucion_tarde else 0
-    diferencia_por_esperar = valor_final - valor_tarde
-
-    evolucion_cash = cash_evolution(
-        capital_inicial=capital_inicial,
-        aportacion_mensual=aportacion_mensual,
-        anios=anios,
-        inflacion=inflacion,
-    )
-    valor_cash = evolucion_cash[-1]["total"] if evolucion_cash else capital_inicial
-    diferencia_vs_cash = valor_final - valor_cash
-
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=anos,
-            y=aportado_hist,
-            mode="lines",
-            name="Capital aportado",
-            line=dict(width=3),
-            hovertemplate="Año %{x}<br>Aportado: %{y:,.2f} €<extra></extra>",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=anos,
-            y=total,
-            mode="lines",
-            name="Valor total",
-            line=dict(width=4),
-            hovertemplate="Año %{x}<br>Valor total: %{y:,.2f} €<extra></extra>",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=anos,
-            y=real,
-            mode="lines",
-            name="Valor real",
-            line=dict(width=3, dash="dot"),
-            hovertemplate="Año %{x}<br>Valor real: %{y:,.2f} €<extra></extra>",
-        )
-    )
-
-    fig.update_layout(
-        template="plotly_white",
-        margin=dict(l=10, r=10, t=20, b=10),
-        height=440,
-        xaxis_title="Años",
-        yaxis_title="Euros",
-        legend_title="",
-        hovermode="x unified",
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-    )
-    fig.update_xaxes(showgrid=False, zeroline=False, tickfont=dict(size=12), title_font=dict(size=13))
-    fig.update_yaxes(gridcolor="rgba(15, 23, 42, 0.08)", zeroline=False, tickfont=dict(size=12), title_font=dict(size=13))
-
-    donut = build_donut_figure(total_aportado, ganancia)
-    bar_fig = build_breakdown_bars(total_aportado, ganancia, valor_cash)
-
-    quick_1 = summary_stat_card(
-        "Capital inicial",
-        formatear_euros_es(capital_inicial),
-        "Punto de partida",
-    )
-    quick_2 = summary_stat_card(
-        "Aportación",
-        formatear_euros_es(aportacion_raw),
-        "Mensual" if aportacion_tipo == "mensual" else "Anual",
-    )
-    quick_3 = summary_stat_card(
-        "Rentabilidad anual",
-        f"{rentabilidad_pct:.2f} %",
-        f"Escenario: {scenario.capitalize()}",
-    )
-    quick_4 = summary_stat_card(
-        "Horizonte temporal",
-        f"{anios} años",
-        f"Inflación {inflacion_pct:.2f} % · Comisión {comision_pct:.2f} %",
-    )
-
-    mensaje = dbc.Card(
-        dbc.CardBody(
-            [
-                html.Div(
-                    "Estimación principal",
-                    className="mb-2",
-                    style={
-                        "fontSize": "0.9rem",
-                        "fontWeight": "700",
-                        "color": "#667085",
-                        "textTransform": "uppercase",
-                        "letterSpacing": "0.07em",
-                    },
-                ),
-                html.H3(
-                    f"Podrías alcanzar {formatear_euros_es(valor_final)}",
-                    className="fw-bold mb-2",
-                    style={
-                        "fontSize": "clamp(1.5rem, 2.2vw, 2.2rem)",
-                        "color": "#0f172a",
-                        "lineHeight": "1.2",
-                    },
-                ),
-                html.P(
-                    f"Habrías aportado {formatear_euros_es(total_aportado)} y el crecimiento potencial sería de {formatear_euros_es(ganancia)}.",
-                    className="mb-0",
-                    style={
-                        "fontSize": "1rem",
-                        "color": "#475467",
-                        "lineHeight": "1.7",
-                    },
-                ),
-            ]
-        ),
-        className="border-0 rounded-4",
-        style={
-            "background": "linear-gradient(135deg, #ffffff 0%, #f7fbff 100%)",
-            "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.07)",
-        },
-    )
-
-    comparativa = html.Div(
-        [
-            section_eyebrow("Escenarios alternativos"),
-            html.H4(
-                "Cómo cambia el resultado si aumentas tu aportación",
-                className="fw-bold mb-3",
-                style={"color": "#0f172a"},
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        scenario_card(
-                            "Escenario actual",
-                            formatear_euros_es(valor_final),
-                            f"{formatear_euros_es(aportacion_mensual)} al mes ({formatear_euros_es(aportacion_anual_equiv)} al año)",
-                            False,
-                        ),
-                        md=4,
-                        className="mb-3",
-                    ),
-                    dbc.Col(
-                        scenario_card(
-                            "+100 €/mes",
-                            formatear_euros_es(valor_100),
-                            f"{formatear_euros_es(diferencia_100)} más frente al escenario actual",
-                            True,
-                        ),
-                        md=4,
-                        className="mb-3",
-                    ),
-                    dbc.Col(
-                        scenario_card(
-                            "+200 €/mes",
-                            formatear_euros_es(valor_200),
-                            f"{formatear_euros_es(diferencia_200)} más frente al escenario actual",
-                            True,
-                        ),
-                        md=4,
-                        className="mb-3",
-                    ),
-                ]
-            ),
-        ]
-    )
-
-    comparativa_tiempo = html.Div(
-        [
-            section_eyebrow("Impacto del tiempo"),
-            html.H4(
-                "Empezar hoy vs esperar 5 años",
-                className="fw-bold mb-3",
-                style={"color": "#0f172a"},
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        scenario_card(
-                            "Empezando hoy",
-                            formatear_euros_es(valor_final),
-                            f"Invirtiendo durante {anios} años",
-                            True,
-                        ),
-                        md=6,
-                        className="mb-3",
-                    ),
-                    dbc.Col(
-                        scenario_card(
-                            "Esperando 5 años",
-                            formatear_euros_es(valor_tarde),
-                            (
-                                f"Podrías acabar con {formatear_euros_es(diferencia_por_esperar)} menos"
-                                if anios_retrasados > 0
-                                else "No hay horizonte suficiente para comparar"
-                            ),
-                            False,
-                        ),
-                        md=6,
-                        className="mb-3",
-                    ),
-                ]
-            ),
-        ]
-    )
-
-    porcentaje_ganancia = (ganancia / total_aportado * 100) if total_aportado > 0 else 0
-    multiple_capital = (valor_final / capital_inicial) if capital_inicial > 0 else 0
-
-    insights = dbc.Card(
-        dbc.CardBody(
-            [
-                section_eyebrow("Insights clave"),
-                html.H4(
-                    "Lecturas rápidas de tu simulación",
-                    className="fw-bold mb-3",
-                    style={"color": "#0f172a"},
-                ),
-                html.Ul(
-                    [
-                        html.Li(
-                            f"Tu aportación equivalente sería de {formatear_euros_es(aportacion_anual_equiv)} al año."
-                        ),
-                        html.Li(
-                            f"El crecimiento estimado representa aproximadamente un {porcentaje_ganancia:.1f} % sobre lo aportado."
-                        ),
-                        html.Li(
-                            f"El capital final sería unas {multiple_capital:.2f} veces tu capital inicial."
-                            if capital_inicial > 0
-                            else "No se puede calcular el múltiplo sobre capital inicial porque es 0."
-                        ),
-                        html.Li(
-                            "A horizontes largos, el tiempo y la constancia suelen pesar más que intentar acertar el momento perfecto."
-                        ),
-                    ],
-                    style={
-                        "paddingLeft": "1.2rem",
-                        "marginBottom": "0",
-                        "color": "#475467",
-                        "lineHeight": "1.8",
-                        "fontSize": "1rem",
-                    },
-                ),
-            ]
-        ),
-        className="border-0 rounded-4",
-        style={
-            "background": "#ffffff",
-            "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
-        },
-    )
-
-    interpretacion = html.Ul(
-        [
-            html.Li(
-                f"Si alcanzaras {formatear_euros_es(valor_final)}, una parte importante no vendría de lo aportado, sino del crecimiento acumulado con el tiempo."
-            ),
-            html.Li(
-                "El tiempo suele ser la variable más poderosa. Empezar antes puede tener más impacto que intentar optimizar cada detalle desde el principio."
-            ),
-            html.Li(
-                "Subir ligeramente la aportación periódica puede producir una diferencia muy significativa cuando se mantiene durante años."
-            ),
-            html.Li(
-                "La inflación y las comisiones reducen el resultado real, así que conviene vigilar costes y pensar siempre en términos de largo plazo."
-            ),
-        ],
-        style={
-            "paddingLeft": "1.2rem",
-            "marginBottom": "0",
-            "color": "#475467",
-            "lineHeight": "1.8",
-            "fontSize": "1rem",
-        },
-    )
-
-    cash_copy = html.P(
-        (
-            f"Con esta simulación, invertir te llevaría a {formatear_euros_es(valor_final)}, "
-            f"frente a {formatear_euros_es(valor_cash)} si simplemente fueras acumulando el dinero sin rentabilidad. "
-            f"La diferencia sería de {formatear_euros_es(diferencia_vs_cash)}."
-        ),
-        className="mb-0 mt-3",
-        style={"color": "#475467", "lineHeight": "1.7"},
-    )
-
-    tabla_anual = build_yearly_table(evolucion)
-    advice_block = build_advice_block(valor_final, total_aportado, anios, aportacion_mensual, ganancia)
 
     return (
-        quick_1,
-        quick_2,
-        quick_3,
-        quick_4,
-        metric_card("Valor final", formatear_euros_es(valor_final), "Estimación nominal al final del periodo", True),
-        metric_card("Total aportado", formatear_euros_es(total_aportado), "Dinero que habrías puesto tú directamente"),
-        metric_card("Ganancia potencial", formatear_euros_es(ganancia), "Crecimiento estimado generado por la inversión", True),
-        fig,
-        mensaje,
-        comparativa,
-        comparativa_tiempo,
-        interpretacion,
-        tabla_anual,
-        donut,
-        insights,
-        bar_fig,
-        cash_copy,
-        advice_block,
-        evolucion,
+        updated_store,
+        dbc.Alert(
+            "Simulación guardada correctamente.",
+            color="success",
+            className="rounded-4",
+        ),
+        "",
     )
 
 
-# =========================================================
-# DESCARGA CSV
-# =========================================================
+def render_saved_interes_compuesto(items):
+    if not items:
+        return dbc.Card(
+            dbc.CardBody(
+                html.Div(
+                    "Todavía no has guardado simulaciones.",
+                    className="text-muted",
+                )
+            ),
+            className="border-0 shadow-sm rounded-4",
+        )
+
+    cards = []
+    for item in items[:10]:
+        data = item.get("data", {})
+
+        capital = data.get("capital_inicial", "0")
+        aportacion = data.get("aportacion", "0")
+        aportacion_tipo = data.get("aportacion_tipo", "mensual")
+        anios = data.get("anios", "0")
+        rentabilidad = data.get("rentabilidad", "0")
+        inflacion = data.get("inflacion", "0")
+        comision = data.get("comision", "0")
+        scenario = data.get("scenario", "base")
+
+        subtitulo = (
+            f"Capital inicial: {capital} € · "
+            f"Aportación: {aportacion} €/{'mes' if aportacion_tipo == 'mensual' else 'año'} · "
+            f"Años: {anios} · "
+            f"Rentabilidad: {rentabilidad}% · "
+            f"Inflación: {inflacion}% · "
+            f"Comisión: {comision}% · "
+            f"Escenario: {str(scenario).capitalize()}"
+        )
+
+        cards.append(
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.Div(
+                            item.get("nombre", "Simulación"),
+                            className="fw-bold mb-1",
+                        ),
+                        html.Div(
+                            subtitulo,
+                            className="text-muted small",
+                            style={"lineHeight": "1.6"},
+                        ),
+                    ]
+                ),
+                className="border-0 shadow-sm rounded-4 mb-3",
+            )
+        )
+
+    return html.Div(cards)
+
+
 @callback(
-    Output("ic-download-csv", "data"),
-    Input("ic-download-btn", "n_clicks"),
-    State("ic-evolucion-store", "data"),
-    prevent_initial_call=True,
+    Output("saved-simulations-list", "children"),
+    Input("saved-simulations-store", "data"),
 )
+def update_saved_interes_compuesto_list(store):
+    store = normalize_store(store)
+    items = store.get("interes_compuesto", [])
+    return render_saved_interes_compuesto(items)
 def descargar_csv(n_clicks, evolucion_data):
     if not n_clicks or not evolucion_data:
         return dash.no_update
