@@ -142,7 +142,27 @@ def hero_metric(label, value):
         className="hero-metric",
     )
 
-
+def calculadora_card(titulo, descripcion, href, icono="📊", destacada=False):
+    return dbc.Col(
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.Div(icono, style={"fontSize": "1.8rem"}),
+                    html.H5(titulo, className="fw-bold mt-2"),
+                    html.P(descripcion, className="text-muted small"),
+                    dbc.Button(
+                        "Usar calculadora",
+                        href=href,
+                        color="primary" if destacada else "light",
+                        className="w-100 mt-2"
+                    )
+                ]
+            ),
+            class_name=f"shadow-sm border-0 rounded-4 h-100 {'border border-primary' if destacada else ''}"
+        ),
+        md=4,
+        className="mb-4"
+    )
 def book_card_v3(book):
     badges = []
 
@@ -330,7 +350,7 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         [
-                                            hero_metric("Herramientas", "3 calculadoras"),
+                                            hero_metric("Herramientas", "5 calculadoras"),
                                             hero_metric("Uso", "Gratis"),
                                             hero_metric("Enfoque", "100% práctico"),
                                         ],
@@ -406,6 +426,55 @@ layout = html.Div(
             ),
             className="home-hero",
         ),
+
+        # 🔥 NUEVA SECCIÓN (AQUÍ ESTÁ LA CLAVE)
+        dbc.Container(
+            [
+                html.H2("Todas las calculadoras", className="fw-bold mb-2"),
+                html.P(
+                    "Elige la herramienta que necesitas y toma mejores decisiones financieras.",
+                    className="text-muted mb-4",
+                ),
+
+                dbc.Row(
+                    [
+                        calculadora_card(
+                            "Interés compuesto",
+                            "Descubre cuánto crecerá tu dinero a largo plazo.",
+                            "/calculadora",
+                            "📈",
+                            True,
+                        ),
+                        calculadora_card(
+                            "FIRE",
+                            "Calcula cuándo podrás vivir de tus inversiones.",
+                            "/fire",
+                            "🔥",
+                        ),
+                        calculadora_card(
+                            "Hipoteca",
+                            "Simula tu cuota, intereses y coste total.",
+                            "/hipoteca",
+                            "🏠",
+                        ),
+                        calculadora_card(
+                            "Rentabilidad alquiler",
+                            "Analiza cashflow y rentabilidad inmobiliaria.",
+                            "/rentabilidad-alquiler",
+                            "💸",
+                        ),
+                        calculadora_card(
+                            "Comparador de inversión",
+                            "Compara inmobiliario vs bolsa vs otras opciones.",
+                            "/comparador",
+                            "⚖️",
+                        ),
+                    ]
+                ),
+            ],
+            className="py-5",
+        ),
+
         books_section_v3(),
         build_disclaimer(title="Empieza a dar el siguiente paso"),
     ]
