@@ -498,60 +498,45 @@ premium_section = html.Div(
                                 [
                                     html.Div("Versión premium", className="section-eyebrow mb-3"),
                                     html.H2(
-                                        "Accede antes que nadie a las calculadoras premium",
+                                        "Una plataforma más avanzada está en camino",
                                         className="fw-bold mb-3 premium-title",
                                     ),
                                     html.P(
-                                        "Estoy preparando herramientas más avanzadas, comparativas pro, escenarios, "
-                                        "guardado de simulaciones y extras para usuarios que quieran profundizar más.",
+                                        "Estoy preparando una versión premium con funciones avanzadas para quienes "
+                                        "quieran ir más allá de las simulaciones básicas.",
                                         className="text-muted mb-3",
                                     ),
                                     html.Ul(
                                         [
-                                            html.Li("Comparativas más avanzadas"),
-                                            html.Li("Escenarios y simulaciones extra"),
-                                            html.Li("Funciones premium con acceso anticipado"),
+                                            html.Li("Guardar simulaciones y escenarios"),
+                                            html.Li("Comparativas avanzadas"),
+                                            html.Li("Herramientas pro de inversión y vivienda"),
+                                            html.Li("Exportaciones y funcionalidades extra"),
                                         ],
                                         className="premium-list text-muted mb-0",
                                     ),
                                 ],
-                                lg=6,
+                                lg=8,
                                 className="mb-4 mb-lg-0",
                             ),
                             dbc.Col(
-                                [
-                                    dbc.Label(
-                                        "Déjame tu correo y te aviso cuando esté listo",
-                                        html_for="premium-email-input",
-                                        className="fw-semibold mb-2",
-                                    ),
-                                    dbc.Input(
-                                        id="premium-email-input",
-                                        type="email",
-                                        placeholder="tuemail@ejemplo.com",
-                                        className="premium-input mb-3",
-                                    ),
-                                    dbc.Checkbox(
-                                        id="premium-consent-checkbox",
-                                        value=True,
-                                        className="me-2",
-                                    ),
-                                    html.Span(
-                                        "Acepto que me contacten sobre el acceso a calculadoras premium.",
-                                        className="small text-muted",
-                                    ),
-                                    html.Div(
+                                html.Div(
+                                    [
+                                        html.Div("Próximamente", className="calc-card-badge mb-3"),
                                         dbc.Button(
-                                            "Quiero acceso premium",
-                                            id="premium-submit-btn",
+                                            "Ver versión premium",
+                                            href="/premium",
                                             color="primary",
-                                            className="rounded-pill px-4 py-2 fw-semibold mt-3",
-                                            n_clicks=0,
-                                        )
-                                    ),
-                                    html.Div(id="premium-form-message", className="mt-3"),
-                                ],
-                                lg=6,
+                                            className="rounded-pill px-4 py-2 fw-semibold w-100 mb-2",
+                                        ),
+                                        html.Div(
+                                            "Muy pronto podrás acceder a herramientas avanzadas de pago.",
+                                            className="small text-muted",
+                                        ),
+                                    ],
+                                    className="calc-highlight-box h-100 d-flex flex-column justify-content-center",
+                                ),
+                                lg=4,
                             ),
                         ]
                     )
