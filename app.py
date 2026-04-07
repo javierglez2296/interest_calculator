@@ -167,6 +167,7 @@ app.layout = html.Div(
     [
         dcc.Store(id="theme-store", storage_type="local"),
         dcc.Location(id="url", refresh=False),
+        dcc.Store(id="saved-simulations-store", storage_type="local"),
 
         build_navbar(),
 
