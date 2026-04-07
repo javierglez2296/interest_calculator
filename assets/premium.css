@@ -1,0 +1,110 @@
+.premium-hero-section {
+    background:
+        radial-gradient(circle at top left, rgba(13,110,253,0.10), transparent 35%),
+        radial-gradient(circle at top right, rgba(25,135,84,0.06), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
+
+.premium-hero-badge {
+    display: inline-block;
+    background: #eef4ff;
+    color: #0d6efd;
+    border: 1px solid #d7e6ff;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.premium-hero-title {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: #101828;
+    max-width: 14ch;
+}
+
+.premium-hero-subtitle {
+    font-size: 1.05rem;
+    color: #475467;
+    max-width: 68ch;
+}
+
+.premium-hero-side-card {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+}
+
+.premium-blocks-section,
+.premium-calcs-section,
+.premium-faq-section {
+    padding-top: 4rem;
+    padding-bottom: 1rem;
+    background: #ffffff;
+}
+
+.premium-transversal-section,
+.premium-cta-section {
+    padding-top: 1rem;
+    padding-bottom: 3rem;
+    background: #ffffff;
+}
+
+.premium-feature-card,
+.premium-calc-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.premium-feature-card:hover,
+.premium-calc-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 35px rgba(16,24,40,0.08);
+}
+
+.premium-feature-icon,
+.premium-calc-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+    border: 1px solid #d7e6ff;
+}
+
+.premium-mini-badge,
+.premium-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.38rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #0d6efd;
+    background: #eef4ff;
+    border: 1px solid #d7e6ff;
+}
+
+.premium-panel,
+.premium-cta-panel {
+    background:
+        radial-gradient(circle at top right, rgba(13,110,253,0.08), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+@media (max-width: 991px) {
+    .premium-hero-section {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    .premium-hero-title {
+        max-width: none;
+    }
+}
