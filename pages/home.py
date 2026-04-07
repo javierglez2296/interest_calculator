@@ -1,50 +1,30 @@
+import os
+import re
+import sqlite3
+from datetime import datetime
+
 import dash
-from dash import html
+from dash import html, dcc, Input, Output, State, callback, no_update
 import dash_bootstrap_components as dbc
+
 from components.disclaimer_afiliados import build_disclaimer
 
 dash.register_page(
     __name__,
     path="/",
-    title="Calculadora de interés compuesto, FIRE, hipoteca y rentabilidad | interescompuesto.app",
+    title="Calculadoras financieras: interés compuesto, FIRE, hipoteca y rentabilidad | interescompuesto.app",
     name="Inicio",
     description=(
         "Calculadoras financieras en español para inversión, FIRE, hipoteca, "
-        "rentabilidad de alquiler y comparación de alternativas."
+        "rentabilidad de alquiler y comparativas. Gratis, claras y prácticas."
     ),
 )
 
 # =========================================================
-# HELPERS
+# CONFIG
 # =========================================================
-def hero_metric(label, value):
-    return html.Div(
-        [
-            html.Div(label, className="hero-metric-label"),
-            html.Div(value, className="hero-metric-value"),
-        ],
-        className="hero-metric-card",
-    )
-
-
-def teaser_card(titulo, texto, href, boton_texto, icono="✨"):
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.Div(icono, className="teaser-icon mb-2"),
-                html.Div(titulo, className="fw-bold mb-1"),
-                html.Div(texto, className="text-muted small mb-3"),
-                dbc.Button(
-                    boton_texto,
-                    href=href,
-                    color="light",
-                    className="rounded-pill px-3 fw-semibold border",
-                ),
-            ]
-        ),
-        className="border-0 shadow-sm rounded-4 h-100 teaser-card",
-    )
-
+DB_PATH = os.getenv("PREMIUM_LEADS_DB_PATH", "premium_leads.db")
+EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 CALCULADORAS = [
     {
@@ -88,6 +68,78 @@ CALCULADORAS = [
         "destacada": False,
     },
 ]
+
+
+# =========================================================
+# DB
+# =========================================================
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS premium_waitlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            source TEXT,
+            consent INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_email_to_waitlist(email, source="home_premium", consent=True):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO premium_waitlist (email, source, consent, created_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (email.strip().lower(), source, 1 if consent else 0, datetime.utcnow().isoformat()),
+    )
+    inserted = cur.rowcount
+    conn.commit()
+    conn.close()
+    return inserted > 0
+
+
+init_db()
+
+
+# =========================================================
+# HELPERS UI
+# =========================================================
+def hero_metric(label, value):
+    return html.Div(
+        [
+            html.Div(label, className="hero-metric-label"),
+            html.Div(value, className="hero-metric-value"),
+        ],
+        className="hero-metric-card",
+    )
+
+
+def teaser_card(titulo, texto, href, boton_texto, icono="✨"):
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div(icono, className="teaser-icon mb-2"),
+                html.Div(titulo, className="fw-bold mb-1"),
+                html.Div(texto, className="text-muted small mb-3"),
+                dbc.Button(
+                    boton_texto,
+                    href=href,
+                    color="light",
+                    className="rounded-pill px-3 fw-semibold border",
+                ),
+            ]
+        ),
+        className="border-0 shadow-sm rounded-4 h-100 teaser-card",
+    )
 
 
 def calculadora_card(titulo, descripcion, href, icono="📊", badge=None, destacada=False):
@@ -162,6 +214,73 @@ def quick_action_card(title, text, href, button_text):
     )
 
 
+def book_card(titulo, texto, href, badge=None):
+    return dbc.Col(
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.Div(badge, className="book-badge mb-2") if badge else None,
+                    html.H3(titulo, className="h5 fw-bold mb-2"),
+                    html.P(texto, className="text-muted small mb-3"),
+                    dbc.Button(
+                        "Ver recomendación",
+                        href=href,
+                        target="_blank",
+                        rel="sponsored noopener noreferrer",
+                        color="light",
+                        className="rounded-pill border fw-semibold px-3",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
+        ),
+        lg=4,
+        md=6,
+        className="mb-4",
+    )
+
+
+def books_section_v3():
+    return html.Div(
+        dbc.Container(
+            [
+                html.Div("Libros recomendados", className="section-eyebrow"),
+                html.H2(
+                    "Aprende a invertir mejor",
+                    className="section-title fw-bold mb-3",
+                ),
+                html.P(
+                    "Una selección sencilla para mejorar mentalidad financiera, criterio de inversión y visión a largo plazo.",
+                    className="section-subtitle mb-4",
+                ),
+                dbc.Row(
+                    [
+                        book_card(
+                            "Padre Rico, Padre Pobre",
+                            "Un clásico para cambiar tu forma de pensar sobre dinero, activos y libertad financiera.",
+                            "https://amzn.to/4tzZ9aB",
+                            "Mentalidad",
+                        ),
+                        book_card(
+                            "The Psychology of Money",
+                            "Muy bueno para entender que invertir bien no va solo de números, sino de comportamiento.",
+                            "https://amzn.to/4vc02Yt",
+                            "Comportamiento",
+                        ),
+                        book_card(
+                            "El inversor inteligente",
+                            "Más exigente, pero una referencia atemporal para invertir con criterio.",
+                            "https://amzn.to/4sQ3Lt1",
+                            "Clásico",
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        className="books-section",
+    )
+
+
 # =========================================================
 # SECTIONS
 # =========================================================
@@ -195,7 +314,7 @@ hero_section = html.Div(
                                         className="rounded-pill px-4 py-2 fw-semibold me-2 mb-2",
                                     ),
                                     dbc.Button(
-                                        "Ver calculadora hipoteca",
+                                        "Ver hipoteca",
                                         href="/hipoteca",
                                         color="light",
                                         className="rounded-pill px-4 py-2 fw-semibold border mb-2",
@@ -228,8 +347,8 @@ hero_section = html.Div(
                                         className="h4 fw-bold mb-3",
                                     ),
                                     html.P(
-                                        "Explora las tres áreas clave de la web: inversión, independencia "
-                                        "financiera y compra de vivienda.",
+                                        "Explora las áreas clave de la web: inversión, independencia financiera, "
+                                        "compra de vivienda y análisis inmobiliario.",
                                         className="text-muted small mb-4",
                                     ),
                                     dbc.Row(
@@ -295,9 +414,8 @@ calculadoras_section = html.Div(
                                 className="section-title fw-bold mb-3",
                             ),
                             html.P(
-                                "Desde inversión a vivienda, pasando por independencia financiera, "
-                                "rentabilidad inmobiliaria y comparativas. Esta home debe funcionar "
-                                "como un hub real de herramientas.",
+                                "Desde inversión a vivienda, pasando por FIRE, rentabilidad inmobiliaria y comparativas. "
+                                "La home debe funcionar como un hub real de herramientas.",
                                 className="section-subtitle mb-0",
                             ),
                         ],
@@ -307,7 +425,7 @@ calculadoras_section = html.Div(
                         html.Div(
                             [
                                 html.Div(
-                                    "Más clics internos, más tiempo en página y más oportunidades de monetización.",
+                                    "Más clics internos, más tiempo en página y más opciones de monetización.",
                                     className="small text-muted mb-2",
                                 ),
                                 html.Div(
@@ -324,7 +442,8 @@ calculadoras_section = html.Div(
                 className="align-items-end mb-4",
             ),
             calculadoras_grid(),
-        ]
+        ],
+        id="todas-las-calculadoras",
     ),
     className="calculadoras-section",
 )
@@ -332,23 +451,14 @@ calculadoras_section = html.Div(
 quick_actions_section = html.Div(
     dbc.Container(
         [
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.Div("Empieza según tu objetivo", className="section-eyebrow"),
-                            html.H2(
-                                "No todas las personas buscan lo mismo",
-                                className="section-title fw-bold mb-3",
-                            ),
-                            html.P(
-                                "Te dejo accesos rápidos según el tipo de decisión que quieras tomar ahora.",
-                                className="section-subtitle mb-4",
-                            ),
-                        ],
-                        lg=8,
-                    ),
-                ]
+            html.Div("Empieza según tu objetivo", className="section-eyebrow"),
+            html.H2(
+                "No todo el mundo busca lo mismo",
+                className="section-title fw-bold mb-3",
+            ),
+            html.P(
+                "Te dejo accesos rápidos según el tipo de decisión que quieras tomar ahora.",
+                className="section-subtitle mb-4",
             ),
             dbc.Row(
                 [
@@ -375,6 +485,82 @@ quick_actions_section = html.Div(
         ]
     ),
     className="quick-actions-section",
+)
+
+premium_section = html.Div(
+    dbc.Container(
+        [
+            dbc.Card(
+                dbc.CardBody(
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    html.Div("Versión premium", className="section-eyebrow mb-3"),
+                                    html.H2(
+                                        "Accede antes que nadie a las calculadoras premium",
+                                        className="fw-bold mb-3 premium-title",
+                                    ),
+                                    html.P(
+                                        "Estoy preparando herramientas más avanzadas, comparativas pro, escenarios, "
+                                        "guardado de simulaciones y extras para usuarios que quieran profundizar más.",
+                                        className="text-muted mb-3",
+                                    ),
+                                    html.Ul(
+                                        [
+                                            html.Li("Comparativas más avanzadas"),
+                                            html.Li("Escenarios y simulaciones extra"),
+                                            html.Li("Funciones premium con acceso anticipado"),
+                                        ],
+                                        className="premium-list text-muted mb-0",
+                                    ),
+                                ],
+                                lg=6,
+                                className="mb-4 mb-lg-0",
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Label(
+                                        "Déjame tu correo y te aviso cuando esté listo",
+                                        html_for="premium-email-input",
+                                        className="fw-semibold mb-2",
+                                    ),
+                                    dbc.Input(
+                                        id="premium-email-input",
+                                        type="email",
+                                        placeholder="tuemail@ejemplo.com",
+                                        className="premium-input mb-3",
+                                    ),
+                                    dbc.Checkbox(
+                                        id="premium-consent-checkbox",
+                                        value=True,
+                                        className="me-2",
+                                    ),
+                                    html.Span(
+                                        "Acepto que me contacten sobre el acceso a calculadoras premium.",
+                                        className="small text-muted",
+                                    ),
+                                    html.Div(
+                                        dbc.Button(
+                                            "Quiero acceso premium",
+                                            id="premium-submit-btn",
+                                            color="primary",
+                                            className="rounded-pill px-4 py-2 fw-semibold mt-3",
+                                            n_clicks=0,
+                                        )
+                                    ),
+                                    html.Div(id="premium-form-message", className="mt-3"),
+                                ],
+                                lg=6,
+                            ),
+                        ]
+                    )
+                ),
+                className="border-0 shadow-sm rounded-4 premium-panel",
+            )
+        ]
+    ),
+    className="premium-section",
 )
 
 cta_section = html.Div(
@@ -529,9 +715,21 @@ layout = html.Div(
                 background: #ffffff;
             }
 
+            .premium-section {
+                padding-top: 0;
+                padding-bottom: 3rem;
+                background: #ffffff;
+            }
+
             .cta-section {
                 padding-bottom: 3rem;
                 background: #ffffff;
+            }
+
+            .books-section {
+                padding-top: 1rem;
+                padding-bottom: 3rem;
+                background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             }
 
             .section-eyebrow {
@@ -594,7 +792,8 @@ layout = html.Div(
                 border: 1px solid #d7e6ff;
             }
 
-            .calc-card-badge {
+            .calc-card-badge,
+            .book-badge {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -637,6 +836,26 @@ layout = html.Div(
                 box-shadow: 0 16px 35px rgba(16,24,40,0.08);
             }
 
+            .premium-panel {
+                background:
+                    radial-gradient(circle at top right, rgba(13,110,253,0.08), transparent 30%),
+                    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            }
+
+            .premium-title {
+                color: #101828;
+            }
+
+            .premium-list {
+                padding-left: 1.1rem;
+            }
+
+            .premium-input {
+                border-radius: 14px;
+                padding-top: 0.8rem;
+                padding-bottom: 0.8rem;
+            }
+
             .cta-panel {
                 background:
                     radial-gradient(circle at top right, rgba(13,110,253,0.08), transparent 28%),
@@ -661,11 +880,78 @@ layout = html.Div(
             """
         ),
         hero_section,
-        html.Div(id="todas-las-calculadoras"),
         calculadoras_section,
         quick_actions_section,
+        premium_section,
         cta_section,
         books_section_v3(),
         build_disclaimer(title="Empieza a dar el siguiente paso"),
     ]
 )
+
+# =========================================================
+# CALLBACKS
+# =========================================================
+@callback(
+    Output("premium-form-message", "children"),
+    Output("premium-email-input", "value"),
+    Input("premium-submit-btn", "n_clicks"),
+    State("premium-email-input", "value"),
+    State("premium-consent-checkbox", "value"),
+    prevent_initial_call=True,
+)
+def save_premium_lead(n_clicks, email, consent):
+    if not n_clicks:
+        return no_update, no_update
+
+    email = (email or "").strip().lower()
+
+    if not email:
+        return (
+            dbc.Alert("Introduce tu correo para apuntarte al acceso premium.", color="warning", className="rounded-4"),
+            no_update,
+        )
+
+    if not EMAIL_RE.match(email):
+        return (
+            dbc.Alert("El correo no parece válido. Revísalo e inténtalo de nuevo.", color="danger", className="rounded-4"),
+            no_update,
+        )
+
+    if not consent:
+        return (
+            dbc.Alert("Necesitas aceptar el aviso para que pueda guardarse tu solicitud.", color="warning", className="rounded-4"),
+            no_update,
+        )
+
+    try:
+        inserted = save_email_to_waitlist(email, source="home_premium", consent=True)
+
+        if inserted:
+            return (
+                dbc.Alert(
+                    "Perfecto. Te he apuntado para avisarte cuando esté lista la versión premium.",
+                    color="success",
+                    className="rounded-4",
+                ),
+                "",
+            )
+
+        return (
+            dbc.Alert(
+                "Ese correo ya estaba apuntado. Te avisaré cuando abra el acceso premium.",
+                color="info",
+                className="rounded-4",
+            ),
+            "",
+        )
+
+    except Exception:
+        return (
+            dbc.Alert(
+                "Ha habido un problema guardando tu correo. Inténtalo de nuevo en unos minutos.",
+                color="danger",
+                className="rounded-4",
+            ),
+            no_update,
+        )
