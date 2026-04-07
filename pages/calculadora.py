@@ -1,6 +1,7 @@
 import io
 from urllib.parse import urlencode, parse_qs
-
+from dash import no_update, ctx, ALL
+from utils.simulations import add_simulation, delete_simulation, normalize_store
 import dash
 from dash import (
     html,
@@ -1010,6 +1011,39 @@ layout = dbc.Container(
                         build_disclaimer(title="Más opciones para dar el siguiente paso"),
                     ],
                     lg=8,
+                ),
+            ],
+            className="gy-4",
+        ),
+
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div("Guardar simulación", className="fw-bold mb-2"),
+                                    dbc.Input(
+                                        id="save-simulation-name",
+                                        placeholder="Ej: Escenario 7% a 25 años",
+                                        className="mb-3",
+                                    ),
+                                    dbc.Button(
+                                        "Guardar",
+                                        id="save-simulation-btn",
+                                        color="primary",
+                                        className="rounded-pill fw-semibold",
+                                        n_clicks=0,
+                                    ),
+                                    html.Div(id="save-simulation-message", className="mt-3"),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 mb-4",
+                        ),
+                        html.Div(id="saved-simulations-list"),
+                    ],
+                    lg=12,
                 ),
             ],
             className="gy-4",
