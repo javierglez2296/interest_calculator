@@ -1,13 +1,9 @@
-import os
-import re
-import sqlite3
-from datetime import datetime
-
 import dash
-from dash import html, dcc, Input, Output, State, callback, no_update
+from dash import html
 import dash_bootstrap_components as dbc
 
 from components.disclaimer_afiliados import build_disclaimer
+
 
 dash.register_page(
     __name__,
@@ -21,11 +17,8 @@ dash.register_page(
 )
 
 # =========================================================
-# CONFIG
+# DATA
 # =========================================================
-DB_PATH = os.getenv("PREMIUM_LEADS_DB_PATH", "premium_leads.db")
-EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-
 CALCULADORAS = [
     {
         "titulo": "Interés compuesto",
@@ -69,45 +62,26 @@ CALCULADORAS = [
     },
 ]
 
-
-# =========================================================
-# DB
-# =========================================================
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS premium_waitlist (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            source TEXT,
-            consent INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
-
-
-def save_email_to_waitlist(email, source="home_premium", consent=True):
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT OR IGNORE INTO premium_waitlist (email, source, consent, created_at)
-        VALUES (?, ?, ?, ?)
-        """,
-        (email.strip().lower(), source, 1 if consent else 0, datetime.utcnow().isoformat()),
-    )
-    inserted = cur.rowcount
-    conn.commit()
-    conn.close()
-    return inserted > 0
-
-
-init_db()
+LIBROS = [
+    {
+        "titulo": "Padre Rico, Padre Pobre",
+        "texto": "Un clásico para cambiar tu forma de pensar sobre dinero, activos y libertad financiera.",
+        "href": "https://amzn.to/4tzZ9aB",
+        "badge": "Mentalidad",
+    },
+    {
+        "titulo": "The Psychology of Money",
+        "texto": "Muy bueno para entender que invertir bien no va solo de números, sino de comportamiento.",
+        "href": "https://amzn.to/4vc02Yt",
+        "badge": "Comportamiento",
+    },
+    {
+        "titulo": "El inversor inteligente",
+        "texto": "Más exigente, pero una referencia atemporal para invertir con criterio.",
+        "href": "https://amzn.to/4sQ3Lt1",
+        "badge": "Clásico",
+    },
+]
 
 
 # =========================================================
@@ -256,23 +230,12 @@ def books_section_v3():
                 dbc.Row(
                     [
                         book_card(
-                            "Padre Rico, Padre Pobre",
-                            "Un clásico para cambiar tu forma de pensar sobre dinero, activos y libertad financiera.",
-                            "https://amzn.to/4tzZ9aB",
-                            "Mentalidad",
-                        ),
-                        book_card(
-                            "The Psychology of Money",
-                            "Muy bueno para entender que invertir bien no va solo de números, sino de comportamiento.",
-                            "https://amzn.to/4vc02Yt",
-                            "Comportamiento",
-                        ),
-                        book_card(
-                            "El inversor inteligente",
-                            "Más exigente, pero una referencia atemporal para invertir con criterio.",
-                            "https://amzn.to/4sQ3Lt1",
-                            "Clásico",
-                        ),
+                            libro["titulo"],
+                            libro["texto"],
+                            libro["href"],
+                            libro["badge"],
+                        )
+                        for libro in LIBROS
                     ]
                 ),
             ]
@@ -599,9 +562,6 @@ cta_section = html.Div(
     className="cta-section",
 )
 
-# =========================================================
-# LAYOUT
-# =========================================================
 layout = html.Div(
     [
         hero_section,
@@ -613,70 +573,3 @@ layout = html.Div(
         build_disclaimer(title="Empieza a dar el siguiente paso"),
     ]
 )
-
-# =========================================================
-# CALLBACKS
-# =========================================================
-@callback(
-    Output("premium-form-message", "children"),
-    Output("premium-email-input", "value"),
-    Input("premium-submit-btn", "n_clicks"),
-    State("premium-email-input", "value"),
-    State("premium-consent-checkbox", "value"),
-    prevent_initial_call=True,
-)
-def save_premium_lead(n_clicks, email, consent):
-    if not n_clicks:
-        return no_update, no_update
-
-    email = (email or "").strip().lower()
-
-    if not email:
-        return (
-            dbc.Alert("Introduce tu correo para apuntarte al acceso premium.", color="warning", className="rounded-4"),
-            no_update,
-        )
-
-    if not EMAIL_RE.match(email):
-        return (
-            dbc.Alert("El correo no parece válido. Revísalo e inténtalo de nuevo.", color="danger", className="rounded-4"),
-            no_update,
-        )
-
-    if not consent:
-        return (
-            dbc.Alert("Necesitas aceptar el aviso para que pueda guardarse tu solicitud.", color="warning", className="rounded-4"),
-            no_update,
-        )
-
-    try:
-        inserted = save_email_to_waitlist(email, source="home_premium", consent=True)
-
-        if inserted:
-            return (
-                dbc.Alert(
-                    "Perfecto. Te he apuntado para avisarte cuando esté lista la versión premium.",
-                    color="success",
-                    className="rounded-4",
-                ),
-                "",
-            )
-
-        return (
-            dbc.Alert(
-                "Ese correo ya estaba apuntado. Te avisaré cuando abra el acceso premium.",
-                color="info",
-                className="rounded-4",
-            ),
-            "",
-        )
-
-    except Exception:
-        return (
-            dbc.Alert(
-                "Ha habido un problema guardando tu correo. Inténtalo de nuevo en unos minutos.",
-                color="danger",
-                className="rounded-4",
-            ),
-            no_update,
-        )
