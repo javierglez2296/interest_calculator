@@ -40,3 +40,23 @@ def add_simulation(store, calculator_key, nombre, data):
     simulation = build_simulation(nombre, data)
     store[calculator_key] = [simulation] + store[calculator_key]
     return store
+
+def delete_simulation(store, calculator_key, simulation_id):
+    """
+    Elimina una simulación por ID dentro de un tipo de calculadora.
+    """
+    store = normalize_store(store)
+
+    if calculator_key not in store:
+        return store
+
+    store[calculator_key] = [
+        sim for sim in store[calculator_key]
+        if sim.get("id") != simulation_id
+    ]
+
+    return store
+
+def get_simulations(store, calculator_key):
+    store = normalize_store(store)
+    return store.get(calculator_key, [])
