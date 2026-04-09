@@ -66,15 +66,13 @@ def parse_number(value):
     if s == "":
         return 0.0
 
-    # limpiar símbolos habituales
     s = (
         s.replace("€", "")
          .replace("%", "")
-         .replace("\u00a0", "")   # non-breaking space
+         .replace("\u00a0", "")
          .replace(" ", "")
     )
 
-    # si contiene . y , decidimos por la última aparición
     if "." in s and "," in s:
         if s.rfind(",") > s.rfind("."):
             # español: 1.234,56
@@ -83,18 +81,12 @@ def parse_number(value):
             # inglés: 1,234.56
             s = s.replace(",", "")
     elif "," in s:
-        # caso con solo coma:
-        # si hay una sola coma y parece decimal -> 12,5
-        # si no -> miles -> 1,234
         partes = s.split(",")
         if len(partes) == 2 and len(partes[1]) <= 2:
             s = s.replace(",", ".")
         else:
             s = s.replace(",", "")
     elif "." in s:
-        # caso con solo punto:
-        # si hay un solo punto y parece decimal -> 12.5
-        # si no -> miles -> 1.234
         partes = s.split(".")
         if len(partes) == 2 and len(partes[1]) <= 2:
             pass
@@ -360,7 +352,6 @@ def cuadro_amortizacion(capital, interes_anual, años):
         amortizacion = cuota - interes
         saldo -= amortizacion
 
-        # blindaje por redondeos al final
         if saldo < 0:
             amortizacion += saldo
             saldo = 0
