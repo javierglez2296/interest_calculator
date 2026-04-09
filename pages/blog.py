@@ -1,4 +1,4 @@
-from dash import html, register_page
+from dash import html, register_page, page_registry
 import dash_bootstrap_components as dbc
 
 register_page(
@@ -9,29 +9,64 @@ register_page(
     description="Artículos sobre interés compuesto, FIRE, inversión indexada e hipotecas."
 )
 
-ARTICULOS = [
-    {
-        "titulo": "Qué es el interés compuesto y cómo aprovecharlo a largo plazo",
-        "descripcion": "Descubre cómo funciona el interés compuesto y por qué puede marcar una gran diferencia en tu patrimonio.",
-        "url": "/blog/interes-compuesto",
-        "categoria": "Interés compuesto",
-        "lectura": "6 min"
-    },
-    {
-        "titulo": "Qué es el movimiento FIRE y cuánto dinero necesitas",
-        "descripcion": "Aprende qué significa FIRE, cómo calcular tu número objetivo y qué variables importan de verdad.",
-        "url": "/blog/fire",
-        "categoria": "FIRE",
-        "lectura": "7 min"
-    },
-    {
-        "titulo": "Cómo calcular una hipoteca y no cometer errores al comprar vivienda",
-        "descripcion": "Te explico cómo estimar la cuota, los intereses y el coste real total de una hipoteca.",
-        "url": "/blog/hipoteca",
-        "categoria": "Hipoteca",
-        "lectura": "8 min"
-    },
+# =========================================================
+# HELPERS
+# =========================================================
+
+EXCLUDE_PATHS = [
+    "/",
+    "/calculadora",
+    "/fire",
+    "/hipoteca",
+    "/rentabilidad-alquiler",
+    "/comparador",
+    "/blog",  # importante excluir la propia página blog
 ]
+
+
+def get_articulos():
+    articulos = []
+
+    for page in page_registry.values():
+        path = page.get("path")
+
+        # Filtrar páginas que no son artículos
+        if not path or path in EXCLUDE_PATHS:
+            continue
+
+        # Solo queremos artículos (puedes ajustar esto si quieres)
+        # Aquí asumimos que todo lo que no es herramienta es artículo
+        if path.startswith("/blog"):
+            continue  # por si tienes otros
+
+        titulo = page.get("title", "Artículo")
+        descripcion = page.get("description", "")
+
+        # Categoría automática simple
+        if "hipoteca" in path:
+            categoria = "Hipoteca"
+        elif "fire" in path:
+            categoria = "FIRE"
+        elif "broker" in path or "trade" in path:
+            categoria = "Broker"
+        elif "cuenta" in path:
+            categoria = "Banca"
+        else:
+            categoria = "Inversión"
+
+        articulos.append(
+            {
+                "titulo": titulo,
+                "descripcion": descripcion,
+                "url": path,
+                "categoria": categoria,
+                "lectura": "6 min",
+            }
+        )
+
+    # Orden opcional (más nuevos arriba si quieres luego)
+    return articulos[::-1]
+
 
 def article_card(article):
     return dbc.Col(
@@ -63,24 +98,32 @@ def article_card(article):
         className="mb-4"
     )
 
-layout = dbc.Container(
-    [
-        dbc.Row(
-            dbc.Col(
-                [
-                    html.H1("Blog", className="fw-bold mb-3"),
-                    html.P(
-                        "Guías prácticas sobre inversión, libertad financiera e hipotecas.",
-                        className="lead text-muted mb-4"
-                    ),
-                ],
-                lg=9
-            ),
-            className="pt-4 pt-md-5"
-        ),
 
-        dbc.Row([article_card(a) for a in ARTICULOS], className="pb-5")
-    ],
-    fluid=True,
-    className="py-2 px-3 px-md-4 px-lg-5"
-)
+# =========================================================
+# LAYOUT
+# =========================================================
+
+def layout():
+    articulos = get_articulos()
+
+    return dbc.Container(
+        [
+            dbc.Row(
+                dbc.Col(
+                    [
+                        html.H1("Blog", className="fw-bold mb-3"),
+                        html.P(
+                            "Guías prácticas sobre inversión, libertad financiera e hipotecas.",
+                            className="lead text-muted mb-4"
+                        ),
+                    ],
+                    lg=9
+                ),
+                className="pt-4 pt-md-5"
+            ),
+
+            dbc.Row([article_card(a) for a in articulos], className="pb-5")
+        ],
+        fluid=True,
+        className="py-2 px-3 px-md-4 px-lg-5"
+    )
