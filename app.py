@@ -1,7 +1,9 @@
 import json
 from dash import Dash, html, dcc, page_container
 import dash_bootstrap_components as dbc
-
+from flask import Response
+import dash
+from datetime import date
 from components.navbar import build_navbar
 from components.footer import build_footer
 
@@ -37,6 +39,70 @@ app = Dash(
 )
 
 server = app.server
+
+# =========================================================
+# SITEMAP
+# =========================================================
+@server.route("/sitemap.xml")
+def sitemap():
+    today = date.today().isoformat()
+
+    priorities = {
+        "/": "1.0",
+        "/calculadora": "0.9",
+        "/fire": "0.9",
+        "/hipoteca": "0.9",
+        "/rentabilidad-alquiler": "0.9",
+        "/comparador": "0.9",
+        "/blog": "0.8",
+    }
+
+    changefreqs = {
+        "/": "weekly",
+        "/calculadora": "weekly",
+        "/fire": "weekly",
+        "/hipoteca": "weekly",
+        "/rentabilidad-alquiler": "weekly",
+        "/comparador": "weekly",
+        "/blog": "weekly",
+    }
+
+    urls = []
+
+    for page in dash.page_registry.values():
+        path = page.get("path")
+
+        if not path:
+            continue
+
+        if path == "/404" or "not_found" in str(page.get("module", "")).lower():
+            continue
+
+        loc = f"{SITE_URL}{path}"
+
+        priority = priorities.get(path, "0.7")
+        changefreq = changefreqs.get(path, "monthly")
+
+        if path.startswith("/blog/") and path != "/blog":
+            priority = "0.7"
+            changefreq = "monthly"
+
+        urls.append(
+            f"""
+  <url>
+    <loc>{loc}</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>{changefreq}</changefreq>
+    <priority>{priority}</priority>
+  </url>"""
+        )
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{''.join(sorted(urls))}
+</urlset>"""
+
+    return Response(xml, mimetype="application/xml")
 
 # =========================================================
 # STRUCTURED DATA
