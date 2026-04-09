@@ -317,29 +317,29 @@ def render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad):
     # CTA intermedio dinámico
     # -----------------------------------------------------
     if math.isinf(anos):
-        cta_mid_title = "Empieza por crear el hábito"
+        cta_mid_title = "Empieza por construir el hábito"
         cta_mid_text = (
             "No necesitas hacerlo perfecto. Lo más importante ahora es empezar a invertir con regularidad."
         )
-        cta_mid_button = "Empezar poco a poco"
+        cta_mid_button = "👉 Empezar a invertir poco a poco"
     elif anos <= 10:
         cta_mid_title = "Estás cerca: protege tu avance"
         cta_mid_text = (
             "La disciplina y la constancia pueden marcar la diferencia entre llegar o quedarte a medio camino."
         )
-        cta_mid_button = "Mantener mi estrategia"
+        cta_mid_button = "👉 Mantener mi plan FIRE"
     elif anos <= 20:
         cta_mid_title = "Tu objetivo es realista"
         cta_mid_text = (
             "Con una estrategia sencilla y aportaciones constantes, puedes recortar varios años."
         )
-        cta_mid_button = "Dar el siguiente paso"
+        cta_mid_button = "👉 Empezar mi estrategia FIRE"
     else:
         cta_mid_title = "Recortar tiempo importa mucho"
         cta_mid_text = (
             "Empezar ya y elevar poco a poco tu aportación puede cambiar tu horizonte FIRE más de lo que parece."
         )
-        cta_mid_button = "Empezar hoy a invertir"
+        cta_mid_button = "👉 Empezar hoy a invertir"
 
     cta_intermedio = dbc.Card(
         dbc.CardBody(
@@ -378,7 +378,7 @@ def render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad):
             "Automatiza aportaciones para crear constancia.",
             "Una estrategia simple es mejor que no hacer nada.",
         ]
-        cta_button_text = "Empezar a invertir poco a poco"
+        cta_button_text = "👉 Empezar a invertir poco a poco"
 
     elif anos <= 10:
         cta_badge = "MUY CERCA DE FIRE"
@@ -392,7 +392,7 @@ def render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad):
             "Evita complicarte con productos innecesarios.",
             "Cada año de disciplina puede acercarte mucho a la meta.",
         ]
-        cta_button_text = "Mantener mi estrategia de inversión"
+        cta_button_text = "👉 Mantener mi estrategia de inversión"
 
     elif anos <= 20:
         cta_badge = "ACELERA TU PLAN"
@@ -406,7 +406,7 @@ def render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad):
             "La automatización evita perder meses importantes.",
             "No necesitas hacerlo perfecto, solo hacerlo constante.",
         ]
-        cta_button_text = "Dar el siguiente paso para invertir"
+        cta_button_text = "👉 Dar el siguiente paso para invertir"
 
     else:
         cta_badge = "RECORTA TIEMPO"
@@ -420,7 +420,7 @@ def render_fire_outputs(gastos, tasa, capital_actual, aportacion, rentabilidad):
             "Aumentar el ahorro mensual tiene más impacto del que parece.",
             "Una cartera sencilla puede ayudarte a avanzar sin bloquearte.",
         ]
-        cta_button_text = "Empezar hoy a construir mi libertad financiera"
+        cta_button_text = "👉 Empezar hoy a construir mi libertad financiera"
 
     if math.isinf(anos):
         diagnostico_estrategia = "Ahora mismo tu prioridad no debería ser optimizar unas décimas de rentabilidad, sino construir hábito y capacidad de ahorro."
@@ -619,25 +619,29 @@ layout = dbc.Container(
                                 dbc.Card(
                                     dbc.CardBody(
                                         [
-                                            html.Div("Empieza a invertir hoy", className="fw-bold mb-2"),
+                                            html.Div("🏦 Plataforma recomendada para tu plan FIRE", className="fw-bold mb-2"),
                                             html.P(
-                                                "Una estrategia sencilla y constante puede marcar una diferencia enorme a 10, 20 o 30 años.",
+                                                "Si quieres construir una estrategia simple a largo plazo, una opción muy utilizada para empezar en España es MyInvestor.",
                                                 className="small text-muted mb-3",
                                             ),
                                             html.Ul(
                                                 [
-                                                    html.Li("Sin complicarte con productos raros."),
-                                                    html.Li("Ideal para empezar con pequeñas cantidades."),
+                                                    html.Li("Útil para inversión periódica a largo plazo."),
+                                                    html.Li("Enfoque sencillo para no complicarte al empezar."),
                                                     html.Li("Cuanto antes empieces, antes trabaja el interés compuesto."),
                                                 ],
                                                 className="small text-muted mb-3 ps-3",
                                             ),
                                             dbc.Button(
-                                                "Empezar a invertir",
+                                                "👉 Empezar mi plan FIRE",
                                                 id="fire-cta-top",
                                                 color="success",
                                                 className="w-100 rounded-3 fw-semibold",
                                                 n_clicks=0,
+                                            ),
+                                            html.Div(
+                                                "Invertir conlleva riesgos. Este contenido es informativo y no constituye asesoramiento financiero personalizado.",
+                                                className="small text-muted mt-3",
                                             ),
                                         ]
                                     ),
@@ -741,7 +745,7 @@ layout = dbc.Container(
 
         html.Div(
             dbc.Button(
-                "Empezar a invertir",
+                "👉 Empezar a invertir",
                 id="fire-cta-mobile",
                 color="success",
                 className="w-100 fw-bold rounded-3",
