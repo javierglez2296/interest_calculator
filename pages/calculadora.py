@@ -1,5 +1,14 @@
 from urllib.parse import urlencode, parse_qs
-
+from utils.montecarlo import montecarlo_interes_compuesto, first_year_reaching_target
+from utils.calculadora_components import (
+    build_empty_figure,
+    build_main_figure,
+    build_donut,
+    build_montecarlo_chart,
+    build_hist,
+    metric,
+    premium_locked,
+)
 import numpy as np
 import dash
 from dash import (
