@@ -1079,7 +1079,7 @@ layout = dbc.Container(
         dcc.Location(id="ic-url", refresh=False),
         dcc.Store(id="ic-evolucion-store"),
         dcc.Store(id="saved-simulations-store", storage_type="local", data=normalize_store(None)),
-        dcc.Store(id="ic-premium-access", storage_type="local", data={"unlocked": False}),
+        dcc.Store(id="ic-premium-access", storage_type="local", data={"unlocked": True}),
         dcc.Download(id="ic-download-csv"),
 
         dbc.Row(
