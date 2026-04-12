@@ -1,4 +1,3 @@
-import io
 from urllib.parse import urlencode, parse_qs
 
 import numpy as np
@@ -19,8 +18,12 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
 
+from helpers import (
+    parse_number,
+    calcular_interes_compuesto,
+    formatear_euros_es,
+)
 from utils.simulations import add_simulation, delete_simulation, normalize_store
-from helpers import parse_number, formatear_euros_es
 from components.disclaimer_afiliados import build_disclaimer
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
@@ -276,7 +279,7 @@ def build_yearly_table(evolucion):
     for item in sampled:
         total = item["total"]
         aportado = item["aportado"]
-        ganancia = total - aportado
+        ganancia = item.get("ganado", total - aportado)
         real = item["real"]
 
         rows.append(
@@ -415,13 +418,13 @@ def scenario_defaults(scenario):
     return presets.get(scenario, presets["base"])
 
 
-def cash_evolution(capital_inicial, aportacion_anual, anios, inflacion):
+def cash_evolution(capital_inicial, aportacion_mensual, anios, inflacion):
     evolucion = []
     total = capital_inicial
     aportado = capital_inicial
     for year in range(1, anios + 1):
-        aportado += aportacion_anual
-        total += aportacion_anual
+        aportado += aportacion_mensual * 12
+        total += aportacion_mensual * 12
         real = total / ((1 + inflacion) ** year) if inflacion > -1 else total
         evolucion.append(
             {
@@ -504,7 +507,7 @@ def evolution_to_dataframe(evolucion):
     for item in evolucion:
         total = item["total"]
         aportado = item["aportado"]
-        ganancia = total - aportado
+        ganancia = item.get("ganado", total - aportado)
         rows.append(
             {
                 "Año": item["año"],
@@ -517,50 +520,52 @@ def evolution_to_dataframe(evolucion):
     return pd.DataFrame(rows)
 
 
+def premium_upgrade_card():
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                section_eyebrow("Premium"),
+                html.H4(
+                    "Activa Monte Carlo y análisis de probabilidad",
+                    className="fw-bold mb-2",
+                    style={"color": "#0f172a"},
+                ),
+                html.P(
+                    "Desbloquea simulaciones avanzadas con volatilidad, bandas de percentiles y probabilidad de alcanzar tu objetivo.",
+                    className="mb-3",
+                    style={"color": "#475467", "lineHeight": "1.7"},
+                ),
+                html.Div(
+                    [
+                        premium_badge("Monte Carlo"),
+                        premium_badge("Probabilidad de objetivo"),
+                        premium_badge("Bandas de percentiles"),
+                        premium_badge("Mayor realismo"),
+                    ],
+                    className="mb-3",
+                ),
+                dbc.Button(
+                    "Desbloquear premium",
+                    href="#premium",
+                    color="dark",
+                    className="rounded-pill fw-bold px-4 py-3",
+                ),
+            ]
+        ),
+        className="border-0 rounded-4",
+        style={
+            "background": "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+            "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
+        },
+    )
+
+
 # =========================================================
-# CÁLCULO PRINCIPAL
+# HELPERS CÁLCULO
 # =========================================================
-def calcular_interes_compuesto_local(
-    capital_inicial,
-    aportacion_anual,
-    anios,
-    rentabilidad,
-    inflacion,
-    comision,
-):
-    evolucion = []
-    total = capital_inicial
-    aportado = capital_inicial
-
-    rentabilidad_neta = rentabilidad - comision
-    rentabilidad_neta = max(rentabilidad_neta, -0.95)
-
-    for year in range(1, anios + 1):
-        total = total * (1 + rentabilidad_neta) + aportacion_anual
-        aportado += aportacion_anual
-        real = total / ((1 + inflacion) ** year) if inflacion > -1 else total
-
-        evolucion.append(
-            {
-                "año": year,
-                "aportado": aportado,
-                "total": total,
-                "real": real,
-            }
-        )
-
-    valor_final = evolucion[-1]["total"] if evolucion else capital_inicial
-    valor_real_final = evolucion[-1]["real"] if evolucion else capital_inicial
-    total_aportado = aportado
-    ganancia = valor_final - total_aportado
-
-    return {
-        "valor_final": valor_final,
-        "valor_real_final": valor_real_final,
-        "total_aportado": total_aportado,
-        "ganancia": ganancia,
-        "evolucion": evolucion,
-    }
+def get_aportacion_mensual(aportacion, aportacion_tipo):
+    aportacion = max(parse_number(aportacion), 0)
+    return aportacion if aportacion_tipo == "mensual" else (aportacion / 12)
 
 
 def build_main_figure(evolucion):
@@ -624,18 +629,15 @@ def build_interpretation(valor_final, valor_real_final, aportado, ganancia, anio
 
     bloques = [
         html.P(
-            f"En esta simulación acabarías con aproximadamente {formatear_euros_es(valor_final)} "
-            f"tras {anios} años.",
+            f"En esta simulación acabarías con aproximadamente {formatear_euros_es(valor_final)} tras {anios} años.",
             style={"color": "#475467", "lineHeight": "1.8"},
         ),
         html.P(
-            f"Habrías aportado {formatear_euros_es(aportado)} y el crecimiento estimado sería de "
-            f"{formatear_euros_es(ganancia)}.",
+            f"Habrías aportado {formatear_euros_es(aportado)} y el crecimiento estimado sería de {formatear_euros_es(ganancia)}.",
             style={"color": "#475467", "lineHeight": "1.8"},
         ),
         html.P(
-            f"Ajustando por inflación, el valor real estimado sería de "
-            f"{formatear_euros_es(valor_real_final)}.",
+            f"Ajustando por inflación, el valor real estimado sería de {formatear_euros_es(valor_real_final)}.",
             style={"color": "#475467", "lineHeight": "1.8"},
         ),
     ]
@@ -672,13 +674,13 @@ def build_emotional_message(valor_final, anios):
             className="rounded-4 border-0",
         )
     return dbc.Alert(
-        f"Esta simulación ya entra en una zona potente: el interés compuesto y el tiempo empiezan a hacer mucho trabajo por ti.",
+        "Esta simulación ya entra en una zona potente: el interés compuesto y el tiempo empiezan a hacer mucho trabajo por ti.",
         color="success",
         className="rounded-4 border-0 fw-semibold",
     )
 
 
-def build_scenarios_comparison(capital_inicial, aportacion_anual, anios):
+def build_scenarios_comparison(capital_inicial, aportacion_mensual, anios):
     escenarios = [
         ("Conservador", 0.04, 0.02, 0.0030),
         ("Base", 0.07, 0.02, 0.0020),
@@ -687,20 +689,27 @@ def build_scenarios_comparison(capital_inicial, aportacion_anual, anios):
 
     cards = []
     for nombre, rent, infl, fee in escenarios:
-        resultado = calcular_interes_compuesto_local(
+        evolucion = calcular_interes_compuesto(
             capital_inicial=capital_inicial,
-            aportacion_anual=aportacion_anual,
-            anios=anios,
-            rentabilidad=rent,
+            aportacion_mensual=aportacion_mensual,
+            años=anios,
+            rentabilidad_anual=rent,
             inflacion=infl,
             comision=fee,
         )
+        if evolucion:
+            valor_final = evolucion[-1]["total"]
+            valor_real = evolucion[-1]["real"]
+        else:
+            valor_final = capital_inicial
+            valor_real = capital_inicial
+
         cards.append(
             dbc.Col(
                 scenario_card(
                     nombre,
-                    formatear_euros_es(resultado["valor_final"]),
-                    f"Valor real aprox.: {formatear_euros_es(resultado['valor_real_final'])}",
+                    formatear_euros_es(valor_final),
+                    f"Valor real aprox.: {formatear_euros_es(valor_real)}",
                     highlight=(nombre == "Base"),
                 ),
                 md=4,
@@ -728,28 +737,30 @@ def build_scenarios_comparison(capital_inicial, aportacion_anual, anios):
     )
 
 
-def build_start_delay_comparison(capital_inicial, aportacion_anual, anios, rentabilidad, inflacion, comision):
+def build_start_delay_comparison(capital_inicial, aportacion_mensual, anios, rentabilidad, inflacion, comision):
     anios_tarde = max(anios - 5, 1)
 
-    actual = calcular_interes_compuesto_local(
+    actual = calcular_interes_compuesto(
         capital_inicial=capital_inicial,
-        aportacion_anual=aportacion_anual,
-        anios=anios,
-        rentabilidad=rentabilidad,
+        aportacion_mensual=aportacion_mensual,
+        años=anios,
+        rentabilidad_anual=rentabilidad,
         inflacion=inflacion,
         comision=comision,
     )
 
-    tarde = calcular_interes_compuesto_local(
+    tarde = calcular_interes_compuesto(
         capital_inicial=capital_inicial,
-        aportacion_anual=aportacion_anual,
-        anios=anios_tarde,
-        rentabilidad=rentabilidad,
+        aportacion_mensual=aportacion_mensual,
+        años=anios_tarde,
+        rentabilidad_anual=rentabilidad,
         inflacion=inflacion,
         comision=comision,
     )
 
-    diferencia = actual["valor_final"] - tarde["valor_final"]
+    actual_final = actual[-1]["total"] if actual else capital_inicial
+    tarde_final = tarde[-1]["total"] if tarde else capital_inicial
+    diferencia = actual_final - tarde_final
 
     return dbc.Card(
         dbc.CardBody(
@@ -765,7 +776,7 @@ def build_start_delay_comparison(capital_inicial, aportacion_anual, anios, renta
                         dbc.Col(
                             summary_stat_card(
                                 "Si empiezas ahora",
-                                formatear_euros_es(actual["valor_final"]),
+                                formatear_euros_es(actual_final),
                                 f"{anios} años de inversión",
                             ),
                             md=4,
@@ -774,7 +785,7 @@ def build_start_delay_comparison(capital_inicial, aportacion_anual, anios, renta
                         dbc.Col(
                             summary_stat_card(
                                 "Si empiezas 5 años más tarde",
-                                formatear_euros_es(tarde["valor_final"]),
+                                formatear_euros_es(tarde_final),
                                 f"{anios_tarde} años de inversión",
                             ),
                             md=4,
@@ -801,7 +812,7 @@ def build_start_delay_comparison(capital_inicial, aportacion_anual, anios, renta
     )
 
 
-def build_insights_block(valor_final, total_aportado, ganancia, aportacion_anual, anios, rentabilidad, comision):
+def build_insights_block(valor_final, total_aportado, ganancia):
     ratio = (ganancia / total_aportado) if total_aportado > 0 else 0
     fee_impact_msg = (
         "Las comisiones merecen mucha atención aquí: a largo plazo restan una cantidad importante."
@@ -872,46 +883,9 @@ def build_insights_block(valor_final, total_aportado, ganancia, aportacion_anual
     )
 
 
-def premium_upgrade_card():
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                section_eyebrow("Premium"),
-                html.H4(
-                    "Activa Monte Carlo y análisis de probabilidad",
-                    className="fw-bold mb-2",
-                    style={"color": "#0f172a"},
-                ),
-                html.P(
-                    "Desbloquea simulaciones avanzadas con volatilidad, bandas de percentiles y probabilidad de alcanzar tu objetivo.",
-                    className="mb-3",
-                    style={"color": "#475467", "lineHeight": "1.7"},
-                ),
-                html.Div(
-                    [
-                        premium_badge("Monte Carlo"),
-                        premium_badge("Probabilidad de objetivo"),
-                        premium_badge("Bandas de percentiles"),
-                        premium_badge("Mayor realismo"),
-                    ],
-                    className="mb-3",
-                ),
-                dbc.Button(
-                    "Desbloquear premium",
-                    href="#premium",
-                    color="dark",
-                    className="rounded-pill fw-bold px-4 py-3",
-                ),
-            ]
-        ),
-        className="border-0 rounded-4",
-        style={
-            "background": "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-            "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
-        },
-    )
-
-
+# =========================================================
+# MONTE CARLO
+# =========================================================
 def first_year_reaching_target(series, target):
     if target is None or target <= 0:
         return None
@@ -923,45 +897,52 @@ def first_year_reaching_target(series, target):
 
 def montecarlo_interes_compuesto(
     capital_inicial,
-    aportacion_anual,
+    aportacion_mensual,
     anios,
-    rentabilidad_media,
-    volatilidad,
-    inflacion,
-    comision,
+    rentabilidad_media_anual,
+    volatilidad_anual,
+    inflacion_anual,
+    comision_anual,
     n_simulaciones=2000,
     seed=42,
 ):
-    if anios <= 0:
+    meses = int(anios * 12)
+    if meses <= 0:
         return None
 
     rng = np.random.default_rng(seed)
 
-    retornos_brutos = rng.normal(
-        loc=rentabilidad_media,
-        scale=volatilidad,
-        size=(n_simulaciones, anios),
+    rentabilidad_media_mensual = (1 + rentabilidad_media_anual) ** (1 / 12) - 1
+    volatilidad_mensual = volatilidad_anual / np.sqrt(12)
+    inflacion_mensual = (1 + inflacion_anual) ** (1 / 12) - 1 if inflacion_anual > -1 else 0.0
+    comision_mensual = comision_anual / 12
+
+    retornos_mensuales = rng.normal(
+        loc=rentabilidad_media_mensual,
+        scale=volatilidad_mensual,
+        size=(n_simulaciones, meses),
     )
 
-    retornos_netos = retornos_brutos - comision
-    retornos_netos = np.clip(retornos_netos, -0.95, None)
+    capitales = np.zeros((n_simulaciones, meses + 1))
+    capitales[:, 0] = capital_inicial
 
-    paths = np.zeros((n_simulaciones, anios + 1))
-    real_paths = np.zeros((n_simulaciones, anios + 1))
+    for mes in range(1, meses + 1):
+        capitales[:, mes] = capitales[:, mes - 1] * (1 + retornos_mensuales[:, mes - 1])
+        capitales[:, mes] += aportacion_mensual
+        capitales[:, mes] *= (1 - comision_mensual)
+        capitales[:, mes] = np.clip(capitales[:, mes], 0, None)
 
-    paths[:, 0] = capital_inicial
-    real_paths[:, 0] = capital_inicial
+    year_points = [0] + [12 * i for i in range(1, anios + 1)]
+    paths_yearly = capitales[:, year_points]
 
-    for year in range(1, anios + 1):
-        paths[:, year] = paths[:, year - 1] * (1 + retornos_netos[:, year - 1]) + aportacion_anual
-        if inflacion > -1:
-            real_paths[:, year] = paths[:, year] / ((1 + inflacion) ** year)
-        else:
-            real_paths[:, year] = paths[:, year]
+    real_paths = np.zeros_like(paths_yearly)
+    for i, year in enumerate(range(0, anios + 1)):
+        factor_inflacion = (1 + inflacion_mensual) ** (year * 12) if inflacion_mensual > -1 else 1
+        real_paths[:, i] = paths_yearly[:, i] / factor_inflacion if factor_inflacion != 0 else paths_yearly[:, i]
 
-    p10 = np.percentile(paths, 10, axis=0)
-    p50 = np.percentile(paths, 50, axis=0)
-    p90 = np.percentile(paths, 90, axis=0)
+    p10 = np.percentile(paths_yearly, 10, axis=0)
+    p50 = np.percentile(paths_yearly, 50, axis=0)
+    p90 = np.percentile(paths_yearly, 90, axis=0)
 
     real_p10 = np.percentile(real_paths, 10, axis=0)
     real_p50 = np.percentile(real_paths, 50, axis=0)
@@ -969,9 +950,9 @@ def montecarlo_interes_compuesto(
 
     return {
         "years": list(range(0, anios + 1)),
-        "paths": paths,
+        "paths": paths_yearly,
         "real_paths": real_paths,
-        "final_values": paths[:, -1],
+        "final_values": paths_yearly[:, -1],
         "real_final_values": real_paths[:, -1],
         "p10": p10,
         "p50": p50,
@@ -1162,7 +1143,6 @@ layout = dbc.Container(
                                     className="mb-4",
                                     style={"color": "#667085", "lineHeight": "1.6"},
                                 ),
-
                                 dbc.Label("Escenario", className="fw-semibold mb-2"),
                                 dcc.RadioItems(
                                     id="ic-scenario",
@@ -1182,7 +1162,6 @@ layout = dbc.Container(
                                     },
                                     className="mb-3",
                                 ),
-
                                 dbc.Label("Tipo de aportación", className="fw-semibold mb-2"),
                                 dcc.RadioItems(
                                     id="ic-aportacion-tipo",
@@ -1201,7 +1180,6 @@ layout = dbc.Container(
                                     },
                                     className="mb-3",
                                 ),
-
                                 input_group(
                                     "Capital inicial",
                                     "ic-capital-inicial",
@@ -1250,9 +1228,7 @@ layout = dbc.Container(
                                     "Coste aproximado del producto o cartera",
                                     suffix="%",
                                 ),
-
                                 html.Hr(className="my-4"),
-
                                 section_eyebrow("Premium"),
                                 dbc.Switch(
                                     id="ic-premium-mode",
@@ -1260,9 +1236,7 @@ layout = dbc.Container(
                                     value=False,
                                     className="mb-3",
                                 ),
-
                                 html.Div(id="ic-premium-lock-note", className="mb-3"),
-
                                 html.Div(
                                     [
                                         input_group(
@@ -1291,7 +1265,6 @@ layout = dbc.Container(
                                     ],
                                     id="ic-premium-controls",
                                 ),
-
                                 dbc.Button(
                                     "Calcular mi dinero futuro",
                                     id="ic-boton",
@@ -1303,7 +1276,6 @@ layout = dbc.Container(
                                         "fontSize": "1rem",
                                     },
                                 ),
-
                                 html.Div(
                                     "Simulación orientativa. No constituye asesoramiento financiero ni garantiza rentabilidades futuras.",
                                     className="mt-3",
@@ -1326,11 +1298,9 @@ layout = dbc.Container(
                     lg=4,
                     className="mb-4",
                 ),
-
                 dbc.Col(
                     [
                         html.Div(id="scroll-target", className="anchor-spacer"),
-
                         html.Div(
                             [
                                 info_chip("Resultado estimado"),
@@ -1340,7 +1310,6 @@ layout = dbc.Container(
                             ],
                             className="mb-3",
                         ),
-
                         dbc.Row(
                             [
                                 dbc.Col(html.Div(id="ic-quick-stat-1"), md=3, className="mb-3"),
@@ -1350,7 +1319,6 @@ layout = dbc.Container(
                             ],
                             className="mb-1",
                         ),
-
                         dbc.Row(
                             [
                                 dbc.Col(html.Div(id="ic-resultado-final"), md=4, className="mb-3"),
@@ -1359,9 +1327,7 @@ layout = dbc.Container(
                             ],
                             className="mb-1",
                         ),
-
                         html.Div(id="ic-mensaje-emocional", className="mb-4"),
-
                         dbc.Row(
                             [
                                 dbc.Col(
@@ -1417,7 +1383,6 @@ layout = dbc.Container(
                                 ),
                             ]
                         ),
-
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1447,7 +1412,6 @@ layout = dbc.Container(
                                 "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
                             },
                         ),
-
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1482,11 +1446,9 @@ layout = dbc.Container(
                                 "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
                             },
                         ),
-
                         html.Div(id="ic-comparativa", className="mb-4"),
                         html.Div(id="ic-start-delay-comparison", className="mb-4"),
                         html.Div(id="ic-insights", className="mb-4"),
-
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1518,9 +1480,7 @@ layout = dbc.Container(
                                 "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
                             },
                         ),
-
                         html.Div(id="ic-advice-block", className="mb-4"),
-
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1559,7 +1519,6 @@ layout = dbc.Container(
                                 "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
                             },
                         ),
-
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1613,7 +1572,6 @@ layout = dbc.Container(
                                 "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
                             },
                         ),
-
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1653,7 +1611,6 @@ layout = dbc.Container(
                                 "boxShadow": "0 18px 45px rgba(16, 24, 40, 0.08)",
                             },
                         ),
-
                         build_disclaimer(title="Más opciones para dar el siguiente paso"),
                     ],
                     lg=8,
@@ -1661,7 +1618,6 @@ layout = dbc.Container(
             ],
             className="gy-4",
         ),
-
         dbc.Row(
             [
                 dbc.Col(
@@ -1701,7 +1657,7 @@ layout = dbc.Container(
 )
 
 # =========================================================
-# SCROLL AUTOMÁTICO
+# CLIENTSIDE
 # =========================================================
 clientside_callback(
     """
@@ -1721,9 +1677,6 @@ clientside_callback(
     Input("ic-boton", "n_clicks"),
 )
 
-# =========================================================
-# COPIAR ENLACE
-# =========================================================
 clientside_callback(
     """
     function(n_clicks, value) {
@@ -1744,7 +1697,7 @@ clientside_callback(
 )
 
 # =========================================================
-# PRECARGAR DESDE URL
+# PRECARGA URL
 # =========================================================
 @callback(
     Output("ic-capital-inicial", "value"),
@@ -1776,7 +1729,7 @@ def load_from_url(search):
 
 
 # =========================================================
-# CAMBIO DE ESCENARIO
+# ESCENARIO
 # =========================================================
 @callback(
     Output("ic-rentabilidad", "value", allow_duplicate=True),
@@ -1791,7 +1744,7 @@ def update_scenario_defaults(scenario):
 
 
 # =========================================================
-# MENSAJE BLOQUEO PREMIUM
+# PREMIUM LOCK NOTE
 # =========================================================
 @callback(
     Output("ic-premium-lock-note", "children"),
@@ -1883,8 +1836,8 @@ def calcular_simulacion(
 
     try:
         capital_inicial_num = max(parse_number(capital_inicial), 0)
-        aportacion_num = max(parse_number(aportacion), 0)
-        anios_num = int(anios or 0)
+        aportacion_mensual = get_aportacion_mensual(aportacion, aportacion_tipo)
+        anios_num = int(parse_number(anios))
         rentabilidad_num = parse_number(rentabilidad) / 100
         inflacion_num = parse_number(inflacion) / 100
         comision_num = parse_number(comision) / 100
@@ -1892,27 +1845,23 @@ def calcular_simulacion(
         if anios_num <= 0:
             raise ValueError("El horizonte temporal debe ser mayor que 0.")
 
-        aportacion_anual = aportacion_num * 12 if aportacion_tipo == "mensual" else aportacion_num
-        aportacion_mensual_equiv = aportacion_num if aportacion_tipo == "mensual" else (aportacion_num / 12)
-
-        resultado = calcular_interes_compuesto_local(
+        evolucion = calcular_interes_compuesto(
             capital_inicial=capital_inicial_num,
-            aportacion_anual=aportacion_anual,
-            anios=anios_num,
-            rentabilidad=rentabilidad_num,
+            aportacion_mensual=aportacion_mensual,
+            años=anios_num,
+            rentabilidad_anual=rentabilidad_num,
             inflacion=inflacion_num,
             comision=comision_num,
         )
 
-        evolucion = resultado["evolucion"]
-        valor_final = resultado["valor_final"]
-        valor_real_final = resultado["valor_real_final"]
-        total_aportado = resultado["total_aportado"]
-        ganancia = resultado["ganancia"]
+        valor_final = evolucion[-1]["total"] if evolucion else capital_inicial_num
+        valor_real_final = evolucion[-1]["real"] if evolucion else capital_inicial_num
+        total_aportado = evolucion[-1]["aportado"] if evolucion else capital_inicial_num
+        ganancia = evolucion[-1].get("ganado", valor_final - total_aportado) if evolucion else 0
 
         cash_evo = cash_evolution(
             capital_inicial=capital_inicial_num,
-            aportacion_anual=aportacion_anual,
+            aportacion_mensual=aportacion_mensual,
             anios=anios_num,
             inflacion=inflacion_num,
         )
@@ -1975,12 +1924,12 @@ def calcular_simulacion(
         grafico = build_main_figure(evolucion)
         comparativa = build_scenarios_comparison(
             capital_inicial=capital_inicial_num,
-            aportacion_anual=aportacion_anual,
+            aportacion_mensual=aportacion_mensual,
             anios=anios_num,
         )
         delay_comparison = build_start_delay_comparison(
             capital_inicial=capital_inicial_num,
-            aportacion_anual=aportacion_anual,
+            aportacion_mensual=aportacion_mensual,
             anios=anios_num,
             rentabilidad=rentabilidad_num,
             inflacion=inflacion_num,
@@ -1990,10 +1939,6 @@ def calcular_simulacion(
             valor_final=valor_final,
             total_aportado=total_aportado,
             ganancia=ganancia,
-            aportacion_anual=aportacion_anual,
-            anios=anios_num,
-            rentabilidad=rentabilidad_num,
-            comision=comision_num,
         )
         breakdown = build_breakdown_bars(total_aportado, ganancia, cash_value)
 
@@ -2007,7 +1952,7 @@ def calcular_simulacion(
             valor_final=valor_final,
             total_aportado=total_aportado,
             anios=anios_num,
-            aportacion_mensual=aportacion_mensual_equiv,
+            aportacion_mensual=aportacion_mensual,
             ganancia=ganancia,
         )
 
@@ -2148,30 +2093,28 @@ def calcular_montecarlo_premium(
         )
 
     try:
-        capital_inicial = max(parse_number(capital_inicial), 0)
-        aportacion = max(parse_number(aportacion), 0)
-        anios = int(anios or 0)
-        rentabilidad = parse_number(rentabilidad) / 100
-        inflacion = parse_number(inflacion) / 100
-        comision = parse_number(comision) / 100
-        volatilidad = max(parse_number(volatilidad), 0) / 100
-        n_simulaciones = int(n_simulaciones or 2000)
-        objetivo = parse_number(objetivo) if objetivo not in [None, ""] else None
+        capital_inicial_num = max(parse_number(capital_inicial), 0)
+        aportacion_mensual = get_aportacion_mensual(aportacion, aportacion_tipo)
+        anios_num = int(parse_number(anios))
+        rentabilidad_num = parse_number(rentabilidad) / 100
+        inflacion_num = parse_number(inflacion) / 100
+        comision_num = parse_number(comision) / 100
+        volatilidad_num = max(parse_number(volatilidad), 0) / 100
+        n_sim_num = int(parse_number(n_simulaciones or 2000))
+        objetivo_num = parse_number(objetivo) if objetivo not in [None, ""] else None
 
-        if anios <= 0:
+        if anios_num <= 0:
             raise ValueError("Horizonte temporal inválido")
 
-        aportacion_anual = aportacion * 12 if aportacion_tipo == "mensual" else aportacion
-
         mc_result = montecarlo_interes_compuesto(
-            capital_inicial=capital_inicial,
-            aportacion_anual=aportacion_anual,
-            anios=anios,
-            rentabilidad_media=rentabilidad,
-            volatilidad=volatilidad,
-            inflacion=inflacion,
-            comision=comision,
-            n_simulaciones=n_simulaciones,
+            capital_inicial=capital_inicial_num,
+            aportacion_mensual=aportacion_mensual,
+            anios=anios_num,
+            rentabilidad_media_anual=rentabilidad_num,
+            volatilidad_anual=volatilidad_num,
+            inflacion_anual=inflacion_num,
+            comision_anual=comision_num,
+            n_simulaciones=n_sim_num,
         )
 
         final_values = mc_result["final_values"]
@@ -2183,11 +2126,11 @@ def calcular_montecarlo_premium(
         real_p50 = np.percentile(real_final_values, 50)
 
         prob_objetivo = None
-        if objetivo and objetivo > 0:
-            prob_objetivo = float(np.mean(final_values >= objetivo))
+        if objetivo_num and objetivo_num > 0:
+            prob_objetivo = float(np.mean(final_values >= objetivo_num))
 
         year_100k = first_year_reaching_target(mc_result["p50"], 100000)
-        year_obj = first_year_reaching_target(mc_result["p50"], objetivo) if objetivo else None
+        year_obj = first_year_reaching_target(mc_result["p50"], objetivo_num) if objetivo_num else None
 
         summary = dbc.Row(
             [
@@ -2235,7 +2178,7 @@ def calcular_montecarlo_premium(
         if prob_objetivo is not None:
             goal_children.append(
                 dbc.Alert(
-                    f"Probabilidad estimada de alcanzar {formatear_euros_es(objetivo)}: {prob_objetivo * 100:.1f}%",
+                    f"Probabilidad estimada de alcanzar {formatear_euros_es(objetivo_num)}: {prob_objetivo * 100:.1f}%",
                     color="success" if prob_objetivo >= 0.6 else "warning",
                     className="rounded-4 border-0 mb-3 fw-semibold",
                 )
@@ -2246,7 +2189,7 @@ def calcular_montecarlo_premium(
             insights.append(f"En la trayectoria mediana superarías 100.000€ alrededor del año {year_100k}.")
         if year_obj is not None:
             insights.append(f"En la trayectoria mediana alcanzarías tu objetivo alrededor del año {year_obj}.")
-        elif objetivo:
+        elif objetivo_num:
             insights.append("En la trayectoria mediana no llegarías al objetivo dentro del horizonte elegido.")
 
         if insights:
@@ -2464,7 +2407,7 @@ def update_saved_interes_compuesto_list(store):
 
 
 # =========================================================
-# DESCARGAR CSV
+# CSV
 # =========================================================
 @callback(
     Output("ic-download-csv", "data"),
