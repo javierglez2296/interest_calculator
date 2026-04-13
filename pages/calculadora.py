@@ -1762,7 +1762,7 @@ def update_scenario_defaults(scenario):
 # =========================================================
 @callback(
     Output("ic-premium-lock-note", "children"),
-    Input("ic-premium-access", "data"),
+    Input("premium-access", "data"),
 )
 def render_premium_lock_note(access_data):
     unlocked = is_premium_unlocked(access_data)
