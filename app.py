@@ -40,6 +40,21 @@ app = Dash(
 
 server = app.server
 
+app.layout = html.Div(
+    [
+        dcc.Location(id="global-url", refresh=False),
+
+        # Store global premium
+        dcc.Store(
+            id="premium-access",
+            storage_type="local",
+            data={"unlocked": False, "source": None},
+        ),
+
+        page_container,
+    ]
+)
+
 # =========================================================
 # SITEMAP
 # =========================================================
