@@ -1,20 +1,6 @@
 from urllib.parse import urlencode, parse_qs
-from utils.montecarlo import montecarlo_interes_compuesto, first_year_reaching_target
-from utils.calculadora_components import (
-    build_empty_figure,
-    build_main_figure,
-    build_donut,
-    build_montecarlo_chart,
-    build_hist,
-    metric,
-    premium_locked,
-)
+
 import numpy as np
-from utils.premium import (
-    is_premium_unlocked,
-    premium_cta_card,
-    premium_active_alert,
-)
 import dash
 from dash import (
     html,
@@ -32,6 +18,11 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
 
+from utils.premium import (
+    is_premium_unlocked,
+    premium_cta_card,
+    premium_active_alert,
+)
 from helpers import (
     parse_number,
     calcular_interes_compuesto,
@@ -534,46 +525,6 @@ def evolution_to_dataframe(evolucion):
     return pd.DataFrame(rows)
 
 
-def premium_upgrade_card():
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                section_eyebrow("Premium"),
-                html.H4(
-                    "Activa Monte Carlo y análisis de probabilidad",
-                    className="fw-bold mb-2",
-                    style={"color": "#0f172a"},
-                ),
-                html.P(
-                    "Desbloquea simulaciones avanzadas con volatilidad, bandas de percentiles y probabilidad de alcanzar tu objetivo.",
-                    className="mb-3",
-                    style={"color": "#475467", "lineHeight": "1.7"},
-                ),
-                html.Div(
-                    [
-                        premium_badge("Monte Carlo"),
-                        premium_badge("Probabilidad de objetivo"),
-                        premium_badge("Bandas de percentiles"),
-                        premium_badge("Mayor realismo"),
-                    ],
-                    className="mb-3",
-                ),
-                dbc.Button(
-                    "Desbloquear premium",
-                    href="#premium",
-                    color="dark",
-                    className="rounded-pill fw-bold px-4 py-3",
-                ),
-            ]
-        ),
-        className="border-0 rounded-4",
-        style={
-            "background": "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-            "boxShadow": "0 14px 36px rgba(16, 24, 40, 0.06)",
-        },
-    )
-
-
 # =========================================================
 # HELPERS CÁLCULO
 # =========================================================
@@ -585,7 +536,7 @@ def get_aportacion_mensual(aportacion, aportacion_tipo):
 def build_main_figure(evolucion):
     if not evolucion:
         return build_empty_figure(
-            "Introduce tus datos y pulsa en calcular para ver la evolución de tu inversión"
+            "La simulación se actualiza automáticamente con tus datos"
         )
 
     x = [x["año"] for x in evolucion]
@@ -1083,8 +1034,6 @@ layout = dbc.Container(
     [
         dcc.Location(id="ic-url", refresh=False),
         dcc.Store(id="ic-evolucion-store"),
-        dcc.Store(id="saved-simulations-store", storage_type="local", data=normalize_store(None)),
-        dcc.Store(id="ic-premium-access", storage_type="local", data={"unlocked": True}),
         dcc.Download(id="ic-download-csv"),
 
         dbc.Row(
@@ -1280,7 +1229,7 @@ layout = dbc.Container(
                                     id="ic-premium-controls",
                                 ),
                                 dbc.Button(
-                                    "Calcular mi dinero futuro",
+                                    "Ver resultados",
                                     id="ic-boton",
                                     color="success",
                                     size="lg",
@@ -1379,7 +1328,7 @@ layout = dbc.Container(
                                                 dcc.Graph(
                                                     id="ic-donut",
                                                     figure=build_empty_figure(
-                                                        "Calcula tu simulación para ver la composición final",
+                                                        "La simulación se actualiza automáticamente",
                                                         height=320,
                                                     ),
                                                     config={"displayModeBar": False},
@@ -1414,7 +1363,7 @@ layout = dbc.Container(
                                     dcc.Graph(
                                         id="ic-grafico",
                                         figure=build_empty_figure(
-                                            "Introduce tus datos y pulsa en calcular para ver la evolución de tu inversión"
+                                            "La simulación se actualiza automáticamente con tus datos"
                                         ),
                                         config={"displayModeBar": False},
                                     ),
@@ -1480,7 +1429,7 @@ layout = dbc.Container(
                                     dcc.Graph(
                                         id="ic-breakdown-bars",
                                         figure=build_empty_figure(
-                                            "Calcula tu simulación para comparar alternativas",
+                                            "La simulación se actualiza automáticamente",
                                             height=360,
                                         ),
                                         config={"displayModeBar": False},
@@ -1815,7 +1764,6 @@ def calcular_simulacion(
     comision,
     scenario,
 ):
-
     try:
         capital_inicial_num = max(parse_number(capital_inicial), 0)
         aportacion_mensual = get_aportacion_mensual(aportacion, aportacion_tipo)
@@ -2018,7 +1966,7 @@ def calcular_simulacion(
     Output("ic-montecarlo-chart", "figure"),
     Output("ic-montecarlo-hist", "figure"),
     Output("ic-premium-goal", "children"),
-    Input("ic-premium-access", "data"),
+    Input("premium-access", "data"),
     Input("ic-premium-mode", "value"),
     Input("ic-capital-inicial", "value"),
     Input("ic-aportacion", "value"),
@@ -2045,7 +1993,7 @@ def calcular_montecarlo_premium(
     n_simulaciones,
     objetivo,
 ):
-    unlocked = bool((access_data or {}).get("unlocked"))
+    unlocked = is_premium_unlocked(access_data)
 
     if not premium_mode:
         return (
@@ -2061,11 +2009,7 @@ def calcular_montecarlo_premium(
 
     if not unlocked:
         return (
-            dbc.Alert(
-                "Esta función forma parte del premium. Cuando conectes tu pago, desbloquéala cambiando ic-premium-access a unlocked=True.",
-                color="warning",
-                className="rounded-4 border-0",
-            ),
+            premium_cta_card(),
             build_empty_figure("Monte Carlo disponible en premium", height=420),
             build_empty_figure("Distribución final disponible en premium", height=360),
             html.Div(),
@@ -2227,6 +2171,7 @@ def calcular_montecarlo_premium(
     State("ic-inflacion", "value"),
     State("ic-comision", "value"),
     State("ic-scenario", "value"),
+    State("premium-access", "data"),
     prevent_initial_call=True,
 )
 def save_interes_compuesto_simulation(
@@ -2241,9 +2186,21 @@ def save_interes_compuesto_simulation(
     inflacion,
     comision,
     scenario,
+    access_data,
 ):
     if not n_clicks:
         return no_update, no_update, no_update
+
+    if not is_premium_unlocked(access_data):
+        return (
+            no_update,
+            dbc.Alert(
+                "Guardar simulaciones es una función premium. Desbloquéala con el pago único.",
+                color="warning",
+                className="rounded-4 border-0",
+            ),
+            no_update,
+        )
 
     data = {
         "capital_inicial": capital_inicial,
@@ -2392,10 +2349,14 @@ def update_saved_interes_compuesto_list(store):
     Output("ic-download-csv", "data"),
     Input("ic-download-btn", "n_clicks"),
     State("ic-evolucion-store", "data"),
+    State("premium-access", "data"),
     prevent_initial_call=True,
 )
-def descargar_csv(n_clicks, evolucion_data):
+def descargar_csv(n_clicks, evolucion_data, access_data):
     if not n_clicks or not evolucion_data:
+        return dash.no_update
+
+    if not is_premium_unlocked(access_data):
         return dash.no_update
 
     df = evolution_to_dataframe(evolucion_data)
