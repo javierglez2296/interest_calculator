@@ -2045,21 +2045,6 @@ def calcular_montecarlo_premium(
     n_simulaciones,
     objetivo,
 ):
-def calcular_montecarlo_premium(
-    n_clicks,
-    access_data,
-    premium_mode,
-    capital_inicial,
-    aportacion,
-    aportacion_tipo,
-    anios,
-    rentabilidad,
-    inflacion,
-    comision,
-    volatilidad,
-    n_simulaciones,
-    objetivo,
-):
     unlocked = bool((access_data or {}).get("unlocked"))
 
     if not premium_mode:
