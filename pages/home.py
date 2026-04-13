@@ -3,6 +3,7 @@ from dash import html
 import dash_bootstrap_components as dbc
 
 from components.disclaimer_afiliados import build_disclaimer
+from utils.premium import STRIPE_PAYMENT_LINK
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
@@ -487,6 +488,72 @@ quick_actions_section = html.Div(
     className="quick-actions-section",
 )
 
+premium_section = html.Div(
+    dbc.Container(
+        dbc.Card(
+            dbc.CardBody(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Div("Premium", className="section-eyebrow mb-3"),
+                                html.Div("Pago único · 9€", className="premium-price-badge mb-3"),
+                                html.H2(
+                                    "Desbloquea todas las calculadoras premium",
+                                    className="premium-title mb-3",
+                                ),
+                                html.P(
+                                    "Accede a Monte Carlo, guardado de simulaciones, exportación de resultados y futuras funciones avanzadas con un solo pago.",
+                                    className="section-subtitle mb-4",
+                                ),
+                                html.Div(
+                                    [
+                                        html.Div("✔ Monte Carlo", className="premium-feature-chip"),
+                                        html.Div("✔ Guardar simulaciones", className="premium-feature-chip"),
+                                        html.Div("✔ Exportar CSV", className="premium-feature-chip"),
+                                        html.Div("✔ Comparativas avanzadas", className="premium-feature-chip"),
+                                    ],
+                                    className="premium-feature-grid mb-4",
+                                ),
+                                html.Div(
+                                    "Sin suscripción. Acceso inmediato en este dispositivo.",
+                                    className="premium-mini-note mb-4",
+                                ),
+                            ],
+                            lg=8,
+                            className="mb-4 mb-lg-0",
+                        ),
+                        dbc.Col(
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Desbloquear todo por 9€",
+                                        href=STRIPE_PAYMENT_LINK,
+                                        target="_blank",
+                                        color="dark",
+                                        className="premium-cta-btn w-100 mb-3",
+                                    ),
+                                    dbc.Button(
+                                        "Ver calculadora premium",
+                                        href="/calculadora",
+                                        color="light",
+                                        className="rounded-pill fw-semibold border w-100",
+                                    ),
+                                ],
+                                className="d-flex flex-column justify-content-center h-100",
+                            ),
+                            lg=4,
+                        ),
+                    ],
+                    className="align-items-center",
+                )
+            ),
+            className="border-0 premium-panel",
+        )
+    ),
+    className="premium-section",
+)
+
 seo_text_section = html.Div(
     dbc.Container(
         [
@@ -712,6 +779,7 @@ layout = html.Div(
         hero_section,
         calculadoras_section,
         quick_actions_section,
+        premium_section,
         seo_text_section,
         articulos_section,
         simulaciones_section,
