@@ -1796,18 +1796,16 @@ def render_premium_lock_note(access_data):
     Output("ic-tabla-anual", "children"),
     Output("ic-share-link", "value"),
     Output("ic-evolucion-store", "data"),
-    Input("ic-boton", "n_clicks"),
-    State("ic-capital-inicial", "value"),
-    State("ic-aportacion", "value"),
-    State("ic-aportacion-tipo", "value"),
-    State("ic-anios", "value"),
-    State("ic-rentabilidad", "value"),
-    State("ic-inflacion", "value"),
-    State("ic-comision", "value"),
-    State("ic-scenario", "value"),
+    Input("ic-capital-inicial", "value"),
+    Input("ic-aportacion", "value"),
+    Input("ic-aportacion-tipo", "value"),
+    Input("ic-anios", "value"),
+    Input("ic-rentabilidad", "value"),
+    Input("ic-inflacion", "value"),
+    Input("ic-comision", "value"),
+    Input("ic-scenario", "value"),
 )
 def calcular_simulacion(
-    n_clicks,
     capital_inicial,
     aportacion,
     aportacion_tipo,
@@ -1817,31 +1815,6 @@ def calcular_simulacion(
     comision,
     scenario,
 ):
-    if not n_clicks:
-        empty_metric = metric_card("Pendiente", "—", "Calcula para ver resultados")
-        empty_fig = build_empty_figure("Introduce tus datos y pulsa en calcular")
-        return (
-            empty_metric,
-            empty_metric,
-            empty_metric,
-            empty_metric,
-            empty_metric,
-            empty_metric,
-            empty_metric,
-            dbc.Alert("Completa los datos y calcula para ver tu simulación.", color="light", className="rounded-4 border-0"),
-            html.Div(""),
-            build_empty_figure("Calcula tu simulación para ver la composición final", height=320),
-            empty_fig,
-            html.Div(),
-            html.Div(),
-            html.Div(),
-            build_empty_figure("Calcula tu simulación para comparar alternativas", height=360),
-            html.Div(),
-            html.Div(),
-            html.Div(),
-            "",
-            None,
-        )
 
     try:
         capital_inicial_num = max(parse_number(capital_inicial), 0)
