@@ -1,11 +1,20 @@
 import dash_bootstrap_components as dbc
 from dash import html
 
+# =========================================================
+# CONFIG
+# =========================================================
 PREMIUM_PRICE = "9€"
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/cNi00kaRr1Ri8sU0tr1VK00"
 
 
+# =========================================================
+# HELPERS
+# =========================================================
 def is_premium_unlocked(access_data):
+    """
+    Comprueba si el usuario tiene premium activo
+    """
     return bool((access_data or {}).get("unlocked"))
 
 
@@ -19,6 +28,9 @@ def get_premium_badges():
     ]
 
 
+# =========================================================
+# CTA PRINCIPAL
+# =========================================================
 def premium_cta_card(
     price=PREMIUM_PRICE,
     payment_link=STRIPE_PAYMENT_LINK,
@@ -57,7 +69,10 @@ def premium_cta_card(
                         html.Div(f"✔ {badge}", className="mb-2")
                         for badge in get_premium_badges()
                     ],
-                    style={"color": "#344054", "fontWeight": "600"},
+                    style={
+                        "color": "#344054",
+                        "fontWeight": "600",
+                    },
                     className="mb-3",
                 ),
                 dbc.Button(
@@ -86,6 +101,9 @@ def premium_cta_card(
     )
 
 
+# =========================================================
+# ESTADO BLOQUEADO
+# =========================================================
 def premium_locked_note(feature_name="esta función"):
     return dbc.Alert(
         f"{feature_name.capitalize()} está disponible en la versión premium.",
@@ -94,6 +112,9 @@ def premium_locked_note(feature_name="esta función"):
     )
 
 
+# =========================================================
+# ESTADO ACTIVO
+# =========================================================
 def premium_active_alert():
     return dbc.Alert(
         "Premium activo. Ya puedes usar todas las funciones desbloqueadas.",
