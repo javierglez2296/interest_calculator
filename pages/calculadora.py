@@ -1765,17 +1765,12 @@ def update_scenario_defaults(scenario):
     Input("ic-premium-access", "data"),
 )
 def render_premium_lock_note(access_data):
-    unlocked = bool((access_data or {}).get("unlocked"))
+    unlocked = is_premium_unlocked(access_data)
 
     if unlocked:
-        return dbc.Alert(
-            "Premium activo. Ya puedes usar Monte Carlo y el análisis de probabilidad.",
-            color="success",
-            className="rounded-4 border-0",
-        )
+        return premium_active_alert()
 
-    return premium_upgrade_card()
-
+    return premium_cta_card()
 
 # =========================================================
 # CÁLCULO PRINCIPAL
