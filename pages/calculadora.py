@@ -10,6 +10,11 @@ from utils.calculadora_components import (
     premium_locked,
 )
 import numpy as np
+from utils.premium import (
+    is_premium_unlocked,
+    premium_cta_card,
+    premium_active_alert,
+)
 import dash
 from dash import (
     html,
