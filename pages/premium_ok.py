@@ -74,6 +74,12 @@ layout = dbc.Container(
                                             "Ver calculadora FIRE",
                                             href="/fire",
                                             color="secondary",
+                                            className="rounded-pill fw-semibold px-4 py-3 me-2 mb-2",
+                                        ),
+                                        dbc.Button(
+                                            "Volver al inicio",
+                                            href="/",
+                                            color="light",
                                             className="rounded-pill fw-semibold px-4 py-3 mb-2",
                                         ),
                                     ],
