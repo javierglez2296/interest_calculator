@@ -1,9 +1,11 @@
 import json
+from datetime import date
+
+import dash
 from dash import Dash, html, dcc, page_container
 import dash_bootstrap_components as dbc
 from flask import Response
-import dash
-from datetime import date
+
 from components.navbar import build_navbar
 from components.footer import build_footer
 
@@ -40,21 +42,6 @@ app = Dash(
 
 server = app.server
 
-app.layout = html.Div(
-    [
-        dcc.Location(id="global-url", refresh=False),
-
-        # Store global premium
-        dcc.Store(
-            id="premium-access",
-            storage_type="local",
-            data={"unlocked": False, "source": None},
-        ),
-
-        page_container,
-    ]
-)
-
 # =========================================================
 # SITEMAP
 # =========================================================
@@ -70,6 +57,7 @@ def sitemap():
         "/rentabilidad-alquiler": "0.9",
         "/comparador": "0.9",
         "/blog": "0.8",
+        "/premium-ok": "0.2",
     }
 
     changefreqs = {
@@ -80,6 +68,7 @@ def sitemap():
         "/rentabilidad-alquiler": "weekly",
         "/comparador": "weekly",
         "/blog": "weekly",
+        "/premium-ok": "yearly",
     }
 
     urls = []
@@ -118,6 +107,7 @@ def sitemap():
 </urlset>"""
 
     return Response(xml, mimetype="application/xml")
+
 
 # =========================================================
 # STRUCTURED DATA
@@ -246,8 +236,15 @@ app.index_string = f"""
 # =========================================================
 app.layout = html.Div(
     [
-        dcc.Store(id="theme-store", storage_type="local"),
+        dcc.Location(id="global-url", refresh=False),
         dcc.Location(id="url", refresh=False),
+
+        dcc.Store(
+            id="premium-access",
+            storage_type="local",
+            data={"unlocked": False, "source": None},
+        ),
+        dcc.Store(id="theme-store", storage_type="local"),
         dcc.Store(id="saved-simulations-store", storage_type="local"),
 
         build_navbar(),
@@ -255,14 +252,14 @@ app.layout = html.Div(
         html.Main(
             html.Div(
                 page_container,
-                className="page-inner"
+                className="page-inner",
             ),
-            className="site-main page-wrapper"
+            className="site-main page-wrapper",
         ),
 
         build_footer(),
     ],
-    className="site-shell"
+    className="site-shell",
 )
 
 # =========================================================
