@@ -641,7 +641,7 @@ layout = dbc.Container(
     [
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
-        dcc.Store(id="pro-unlocked", data=False, storage_type="local"),
+
 
         dbc.Row(
             [
