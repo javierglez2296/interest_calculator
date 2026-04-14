@@ -1078,7 +1078,7 @@ def build_pro_recommendation(ratio_esfuerzo, ahorro_intereses, meses_ahorrados):
 layout = dbc.Container(
     [
         dcc.Location(id="hip-url", refresh=False),
-        dcc.Store(id="hip-pro-unlocked", data=False, storage_type="local"),
+        dcc.Store(id="hip-global-premium", data=False, storage_type="local"),
 
         dbc.Row(
             [
@@ -1690,10 +1690,10 @@ def update_capacidad_compra(
 # CALLBACKS PRO
 # =========================================================
 @callback(
-    Output("hip-pro-unlocked", "data"),
+    Output("hip-global-premium", "data"),
     Output("hip-pro-feedback", "children"),
     Input("hip-url", "search"),
-    State("hip-pro-unlocked", "data"),
+    State("hip-global-premium", "data"),
     prevent_initial_call=False,
 )
 def unlock_hipoteca_pro(search, already_unlocked):
@@ -1731,7 +1731,7 @@ def unlock_hipoteca_pro(search, already_unlocked):
 
 @callback(
     Output("hip-pro-cta-box", "children"),
-    Input("hip-pro-unlocked", "data"),
+    Input("hip-global-premium", "data"),
 )
 def update_pro_cta(unlocked):
     return build_pro_active_card() if unlocked else build_pro_locked_card()
@@ -1739,7 +1739,7 @@ def update_pro_cta(unlocked):
 
 @callback(
     Output("hip-pro-content", "children"),
-    Input("hip-pro-unlocked", "data"),
+    Input("hip-global-premium", "data"),
     Input("hip-precio", "value"),
     Input("hip-entrada", "value"),
     Input("hip-interes", "value"),
