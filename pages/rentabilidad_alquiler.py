@@ -1,5 +1,5 @@
 import dash
-from dash import html, dcc, Input, Output, State, callback, clientside_callback
+from dash import html, dcc, Input, Output, callback, clientside_callback
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from urllib.parse import parse_qs
@@ -642,7 +642,6 @@ layout = dbc.Container(
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
 
-
         dbc.Row(
             [
                 dbc.Col(
@@ -1030,57 +1029,27 @@ layout = dbc.Container(
 # =========================================================
 @callback(
     Output("gtag-pro-open-store", "data"),
-    Input("url", "search"),
+    Input("premium-access", "data"),
     prevent_initial_call=False,
 )
-def track_pro_interest(search):
-    params = parse_qs((search or "").lstrip("?"))
-    came_from_success = any(
-        [
-            params.get("pro", ["0"])[0] == "1",
-            params.get("premium", ["0"])[0] == "1",
-            params.get("paid", ["0"])[0] == "1",
-            params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
-            "session_id" in params,
-        ]
-    )
-    if came_from_success:
+def track_pro_interest(premium_access):
+    unlocked = bool((premium_access or {}).get("unlocked"))
+    if unlocked:
         return {"event": "unlock_rentabilidad_pro"}
     return dash.no_update
 
 
 @callback(
-    Output("pro-unlocked", "data"),
     Output("pro-unlock-feedback", "children"),
     Output("pro-scroll-trigger", "children"),
-    Input("url", "search"),
-    State("pro-unlocked", "data"),
+    Input("premium-access", "data"),
     prevent_initial_call=False,
 )
-def unlock_pro(search, already_unlocked):
-    already_unlocked = bool(already_unlocked)
+def sync_unlock_feedback(premium_access):
+    unlocked = bool((premium_access or {}).get("unlocked"))
 
-    if already_unlocked:
-        return True, html.Div(), ""
-
-    if not search:
-        return False, html.Div(), ""
-
-    params = parse_qs(search.lstrip("?"))
-
-    unlocked_from_url = any(
-        [
-            params.get("pro", ["0"])[0] == "1",
-            params.get("premium", ["0"])[0] == "1",
-            params.get("paid", ["0"])[0] == "1",
-            params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
-            "session_id" in params,
-        ]
-    )
-
-    if unlocked_from_url:
+    if unlocked:
         return (
-            True,
             dbc.Alert(
                 "✅ Acceso premium activado correctamente.",
                 color="success",
@@ -1089,12 +1058,16 @@ def unlock_pro(search, already_unlocked):
             "scroll",
         )
 
-    return False, html.Div(), ""
+    return html.Div(), ""
 
 
-Input("global-premium", "data")
-def update_pro_blocks(unlocked):
-    unlocked = bool(unlocked)
+@callback(
+    Output("pro-card-dynamic", "children"),
+    Output("pro-preview-dynamic", "children"),
+    Input("premium-access", "data"),
+)
+def update_pro_blocks(premium_access):
+    unlocked = bool((premium_access or {}).get("unlocked"))
     return (
         pro_card(unlocked),
         locked_preview(unlocked),
@@ -1416,7 +1389,7 @@ def update_calculator(
 # =========================================================
 @callback(
     Output("pro-content", "children"),
-    Input("global-premium", "data"),
+    Input("premium-access", "data"),
     Input("precio_compra", "value"),
     Input("gastos_compra", "value"),
     Input("reforma", "value"),
@@ -1431,7 +1404,7 @@ def update_calculator(
     Input("sp500_return", "value"),
 )
 def render_pro_content(
-    unlocked,
+    premium_access,
     precio_compra,
     gastos_compra,
     reforma,
@@ -1445,6 +1418,8 @@ def render_pro_content(
     irpf_pct,
     sp500_return,
 ):
+    unlocked = bool((premium_access or {}).get("unlocked"))
+
     if not unlocked:
         return html.Div(
             [
