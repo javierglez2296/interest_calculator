@@ -12,7 +12,7 @@ register_page(
     description="Calcula la cuota mensual de tu hipoteca, intereses totales, entrada necesaria, esfuerzo financiero y coste final del préstamo."
 )
 
-STRIPE_HIPOTECA_URL = "https://buy.stripe.com/TU_ENLACE_DE_STRIPE"
+STRIPE_HIPOTECA_URL = "https://buy.stripe.com/cNi00kaRr1Ri8sU0tr1VK00"
 
 
 # =========================================================
