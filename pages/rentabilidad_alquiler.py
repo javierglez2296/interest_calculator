@@ -19,6 +19,7 @@ dash.register_page(
 HIPOTECA_URL = "/hipoteca"
 COMPARADOR_URL = "/comparador"
 SP500_RETURN_DEFAULT = 7.0
+STRIPE_PAYMENT_LINK = "https://buy.stripe.com/cNi00kaRr1Ri8sU0tr1VK00"
 
 
 # =========================================================
@@ -551,10 +552,10 @@ def pro_card(unlocked=False):
                 ),
                 dbc.Button(
                     "Desbloquear análisis completo",
-                    id="open-pro-modal-btn",
+                    href=STRIPE_PAYMENT_LINK,
+                    target="_self",
                     color="primary",
                     className="rounded-pill px-4",
-                    n_clicks=0,
                 ),
             ]
         ),
@@ -622,116 +623,14 @@ def locked_preview(unlocked=False):
                 ),
                 dbc.Button(
                     "Quiero la versión PRO",
-                    id="open-pro-modal-btn-2",
+                    href=STRIPE_PAYMENT_LINK,
+                    target="_self",
                     color="dark",
                     className="rounded-pill px-4 mt-4 w-100",
-                    n_clicks=0,
                 ),
             ]
         ),
         className="border-0 shadow-sm rounded-4 h-100",
-    )
-
-
-def email_capture_box(unlocked=False):
-    if unlocked:
-        return dbc.Card(
-            dbc.CardBody(
-                [
-                    section_eyebrow("DESBLOQUEO PRO"),
-                    html.H3("Premium ya activo", className="h5 fw-bold mb-3"),
-                    html.P(
-                        "Esta calculadora ya está desbloqueada para este usuario.",
-                        className="text-muted mb-0",
-                    ),
-                ]
-            ),
-            className="border-0 shadow-sm rounded-4 h-100",
-        )
-
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                section_eyebrow("DESBLOQUEO PRO"),
-                html.H3("Introduce tu email y desbloquea el análisis completo", className="h5 fw-bold mb-3"),
-                html.P(
-                    "Te muestro al instante la versión PRO con comparativa a 10 años, payback y recomendación final.",
-                    className="text-muted mb-3",
-                ),
-                dbc.InputGroup(
-                    [
-                        dbc.Input(
-                            id="email-pro-input",
-                            type="email",
-                            placeholder="Tu email",
-                            class_name="rounded-start-pill",
-                        ),
-                        dbc.Button(
-                            "Ver análisis PRO",
-                            id="email-pro-submit-btn",
-                            color="primary",
-                            className="rounded-end-pill px-4",
-                            n_clicks=0,
-                        ),
-                    ],
-                    class_name="mb-2",
-                ),
-                html.Div(
-                    "Acceso inmediato. Sin esperas.",
-                    className="text-muted small",
-                ),
-            ]
-        ),
-        className="border-0 shadow-sm rounded-4 h-100",
-    )
-
-
-def pro_modal():
-    return dbc.Modal(
-        [
-            dbc.ModalHeader(dbc.ModalTitle("Desbloquear análisis PRO")),
-            dbc.ModalBody(
-                [
-                    html.P(
-                        "Introduce tu email y desbloquea ahora el análisis avanzado.",
-                        className="text-muted",
-                    ),
-                    html.Div(
-                        [
-                            html.Div("Qué incluye la versión PRO", className="fw-bold mb-2"),
-                            html.Ul(
-                                [
-                                    html.Li("Comparativa inmueble vs S&P 500 a 10 años"),
-                                    html.Li("Payback estimado"),
-                                    html.Li("Recomendación final: comprar / dudoso / no comprar"),
-                                    html.Li("Escenario más realista de rentabilidad"),
-                                    html.Li("Tabla anual resumida"),
-                                ],
-                                className="text-muted",
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    dbc.Input(
-                        id="modal-email-input",
-                        type="email",
-                        placeholder="Tu email",
-                        class_name="mb-3",
-                    ),
-                    dbc.Button(
-                        "Ver análisis PRO",
-                        id="modal-email-submit-btn",
-                        color="primary",
-                        className="rounded-pill px-4 w-100",
-                        n_clicks=0,
-                    ),
-                ]
-            ),
-        ],
-        id="pro-modal",
-        is_open=False,
-        centered=True,
-        size="lg",
     )
 
 
@@ -742,7 +641,6 @@ layout = dbc.Container(
     [
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
-        dcc.Store(id="gtag-email-submit-store"),
         dcc.Store(id="pro-unlocked", data=False, storage_type="local"),
 
         dbc.Row(
@@ -996,7 +894,29 @@ layout = dbc.Container(
 
         dbc.Row(
             [
-                dbc.Col(html.Div(email_capture_box(False), id="pro-email-dynamic"), lg=5),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                section_eyebrow("DESBLOQUEO PRO"),
+                                html.H3("Compra la versión premium", className="h5 fw-bold mb-3"),
+                                html.P(
+                                    "Accede al bloque avanzado con proyección a 10 años, payback y recomendación final.",
+                                    className="text-muted mb-3",
+                                ),
+                                dbc.Button(
+                                    "Ir a Stripe",
+                                    href=STRIPE_PAYMENT_LINK,
+                                    target="_self",
+                                    color="primary",
+                                    className="rounded-pill px-4",
+                                ),
+                            ]
+                        ),
+                        className="border-0 shadow-sm rounded-4 h-100",
+                    ),
+                    lg=5,
+                ),
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
@@ -1048,8 +968,6 @@ layout = dbc.Container(
             class_name="pb-5",
         ),
 
-        pro_modal(),
-
         html.Div(
             dbc.Container(
                 dbc.Row(
@@ -1070,10 +988,10 @@ layout = dbc.Container(
                         dbc.Col(
                             dbc.Button(
                                 "Quiero la PRO",
-                                id="sticky-pro-cta",
+                                href=STRIPE_PAYMENT_LINK,
+                                target="_self",
                                 color="primary",
                                 className="rounded-pill w-100",
-                                n_clicks=0,
                             ),
                             xs=5,
                             md=4,
@@ -1111,137 +1029,72 @@ layout = dbc.Container(
 # CALLBACKS UI
 # =========================================================
 @callback(
-    Output("pro-modal", "is_open"),
-    Input("open-pro-modal-btn", "n_clicks"),
-    Input("open-pro-modal-btn-2", "n_clicks"),
-    Input("sticky-pro-cta", "n_clicks"),
-    Input("modal-email-submit-btn", "n_clicks"),
-    State("pro-modal", "is_open"),
-    prevent_initial_call=True,
-)
-def toggle_modal(btn1, btn2, btn3, modal_submit, is_open):
-    triggered = dash.callback_context.triggered_id
-
-    if triggered in ["open-pro-modal-btn", "open-pro-modal-btn-2", "sticky-pro-cta"]:
-        return True
-
-    if triggered == "modal-email-submit-btn":
-        return False
-
-    return is_open
-
-
-@callback(
     Output("gtag-pro-open-store", "data"),
-    Input("open-pro-modal-btn", "n_clicks"),
-    Input("open-pro-modal-btn-2", "n_clicks"),
-    Input("sticky-pro-cta", "n_clicks"),
-    prevent_initial_call=True,
+    Input("url", "search"),
+    prevent_initial_call=False,
 )
-def track_pro_interest(btn1, btn2, btn3):
-    return {"event": "click_rentabilidad_pro"}
-
-
-@callback(
-    Output("gtag-email-submit-store", "data"),
-    Input("email-pro-submit-btn", "n_clicks"),
-    Input("modal-email-submit-btn", "n_clicks"),
-    State("email-pro-input", "value"),
-    State("modal-email-input", "value"),
-    prevent_initial_call=True,
-)
-def track_email_interest(btn1, btn2, email1, email2):
-    triggered = dash.callback_context.triggered_id
-    email = email1 if triggered == "email-pro-submit-btn" else email2
-    email = (email or "").strip()
-
-    return {
-        "event": "submit_rentabilidad_pro_email",
-        "has_email": bool(email),
-    }
+def track_pro_interest(search):
+    params = parse_qs((search or "").lstrip("?"))
+    came_from_success = any(
+        [
+            params.get("pro", ["0"])[0] == "1",
+            params.get("premium", ["0"])[0] == "1",
+            params.get("paid", ["0"])[0] == "1",
+            params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
+            "session_id" in params,
+        ]
+    )
+    if came_from_success:
+        return {"event": "unlock_rentabilidad_pro"}
+    return dash.no_update
 
 
 @callback(
     Output("pro-unlocked", "data"),
     Output("pro-unlock-feedback", "children"),
     Output("pro-scroll-trigger", "children"),
-    Input("email-pro-submit-btn", "n_clicks"),
-    Input("modal-email-submit-btn", "n_clicks"),
     Input("url", "search"),
-    State("email-pro-input", "value"),
-    State("modal-email-input", "value"),
     State("pro-unlocked", "data"),
     prevent_initial_call=False,
 )
-def unlock_pro(email_btn_clicks, modal_btn_clicks, search, email1, email2, already_unlocked):
-    ctx = dash.callback_context
-    triggered = ctx.triggered_id
+def unlock_pro(search, already_unlocked):
     already_unlocked = bool(already_unlocked)
-
-    if triggered == "url" or triggered is None:
-        if already_unlocked:
-            return True, html.Div(), ""
-
-        if not search:
-            return False, html.Div(), ""
-
-        params = parse_qs(search.lstrip("?"))
-
-        unlocked_from_url = any(
-            [
-                params.get("pro", ["0"])[0] == "1",
-                params.get("premium", ["0"])[0] == "1",
-                params.get("paid", ["0"])[0] == "1",
-                params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
-                "session_id" in params,
-            ]
-        )
-
-        if unlocked_from_url:
-            return (
-                True,
-                dbc.Alert(
-                    "✅ Acceso premium activado correctamente.",
-                    color="success",
-                    className="rounded-4 mb-0",
-                ),
-                "scroll",
-            )
-
-        return False, html.Div(), ""
-
-    email = email1 if triggered == "email-pro-submit-btn" else email2
-    email = (email or "").strip()
 
     if already_unlocked:
         return True, html.Div(), ""
 
-    if not email or "@" not in email or "." not in email:
+    if not search:
+        return False, html.Div(), ""
+
+    params = parse_qs(search.lstrip("?"))
+
+    unlocked_from_url = any(
+        [
+            params.get("pro", ["0"])[0] == "1",
+            params.get("premium", ["0"])[0] == "1",
+            params.get("paid", ["0"])[0] == "1",
+            params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
+            "session_id" in params,
+        ]
+    )
+
+    if unlocked_from_url:
         return (
-            False,
+            True,
             dbc.Alert(
-                "Introduce un email válido para desbloquear la versión PRO.",
-                color="danger",
+                "✅ Acceso premium activado correctamente.",
+                color="success",
                 className="rounded-4 mb-0",
             ),
-            "",
+            "scroll",
         )
 
-    return (
-        True,
-        dbc.Alert(
-            "✅ Análisis PRO desbloqueado correctamente.",
-            color="success",
-            className="rounded-4 mb-0",
-        ),
-        "scroll",
-    )
+    return False, html.Div(), ""
 
 
 @callback(
     Output("pro-card-dynamic", "children"),
     Output("pro-preview-dynamic", "children"),
-    Output("pro-email-dynamic", "children"),
     Input("pro-unlocked", "data"),
 )
 def update_pro_blocks(unlocked):
@@ -1249,7 +1102,6 @@ def update_pro_blocks(unlocked):
     return (
         pro_card(unlocked),
         locked_preview(unlocked),
-        email_capture_box(unlocked),
     )
 
 
@@ -1267,23 +1119,6 @@ clientside_callback(
     """,
     Output("hero-cta-gratis", "title"),
     Input("gtag-pro-open-store", "data"),
-)
-
-clientside_callback(
-    """
-    function(data) {
-        if (!data) { return window.dash_clientside.no_update; }
-        if (window.gtag) {
-            window.gtag('event', data.event, {
-                page: 'rentabilidad_alquiler',
-                has_email: data.has_email ? 'yes' : 'no'
-            });
-        }
-        return '';
-    }
-    """,
-    Output("hero-cta-hipoteca", "title"),
-    Input("gtag-email-submit-store", "data"),
 )
 
 clientside_callback(
@@ -1639,6 +1474,13 @@ def render_pro_content(
                         "filter": "blur(2px)",
                         "opacity": 0.8,
                     },
+                ),
+                dbc.Button(
+                    "Comprar versión PRO",
+                    href=STRIPE_PAYMENT_LINK,
+                    target="_self",
+                    color="primary",
+                    className="rounded-pill px-4 mt-4",
                 ),
             ]
         )
