@@ -1092,11 +1092,7 @@ def unlock_pro(search, already_unlocked):
     return False, html.Div(), ""
 
 
-@callback(
-    Output("pro-card-dynamic", "children"),
-    Output("pro-preview-dynamic", "children"),
-    Input("pro-unlocked", "data"),
-)
+Input("global-premium", "data")
 def update_pro_blocks(unlocked):
     unlocked = bool(unlocked)
     return (
