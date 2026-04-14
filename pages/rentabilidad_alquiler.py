@@ -1420,7 +1420,7 @@ def update_calculator(
 # =========================================================
 @callback(
     Output("pro-content", "children"),
-    Input("pro-unlocked", "data"),
+    Input("global-premium", "data"),
     Input("precio_compra", "value"),
     Input("gastos_compra", "value"),
     Input("reforma", "value"),
