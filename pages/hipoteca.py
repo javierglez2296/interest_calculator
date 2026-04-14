@@ -1,6 +1,8 @@
-from dash import html, dcc, register_page, callback, Input, Output
+    import dash
+from dash import html, dcc, register_page, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
+from urllib.parse import parse_qs
 
 register_page(
     __name__,
@@ -9,6 +11,9 @@ register_page(
     title="Calculadora de hipoteca | interescompuesto.app",
     description="Calcula la cuota mensual de tu hipoteca, intereses totales, entrada necesaria, esfuerzo financiero y coste final del préstamo."
 )
+
+STRIPE_HIPOTECA_URL = "https://buy.stripe.com/TU_ENLACE_DE_STRIPE"
+
 
 # =========================================================
 # HELPERS
@@ -762,7 +767,7 @@ def build_plan_ahorro_table(resultados):
                 )
             ),
             html.Tbody(
-                                [
+                [
                     html.Tr(
                         [
                             html.Td(f"{int(r['aportacion'])} €/mes"),
@@ -818,10 +823,263 @@ def input_block(label, input_id, value, type_="number", step=None, min_=None, ma
 
 
 # =========================================================
+# PRO HELPERS
+# =========================================================
+def calcular_hipoteca_con_amortizacion_extra(principal, interes_anual, anos, extra_mensual=0):
+    principal = max(safe_num(principal), 0)
+    interes_anual = max(safe_num(interes_anual), 0)
+    anos = max(safe_num(anos), 0)
+    extra_mensual = max(safe_num(extra_mensual), 0)
+
+    meses = int(anos * 12)
+    if principal <= 0 or meses <= 0:
+        return {
+            "cuota_base": 0,
+            "cuota_total": 0,
+            "meses_nuevos": 0,
+            "intereses_totales_nuevos": 0,
+            "filas": [],
+        }
+
+    r = interes_anual / 100 / 12
+    if r == 0:
+        cuota_base = principal / meses
+    else:
+        cuota_base = principal * (r * (1 + r) ** meses) / ((1 + r) ** meses - 1)
+
+    cuota_total = cuota_base + extra_mensual
+    saldo = principal
+    filas = []
+    intereses_totales = 0
+    mes = 0
+
+    while saldo > 0 and mes < 1000:
+        mes += 1
+        interes_mes = saldo * r if r > 0 else 0
+        pago = cuota_total
+
+        if r == 0:
+            amortizacion = min(cuota_total, saldo)
+        else:
+            amortizacion = max(pago - interes_mes, 0)
+            amortizacion = min(amortizacion, saldo)
+
+        saldo = max(saldo - amortizacion, 0)
+        intereses_totales += interes_mes
+
+        filas.append(
+            {
+                "mes": mes,
+                "interes": interes_mes,
+                "amortizacion": amortizacion,
+                "saldo": saldo,
+            }
+        )
+
+        if saldo <= 0:
+            break
+
+    return {
+        "cuota_base": cuota_base,
+        "cuota_total": cuota_total,
+        "meses_nuevos": mes,
+        "intereses_totales_nuevos": intereses_totales,
+        "filas": filas,
+    }
+
+
+def calcular_amortizacion_unica(principal, interes_anual, anos, amortizacion_unica, estrategia="plazo"):
+    principal = max(safe_num(principal), 0)
+    interes_anual = max(safe_num(interes_anual), 0)
+    anos = max(safe_num(anos), 0)
+    amortizacion_unica = max(safe_num(amortizacion_unica), 0)
+
+    base = calcular_hipoteca(principal, 0, interes_anual, anos, 0)
+    principal_nuevo = max(principal - amortizacion_unica, 0)
+    meses_base = base["meses"]
+    cuota_base = base["cuota"]
+    r = interes_anual / 100 / 12
+
+    if principal_nuevo <= 0:
+        return {
+            "cuota_nueva": 0,
+            "meses_nuevos": 0,
+            "intereses_nuevos": 0,
+        }
+
+    if estrategia == "cuota":
+        if meses_base <= 0:
+            cuota_nueva = 0
+        elif r == 0:
+            cuota_nueva = principal_nuevo / meses_base
+        else:
+            cuota_nueva = principal_nuevo * (r * (1 + r) ** meses_base) / ((1 + r) ** meses_base - 1)
+
+        intereses_nuevos = cuota_nueva * meses_base - principal_nuevo
+        return {
+            "cuota_nueva": cuota_nueva,
+            "meses_nuevos": meses_base,
+            "intereses_nuevos": intereses_nuevos,
+        }
+
+    saldo = principal_nuevo
+    intereses = 0
+    mes = 0
+    while saldo > 0 and mes < 1000:
+        mes += 1
+        interes_mes = saldo * r if r > 0 else 0
+        amortizacion = cuota_base - interes_mes if r > 0 else cuota_base
+        amortizacion = min(max(amortizacion, 0), saldo)
+        saldo = max(saldo - amortizacion, 0)
+        intereses += interes_mes
+        if saldo <= 0:
+            break
+
+    return {
+        "cuota_nueva": cuota_base,
+        "meses_nuevos": mes,
+        "intereses_nuevos": intereses,
+    }
+
+
+def crear_figura_stress_tipos(principal, anos, tipo_base):
+    tipo_base = max(safe_num(tipo_base), 0)
+    escenarios = [tipo_base, tipo_base + 1, tipo_base + 2]
+    cuotas = []
+    etiquetas = []
+
+    for tipo in escenarios:
+        data = calcular_hipoteca(principal, 0, tipo, anos, 0)
+        cuotas.append(data["cuota"])
+        etiquetas.append(f"{fmt_num(tipo)} %")
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=etiquetas,
+            y=cuotas,
+            hovertemplate="Tipo %{x}<br>Cuota: %{y:,.2f} €<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        template="plotly_white",
+        height=340,
+        margin=dict(l=20, r=20, t=25, b=20),
+        xaxis=dict(title="Escenario"),
+        yaxis=dict(title="Cuota mensual (€)"),
+        showlegend=False,
+    )
+    return fig
+
+
+def build_pro_locked_card():
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div("VERSIÓN PRO", className="small fw-bold text-primary mb-2"),
+                html.H3("Desbloquea el análisis avanzado de hipoteca", className="h4 fw-bold mb-3"),
+                html.P(
+                    "Incluye amortización anticipada, ahorro de intereses, comparación cuota vs plazo, stress test de tipos y recomendación final.",
+                    className="text-muted mb-3",
+                ),
+                html.Div(
+                    [
+                        dbc.Badge("Amortización anticipada", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("Reducir cuota o plazo", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("Stress test", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("Recomendación final", color="light", text_color="dark", class_name="me-2 mb-2"),
+                    ],
+                    className="mb-3",
+                ),
+                html.Div(
+                    [
+                        html.Div("🔒 Resultado premium bloqueado", className="fw-semibold mb-2"),
+                        html.Div(
+                            "Qué pasa si amortizas 100 €/mes, cuánto ahorras en intereses y si te conviene bajar cuota o plazo.",
+                            className="text-muted small",
+                        ),
+                    ],
+                    style={
+                        "border": "1px dashed #cbd5e1",
+                        "borderRadius": "16px",
+                        "padding": "1rem",
+                        "background": "#f8fafc",
+                    },
+                    className="mb-4",
+                ),
+                dbc.Button(
+                    "Desbloquear PRO",
+                    id="hip-open-pro-btn",
+                    href=STRIPE_HIPOTECA_URL,
+                    target="_self",
+                    color="primary",
+                    className="rounded-pill px-4",
+                ),
+            ]
+        ),
+        className="shadow-sm border-0 rounded-4 h-100",
+    )
+
+
+def build_pro_active_card():
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div("VERSIÓN PRO", className="small fw-bold text-primary mb-2"),
+                html.H3("Acceso premium activo", className="h4 fw-bold mb-3"),
+                html.P(
+                    "Ya tienes desbloqueado el bloque avanzado de la calculadora de hipoteca.",
+                    className="text-muted mb-3",
+                ),
+                dbc.Alert(
+                    "✅ El análisis PRO ya está disponible más abajo.",
+                    color="success",
+                    class_name="rounded-4 mb-0",
+                ),
+            ]
+        ),
+        className="shadow-sm border-0 rounded-4 h-100",
+    )
+
+
+def build_pro_recommendation(ratio_esfuerzo, ahorro_intereses, meses_ahorrados):
+    if ratio_esfuerzo > 40:
+        label = "Precaución"
+        color = "danger"
+        texto = "La cuota pesa mucho sobre tus ingresos. Antes de acelerar la compra, priorizaría margen financiero."
+    elif ahorro_intereses > 30000 or meses_ahorrados > 60:
+        label = "Muy interesante"
+        color = "success"
+        texto = "La amortización anticipada tiene un impacto potente. Merece la pena considerarla seriamente."
+    elif ahorro_intereses > 10000 or meses_ahorrados > 24:
+        label = "Interesante"
+        color = "primary"
+        texto = "La amortización extra mejora bastante el coste total y puede ser una buena decisión."
+    else:
+        label = "Impacto moderado"
+        color = "warning"
+        texto = "La mejora existe, pero no cambia radicalmente la operación. Conviene comparar con otras prioridades financieras."
+
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div("RECOMENDACIÓN FINAL", className="small fw-bold text-primary mb-2"),
+                dbc.Badge(label, color=color, class_name="px-3 py-2 mb-3", pill=True),
+                html.P(texto, className="text-muted mb-0"),
+            ]
+        ),
+        className="shadow-sm border-0 rounded-4 h-100",
+    )
+
+
+# =========================================================
 # LAYOUT
 # =========================================================
 layout = dbc.Container(
     [
+        dcc.Location(id="hip-url", refresh=False),
+        dcc.Store(id="hip-pro-unlocked", data=False, storage_type="local"),
+
         dbc.Row(
             [
                 dbc.Col(
@@ -1113,6 +1371,79 @@ layout = dbc.Container(
             class_name="shadow-sm border-0 rounded-4 mb-5",
         ),
 
+        dbc.Row(
+            [
+                dbc.Col(html.Div(id="hip-pro-cta-box"), lg=5),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.Div("PREVIEW PRO", className="small fw-bold text-primary mb-2"),
+                                html.H3("Lo que vería el usuario premium", className="h5 fw-bold mb-3"),
+                                html.Div(
+                                    [
+                                        html.Div("Ahorro potencial en intereses", className="fw-semibold mb-2"),
+                                        html.Div("31.420 €", className="display-6 fw-bold text-primary"),
+                                        html.Div("Meses recortados", className="fw-semibold mt-4 mb-2"),
+                                        html.Div("7 años y 4 meses", className="h2 fw-bold"),
+                                    ],
+                                    style={
+                                        "borderRadius": "18px",
+                                        "padding": "1rem",
+                                        "background": "#f8fafc",
+                                        "border": "1px solid #e9eef5",
+                                        "filter": "blur(3px)",
+                                        "opacity": 0.8,
+                                    },
+                                ),
+                            ]
+                        ),
+                        class_name="shadow-sm border-0 rounded-4 h-100",
+                    ),
+                    lg=7,
+                ),
+            ],
+            class_name="g-4 mb-4",
+        ),
+
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    section_title(
+                        "5. Hipoteca PRO",
+                        "Amortización anticipada, ahorro de intereses, cuota vs plazo, stress test y lectura final.",
+                    ),
+                    dbc.Row(
+                        [
+                            input_block("Amortización extra mensual", "hip-pro-extra-mensual", 100, step=25, min_=0, suffix="€"),
+                            dbc.Col(
+                                [
+                                    dbc.Label("Prioridad de amortización", html_for="hip-pro-estrategia", class_name="fw-semibold mb-2"),
+                                    dbc.RadioItems(
+                                        id="hip-pro-estrategia",
+                                        options=[
+                                            {"label": "Reducir plazo", "value": "plazo"},
+                                            {"label": "Reducir cuota", "value": "cuota"},
+                                        ],
+                                        value="plazo",
+                                        inline=True,
+                                        class_name="mb-3",
+                                    ),
+                                ],
+                                md=6,
+                                lg=4,
+                            ),
+                            input_block("Amortización única inicial", "hip-pro-amort-unica", 10000, step=1000, min_=0, suffix="€"),
+                        ],
+                        class_name="mb-2",
+                    ),
+                    html.Div(id="hip-pro-feedback", className="mb-3"),
+                    html.Div(id="hip-pro-content"),
+                ]
+            ),
+            class_name="shadow-sm border-0 rounded-4 mb-5",
+        ),
+
         dbc.Card(
             dbc.CardBody(
                 [
@@ -1136,7 +1467,7 @@ layout = dbc.Container(
                                 dbc.Alert(
                                     [
                                         html.Div("• Los gastos iniciales pueden variar según comunidad, perfil y operación."),
-                                        html.Div("• Esta simulación no incluye productos vinculados, comisiones o amortizaciones anticipadas."),
+                                        html.Div("• Esta simulación no incluye productos vinculados, comisiones o amortizaciones anticipadas salvo en el bloque PRO."),
                                         html.Div("• Úsala para comparar escenarios y tomar decisiones con más contexto."),
                                     ],
                                     color="light",
@@ -1158,7 +1489,7 @@ layout = dbc.Container(
 
 
 # =========================================================
-# CALLBACKS
+# CALLBACKS FREE
 # =========================================================
 @callback(
     Output("hip-metricas-principales", "children"),
@@ -1353,3 +1684,288 @@ def update_capacidad_compra(
     fig = crear_figura_capacidad_compra(precio_objetivo, data["precio_max_comprable"])
 
     return metrics, data["factor_limitante"], fig
+
+
+# =========================================================
+# CALLBACKS PRO
+# =========================================================
+@callback(
+    Output("hip-pro-unlocked", "data"),
+    Output("hip-pro-feedback", "children"),
+    Input("hip-url", "search"),
+    State("hip-pro-unlocked", "data"),
+    prevent_initial_call=False,
+)
+def unlock_hipoteca_pro(search, already_unlocked):
+    already_unlocked = bool(already_unlocked)
+
+    if already_unlocked:
+        return True, html.Div()
+
+    if not search:
+        return False, html.Div()
+
+    params = parse_qs(search.lstrip("?"))
+    unlocked = any(
+        [
+            params.get("premium", ["0"])[0] == "1",
+            params.get("pro", ["0"])[0] == "1",
+            params.get("paid", ["0"])[0] == "1",
+            params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
+            "session_id" in params,
+        ]
+    )
+
+    if unlocked:
+        return (
+            True,
+            dbc.Alert(
+                "✅ Acceso premium activado correctamente.",
+                color="success",
+                class_name="rounded-4 mb-0",
+            ),
+        )
+
+    return False, html.Div()
+
+
+@callback(
+    Output("hip-pro-cta-box", "children"),
+    Input("hip-pro-unlocked", "data"),
+)
+def update_pro_cta(unlocked):
+    return build_pro_active_card() if unlocked else build_pro_locked_card()
+
+
+@callback(
+    Output("hip-pro-content", "children"),
+    Input("hip-pro-unlocked", "data"),
+    Input("hip-precio", "value"),
+    Input("hip-entrada", "value"),
+    Input("hip-interes", "value"),
+    Input("hip-anos", "value"),
+    Input("hip-gastos", "value"),
+    Input("hip-ingresos", "value"),
+    Input("hip-pro-extra-mensual", "value"),
+    Input("hip-pro-estrategia", "value"),
+    Input("hip-pro-amort-unica", "value"),
+)
+def render_hipoteca_pro(
+    unlocked,
+    precio,
+    entrada_pct,
+    interes_anual,
+    anos,
+    gastos_pct,
+    ingresos,
+    extra_mensual,
+    estrategia,
+    amort_unica,
+):
+    if not unlocked:
+        return html.Div(
+            [
+                html.H3("Desbloquea la versión PRO", className="h5 fw-bold mb-3"),
+                html.P(
+                    "Incluye amortización anticipada, ahorro de intereses, comparación cuota vs plazo y stress test avanzado.",
+                    className="text-muted mb-3",
+                ),
+                html.Div(
+                    [
+                        html.Div("Ahorro potencial en intereses", className="fw-semibold mb-2"),
+                        html.Div("31.420 €", className="display-6 fw-bold text-primary"),
+                        html.P(
+                            "Resultados avanzados bloqueados.",
+                            className="text-muted mt-3 mb-0",
+                        ),
+                    ],
+                    style={
+                        "padding": "1rem",
+                        "borderRadius": "16px",
+                        "background": "#f8fafc",
+                        "border": "1px dashed #cbd5e1",
+                        "filter": "blur(2px)",
+                        "opacity": 0.8,
+                    },
+                ),
+                dbc.Button(
+                    "Ir a Stripe y desbloquear",
+                    href=STRIPE_HIPOTECA_URL,
+                    target="_self",
+                    color="primary",
+                    className="rounded-pill px-4 mt-4",
+                ),
+            ]
+        )
+
+    data = calcular_hipoteca(precio, entrada_pct, interes_anual, anos, gastos_pct)
+    principal = data["principal"]
+    cuota = data["cuota"]
+    meses = data["meses"]
+    ingresos = safe_num(ingresos)
+    ratio_esfuerzo = (cuota / ingresos * 100) if ingresos > 0 else 0
+
+    pro_extra = calcular_hipoteca_con_amortizacion_extra(principal, interes_anual, anos, extra_mensual)
+    comparativa_estrategia = calcular_amortizacion_unica(principal, interes_anual, anos, amort_unica, estrategia)
+
+    ahorro_intereses_extra = max(data["intereses_totales"] - pro_extra["intereses_totales_nuevos"], 0)
+    meses_ahorrados_extra = max(meses - pro_extra["meses_nuevos"], 0)
+
+    ahorro_intereses_unica = max(data["intereses_totales"] - comparativa_estrategia["intereses_nuevos"], 0)
+    meses_ahorrados_unica = max(meses - comparativa_estrategia["meses_nuevos"], 0)
+
+    resumen_pro = resumir_por_ano(pro_extra["filas"])
+    fig_stress = crear_figura_stress_tipos(principal, anos, interes_anual)
+
+    if pro_extra["filas"]:
+        fig_amort_extra = crear_figura_amortizacion(pro_extra["filas"])
+    else:
+        fig_amort_extra = go.Figure()
+
+    tabla_resumen_pro = build_amort_table(resumen_pro[:15]) if resumen_pro else dbc.Alert(
+        "No hay datos suficientes para mostrar el resumen anual PRO.",
+        color="light",
+        class_name="rounded-4 mb-0",
+    )
+
+    if estrategia == "cuota":
+        estrategia_titulo = "Reducir cuota"
+        estrategia_texto = f"La cuota estimada bajaría a {fmt_eur(comparativa_estrategia['cuota_nueva'])} manteniendo el plazo."
+    else:
+        estrategia_titulo = "Reducir plazo"
+        estrategia_texto = f"El plazo estimado bajaría a {fmt_meses_anos(comparativa_estrategia['meses_nuevos'])} manteniendo la cuota."
+
+    return html.Div(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(
+                        build_pro_recommendation(
+                            ratio_esfuerzo=ratio_esfuerzo,
+                            ahorro_intereses=ahorro_intereses_extra,
+                            meses_ahorrados=meses_ahorrados_extra,
+                        ),
+                        lg=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Ahorro en intereses",
+                            fmt_eur(ahorro_intereses_extra),
+                            "Con amortización extra mensual",
+                            highlight=True,
+                        ),
+                        lg=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Tiempo recortado",
+                            fmt_meses_anos(meses_ahorrados_extra),
+                            "Frente a la hipoteca base",
+                            highlight=True,
+                        ),
+                        lg=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+
+            dbc.Row(
+                [
+                    dbc.Col(
+                        metric_card(
+                            "Cuota base",
+                            fmt_eur(cuota),
+                            f"Plazo original: {fmt_meses_anos(meses)}",
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Cuota con extra mensual",
+                            fmt_eur(pro_extra["cuota_total"]),
+                            "Cuota base + amortización adicional",
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Nuevo plazo estimado",
+                            fmt_meses_anos(pro_extra["meses_nuevos"]),
+                            f"Antes: {fmt_meses_anos(meses)}",
+                        ),
+                        md=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div("COMPARATIVA CUOTA VS PLAZO", className="small fw-bold text-primary mb-2"),
+                                    html.H3(estrategia_titulo, className="h5 fw-bold mb-3"),
+                                    html.P(estrategia_texto, className="text-muted mb-3"),
+                                    html.P(
+                                        f"Ahorro estimado en intereses con amortización única: {fmt_eur(ahorro_intereses_unica)}.",
+                                        className="mb-2",
+                                    ),
+                                    html.P(
+                                        f"Tiempo recortado estimado: {fmt_meses_anos(meses_ahorrados_unica)}.",
+                                        className="mb-0",
+                                    ),
+                                ]
+                            ),
+                            class_name="shadow-sm border-0 rounded-4 h-100",
+                        ),
+                        lg=5,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div("STRESS TEST", className="small fw-bold text-primary mb-2"),
+                                    dcc.Graph(figure=fig_stress, config={"displayModeBar": False}),
+                                ]
+                            ),
+                            class_name="shadow-sm border-0 rounded-4 h-100",
+                        ),
+                        lg=7,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div("AMORTIZACIÓN CON EXTRA", className="small fw-bold text-primary mb-2"),
+                                    dcc.Graph(figure=fig_amort_extra, config={"displayModeBar": False}),
+                                ]
+                            ),
+                            class_name="shadow-sm border-0 rounded-4 h-100",
+                        ),
+                        lg=7,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div("RESUMEN ANUAL PRO", className="small fw-bold text-primary mb-2"),
+                                    tabla_resumen_pro,
+                                ]
+                            ),
+                            class_name="shadow-sm border-0 rounded-4 h-100",
+                        ),
+                        lg=5,
+                    ),
+                ],
+                class_name="g-4",
+            ),
+        ]
+    )
