@@ -1,8 +1,7 @@
 import dash
-from dash import html, dcc, register_page, callback, Input, Output, State
+from dash import html, dcc, register_page, callback, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from urllib.parse import parse_qs
 
 register_page(
     __name__,
@@ -1009,7 +1008,6 @@ def build_pro_locked_card():
                 ),
                 dbc.Button(
                     "Desbloquear PRO",
-                    id="hip-open-pro-btn",
                     href=STRIPE_HIPOTECA_URL,
                     target="_self",
                     color="primary",
@@ -1077,9 +1075,6 @@ def build_pro_recommendation(ratio_esfuerzo, ahorro_intereses, meses_ahorrados):
 # =========================================================
 layout = dbc.Container(
     [
-        dcc.Location(id="hip-url", refresh=False),
-        dcc.Store(id="hip-global-premium", data=False, storage_type="local"),
-
         dbc.Row(
             [
                 dbc.Col(
@@ -1690,56 +1685,35 @@ def update_capacidad_compra(
 # CALLBACKS PRO
 # =========================================================
 @callback(
-    Output("hip-global-premium", "data"),
     Output("hip-pro-feedback", "children"),
-    Input("hip-url", "search"),
-    State("hip-global-premium", "data"),
+    Input("premium-access", "data"),
     prevent_initial_call=False,
 )
-def unlock_hipoteca_pro(search, already_unlocked):
-    already_unlocked = bool(already_unlocked)
-
-    if already_unlocked:
-        return True, html.Div()
-
-    if not search:
-        return False, html.Div()
-
-    params = parse_qs(search.lstrip("?"))
-    unlocked = any(
-        [
-            params.get("premium", ["0"])[0] == "1",
-            params.get("pro", ["0"])[0] == "1",
-            params.get("paid", ["0"])[0] == "1",
-            params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
-            "session_id" in params,
-        ]
-    )
+def sync_hipoteca_feedback(premium_access):
+    unlocked = bool((premium_access or {}).get("unlocked"))
 
     if unlocked:
-        return (
-            True,
-            dbc.Alert(
-                "✅ Acceso premium activado correctamente.",
-                color="success",
-                class_name="rounded-4 mb-0",
-            ),
+        return dbc.Alert(
+            "✅ Acceso premium activado correctamente.",
+            color="success",
+            class_name="rounded-4 mb-0",
         )
 
-    return False, html.Div()
+    return html.Div()
 
 
 @callback(
     Output("hip-pro-cta-box", "children"),
-    Input("hip-global-premium", "data"),
+    Input("premium-access", "data"),
 )
-def update_pro_cta(unlocked):
+def update_pro_cta(premium_access):
+    unlocked = bool((premium_access or {}).get("unlocked"))
     return build_pro_active_card() if unlocked else build_pro_locked_card()
 
 
 @callback(
     Output("hip-pro-content", "children"),
-    Input("hip-global-premium", "data"),
+    Input("premium-access", "data"),
     Input("hip-precio", "value"),
     Input("hip-entrada", "value"),
     Input("hip-interes", "value"),
@@ -1751,7 +1725,7 @@ def update_pro_cta(unlocked):
     Input("hip-pro-amort-unica", "value"),
 )
 def render_hipoteca_pro(
-    unlocked,
+    premium_access,
     precio,
     entrada_pct,
     interes_anual,
@@ -1762,6 +1736,8 @@ def render_hipoteca_pro(
     estrategia,
     amort_unica,
 ):
+    unlocked = bool((premium_access or {}).get("unlocked"))
+
     if not unlocked:
         return html.Div(
             [
