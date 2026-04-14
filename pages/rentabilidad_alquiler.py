@@ -446,6 +446,7 @@ def grafico_breakdown(data, cuota_anual_hipoteca=0):
     )
     return fig
 
+
 def grafico_comparativa(
     inversion_total,
     capital_aportado,
@@ -480,7 +481,39 @@ def grafico_comparativa(
     )
     return fig
 
-def pro_card():
+
+def pro_card(unlocked=False):
+    if unlocked:
+        return dbc.Card(
+            dbc.CardBody(
+                [
+                    section_eyebrow("VERSIÓN PRO"),
+                    html.H3("Acceso premium activo", className="h4 fw-bold mb-3"),
+                    html.P(
+                        "Ya tienes desbloqueado el análisis completo de esta calculadora.",
+                        className="text-muted mb-3",
+                    ),
+                    html.Div(
+                        [
+                            dbc.Badge("10 años", color="light", text_color="dark", class_name="me-2 mb-2"),
+                            dbc.Badge("Amortización", color="light", text_color="dark", class_name="me-2 mb-2"),
+                            dbc.Badge("Revalorización", color="light", text_color="dark", class_name="me-2 mb-2"),
+                            dbc.Badge("Escenarios avanzados", color="light", text_color="dark", class_name="me-2 mb-2"),
+                            dbc.Badge("PDF", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        ],
+                        className="mb-3",
+                    ),
+                    dbc.Alert(
+                        "✅ El contenido PRO ya está disponible más abajo.",
+                        color="success",
+                        className="rounded-4 mb-0",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
+            style={"background": "linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%)"},
+        )
+
     return dbc.Card(
         dbc.CardBody(
             [
@@ -530,7 +563,27 @@ def pro_card():
     )
 
 
-def locked_preview():
+def locked_preview(unlocked=False):
+    if unlocked:
+        return dbc.Card(
+            dbc.CardBody(
+                [
+                    section_eyebrow("PREVIEW PRO"),
+                    html.H3("Vista premium activa", className="h5 fw-bold mb-3"),
+                    html.P(
+                        "El usuario ya tiene acceso al bloque avanzado: proyección a 10 años, payback y comparativa ampliada.",
+                        className="text-muted mb-3",
+                    ),
+                    dbc.Alert(
+                        "✅ Ya no hace falta desbloquear nada en esta página.",
+                        color="success",
+                        className="rounded-4 mb-0",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
+        )
+
     return dbc.Card(
         dbc.CardBody(
             [
@@ -580,7 +633,22 @@ def locked_preview():
     )
 
 
-def email_capture_box():
+def email_capture_box(unlocked=False):
+    if unlocked:
+        return dbc.Card(
+            dbc.CardBody(
+                [
+                    section_eyebrow("DESBLOQUEO PRO"),
+                    html.H3("Premium ya activo", className="h5 fw-bold mb-3"),
+                    html.P(
+                        "Esta calculadora ya está desbloqueada para este usuario.",
+                        className="text-muted mb-0",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
+        )
+
     return dbc.Card(
         dbc.CardBody(
             [
@@ -675,7 +743,7 @@ layout = dbc.Container(
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
         dcc.Store(id="gtag-email-submit-store"),
-        dcc.Store(id="pro-unlocked", data=False),
+        dcc.Store(id="pro-unlocked", data=False, storage_type="local"),
 
         dbc.Row(
             [
@@ -901,8 +969,8 @@ layout = dbc.Container(
 
         dbc.Row(
             [
-                dbc.Col(pro_card(), lg=5),
-                dbc.Col(locked_preview(), lg=7),
+                dbc.Col(html.Div(pro_card(False), id="pro-card-dynamic"), lg=5),
+                dbc.Col(html.Div(locked_preview(False), id="pro-preview-dynamic"), lg=7),
             ],
             class_name="g-4 pb-4",
         ),
@@ -928,7 +996,7 @@ layout = dbc.Container(
 
         dbc.Row(
             [
-                dbc.Col(email_capture_box(), lg=5),
+                dbc.Col(html.Div(email_capture_box(False), id="pro-email-dynamic"), lg=5),
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
@@ -1102,23 +1170,51 @@ def track_email_interest(btn1, btn2, email1, email2):
     Input("url", "search"),
     State("email-pro-input", "value"),
     State("modal-email-input", "value"),
+    State("pro-unlocked", "data"),
     prevent_initial_call=False,
 )
-def unlock_pro(email_btn_clicks, modal_btn_clicks, search, email1, email2):
+def unlock_pro(email_btn_clicks, modal_btn_clicks, search, email1, email2, already_unlocked):
     ctx = dash.callback_context
     triggered = ctx.triggered_id
+    already_unlocked = bool(already_unlocked)
 
-    if triggered == "url":
+    if triggered == "url" or triggered is None:
+        if already_unlocked:
+            return True, html.Div(), ""
+
         if not search:
             return False, html.Div(), ""
+
         params = parse_qs(search.lstrip("?"))
-        unlocked_from_url = params.get("pro", ["0"])[0] == "1"
+
+        unlocked_from_url = any(
+            [
+                params.get("pro", ["0"])[0] == "1",
+                params.get("premium", ["0"])[0] == "1",
+                params.get("paid", ["0"])[0] == "1",
+                params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
+                "session_id" in params,
+            ]
+        )
+
         if unlocked_from_url:
-            return True, html.Div(), "scroll"
+            return (
+                True,
+                dbc.Alert(
+                    "✅ Acceso premium activado correctamente.",
+                    color="success",
+                    className="rounded-4 mb-0",
+                ),
+                "scroll",
+            )
+
         return False, html.Div(), ""
 
     email = email1 if triggered == "email-pro-submit-btn" else email2
     email = (email or "").strip()
+
+    if already_unlocked:
+        return True, html.Div(), ""
 
     if not email or "@" not in email or "." not in email:
         return (
@@ -1139,6 +1235,21 @@ def unlock_pro(email_btn_clicks, modal_btn_clicks, search, email1, email2):
             className="rounded-4 mb-0",
         ),
         "scroll",
+    )
+
+
+@callback(
+    Output("pro-card-dynamic", "children"),
+    Output("pro-preview-dynamic", "children"),
+    Output("pro-email-dynamic", "children"),
+    Input("pro-unlocked", "data"),
+)
+def update_pro_blocks(unlocked):
+    unlocked = bool(unlocked)
+    return (
+        pro_card(unlocked),
+        locked_preview(unlocked),
+        email_capture_box(unlocked),
     )
 
 
@@ -1227,7 +1338,6 @@ clientside_callback(
     Input("años_hipoteca", "value"),
     Input("sp500_return", "value"),
 )
-
 def update_calculator(
     precio_compra,
     gastos_compra,
@@ -1289,11 +1399,6 @@ def update_calculator(
     capital_aportado = base["inversion_total"] - capital_hipoteca if usar_deuda else base["inversion_total"]
     capital_aportado = max(capital_aportado, 0.0)
 
-    # =====================================================
-    # SEPARACIÓN CORRECTA:
-    # - cashflow: resta toda la cuota
-    # - rentabilidad económica: resta solo intereses estimados
-    # =====================================================
     intereses_anuales_estimados = capital_hipoteca * (interes_hipoteca / 100.0) if usar_deuda else 0.0
 
     cashflow_despues_hipoteca = base["cashflow_mensual"] - cuota_mensual
