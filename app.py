@@ -1,8 +1,9 @@
 import json
 from datetime import date
+from urllib.parse import parse_qs
 
 import dash
-from dash import Dash, html, dcc, page_container
+from dash import Dash, html, dcc, page_container, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 from flask import Response
 
@@ -261,6 +262,44 @@ app.layout = html.Div(
     ],
     className="site-shell",
 )
+
+# =========================================================
+# PREMIUM GLOBAL
+# =========================================================
+@callback(
+    Output("premium-access", "data"),
+    Input("global-url", "pathname"),
+    Input("global-url", "search"),
+    State("premium-access", "data"),
+    prevent_initial_call=False,
+)
+def unlock_global_premium(pathname, search, current_data):
+    current_data = current_data or {"unlocked": False, "source": None}
+
+    if current_data.get("unlocked"):
+        return current_data
+
+    # Desbloqueo global al volver de Stripe
+    if pathname == "/premium-ok":
+        return {"unlocked": True, "source": "premium-ok"}
+
+    # Soporte adicional por querystring por si lo usas en el futuro
+    if search:
+        params = parse_qs(search.lstrip("?"))
+        unlocked = any(
+            [
+                params.get("premium", ["0"])[0] == "1",
+                params.get("pro", ["0"])[0] == "1",
+                params.get("paid", ["0"])[0] == "1",
+                params.get("success", ["false"])[0].lower() in ["1", "true", "yes"],
+                "session_id" in params,
+            ]
+        )
+        if unlocked:
+            return {"unlocked": True, "source": "querystring"}
+
+    return current_data
+
 
 # =========================================================
 # MAIN
