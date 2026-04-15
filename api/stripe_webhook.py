@@ -21,10 +21,10 @@ def stripe_webhook():
             STRIPE_WEBHOOK_SECRET
         )
     except Exception as e:
-        print("❌ Error verificando webhook:", str(e))
+        print("❌ Error webhook:", str(e))
         return jsonify({"error": "invalid webhook"}), 400
 
-    # 🎯 Evento clave
+    # 🎯 CUANDO ALGUIEN PAGA
     if event["type"] == "checkout.session.completed":
 
         session = event["data"]["object"]
