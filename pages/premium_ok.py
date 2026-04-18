@@ -1,5 +1,5 @@
 import dash
-from dash import html, dcc, Input, Output, callback
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 dash.register_page(
@@ -37,7 +37,7 @@ layout = dbc.Container(
                                     },
                                 ),
                                 html.H1(
-                                    "Ya tienes desbloqueadas todas las calculadoras premium",
+                                    "Pago recibido",
                                     className="fw-bold mb-3",
                                     style={
                                         "color": "#0f172a",
@@ -47,7 +47,7 @@ layout = dbc.Container(
                                     },
                                 ),
                                 html.P(
-                                    "Se ha activado el acceso premium en este dispositivo. Ya puedes usar Monte Carlo, guardar simulaciones, exportaciones y futuras funciones premium.",
+                                    "Si el pago se ha procesado correctamente, tu acceso premium se activará al validarse con el sistema.",
                                     className="mb-4",
                                     style={
                                         "color": "#475467",
@@ -58,23 +58,17 @@ layout = dbc.Container(
                                     },
                                 ),
                                 dbc.Alert(
-                                    "Acceso premium activado correctamente.",
+                                    "Estamos comprobando tu acceso premium.",
                                     color="success",
                                     className="rounded-4 border-0 mb-4",
                                 ),
                                 html.Div(
                                     [
                                         dbc.Button(
-                                            "Ir a la calculadora de interés compuesto",
-                                            href="/calculadora",
+                                            "Ir a hipoteca",
+                                            href="/hipoteca",
                                             color="success",
                                             className="rounded-pill fw-bold px-4 py-3 me-2 mb-2",
-                                        ),
-                                        dbc.Button(
-                                            "Ver calculadora FIRE",
-                                            href="/fire",
-                                            color="secondary",
-                                            className="rounded-pill fw-semibold px-4 py-3 me-2 mb-2",
                                         ),
                                         dbc.Button(
                                             "Volver al inicio",
@@ -104,14 +98,3 @@ layout = dbc.Container(
     className="py-5 px-4",
     style={"maxWidth": "1200px"},
 )
-
-
-@callback(
-    Output("premium-access", "data", allow_duplicate=True),
-    Input("premium-ok-url", "pathname"),
-    prevent_initial_call="initial_duplicate",
-)
-def unlock_premium(pathname):
-    if pathname == "/premium-ok":
-        return {"unlocked": True, "source": "stripe_redirect"}
-    return dash.no_update
