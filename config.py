@@ -8,4 +8,4 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 SITE_URL = os.getenv("SITE_URL", "https://interescompuesto.app")
 
-HIPOTECA_PRODUCT_CODE = "hipoteca_pro"
+PREMIUM_PRODUCT_CODE = "premium_global"
