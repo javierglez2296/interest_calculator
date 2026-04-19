@@ -5,7 +5,7 @@ from server import server
 from utils.config import (
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
-    HIPOTECA_PRODUCT_CODE,
+    PREMIUM_PRODUCT_CODE,
 )
 from utils.supabase_client import get_supabase_admin
 
@@ -52,7 +52,7 @@ def stripe_webhook():
 
         payment_link_id = session.get("payment_link")
         metadata = session.get("metadata") or {}
-        product_code = metadata.get("product_code") or HIPOTECA_PRODUCT_CODE
+        product_code = metadata.get("product_code") or PREMIUM_PRODUCT_CODE
 
         if payment_status != "paid":
             print(f"⚠️ Session completada pero no pagada: {session_id} / {payment_status}")
@@ -65,7 +65,6 @@ def stripe_webhook():
         try:
             supabase = get_supabase_admin()
 
-            # idempotencia básica por event_id
             existing = (
                 supabase.table("purchases")
                 .select("id")
@@ -92,7 +91,7 @@ def stripe_webhook():
                 on_conflict="email,product_code",
             ).execute()
 
-            print(f"✅ Premium activado para {email} / {product_code}")
+            print(f"✅ Premium global activado para {email}")
 
         except Exception as e:
             print("❌ Error guardando compra en Supabase:", str(e))
