@@ -1,6 +1,7 @@
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
+import requests
 
 dash.register_page(
     __name__,
@@ -28,16 +29,9 @@ layout = dbc.Container(
                                         "fontSize": "0.85rem",
                                     },
                                 ),
-                                html.Div(
-                                    "✅",
-                                    className="mb-3",
-                                    style={
-                                        "fontSize": "3rem",
-                                        "lineHeight": "1",
-                                    },
-                                ),
+                                html.Div("✅", className="mb-3", style={"fontSize": "3rem", "lineHeight": "1"}),
                                 html.H1(
-                                    "Pago recibido",
+                                    "Valida tu acceso premium",
                                     className="fw-bold mb-3",
                                     style={
                                         "color": "#0f172a",
@@ -47,7 +41,7 @@ layout = dbc.Container(
                                     },
                                 ),
                                 html.P(
-                                    "Si el pago se ha procesado correctamente, tu acceso premium se activará al validarse con el sistema.",
+                                    "Introduce el mismo email que usaste en Stripe. Si el pago está registrado, activaremos el premium en este navegador.",
                                     className="mb-4",
                                     style={
                                         "color": "#475467",
@@ -57,17 +51,39 @@ layout = dbc.Container(
                                         "margin": "0 auto",
                                     },
                                 ),
-                                dbc.Alert(
-                                    "Estamos comprobando tu acceso premium.",
-                                    color="success",
-                                    className="rounded-4 border-0 mb-4",
+
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            dbc.Input(
+                                                id="premium-email-input",
+                                                type="email",
+                                                placeholder="tuemail@dominio.com",
+                                                class_name="rounded-pill",
+                                            ),
+                                            md=8,
+                                        ),
+                                        dbc.Col(
+                                            dbc.Button(
+                                                "Activar premium",
+                                                id="premium-validate-btn",
+                                                color="success",
+                                                className="rounded-pill fw-bold w-100",
+                                            ),
+                                            md=4,
+                                        ),
+                                    ],
+                                    class_name="g-2 justify-content-center mb-4",
                                 ),
+
+                                html.Div(id="premium-validation-feedback", className="mb-4"),
+
                                 html.Div(
                                     [
                                         dbc.Button(
                                             "Ir a hipoteca",
                                             href="/hipoteca",
-                                            color="success",
+                                            color="primary",
                                             className="rounded-pill fw-bold px-4 py-3 me-2 mb-2",
                                         ),
                                         dbc.Button(
@@ -92,9 +108,52 @@ layout = dbc.Container(
                     className="mx-auto",
                 )
             ]
-        )
+        ),
     ],
     fluid=True,
     className="py-5 px-4",
     style={"maxWidth": "1200px"},
 )
+
+
+@callback(
+    Output("premium-access", "data", allow_duplicate=True),
+    Output("premium-validation-feedback", "children"),
+    Input("premium-validate-btn", "n_clicks"),
+    State("premium-email-input", "value"),
+    prevent_initial_call=True,
+)
+def validate_premium_access(n_clicks, email):
+    email = (email or "").strip().lower()
+
+    if not email:
+        return (
+            dash.no_update,
+            dbc.Alert("Introduce tu email para validar el premium.", color="warning", class_name="rounded-4"),
+        )
+
+    try:
+        response = requests.post(
+            "https://interescompuesto.app/api/check-premium",
+            json={"email": email, "product_code": "hipoteca_pro"},
+            timeout=8,
+        )
+
+        data = response.json()
+
+        if response.ok and data.get("unlocked"):
+            return (
+                {"unlocked": True, "source": "server_validation", "email": email},
+                dbc.Alert("✅ Premium activado correctamente en este navegador.", color="success", class_name="rounded-4"),
+            )
+
+        return (
+            {"unlocked": False, "source": "server_validation", "email": email},
+            dbc.Alert("No hemos encontrado una compra premium activa con ese email.", color="danger", class_name="rounded-4"),
+        )
+
+    except Exception:
+        return (
+            dash.no_update,
+            dbc.Alert("Error validando el premium. Inténtalo de nuevo en unos segundos.", color="warning", class_name="rounded-4"),
+        )
