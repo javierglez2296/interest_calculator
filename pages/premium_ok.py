@@ -3,7 +3,7 @@ from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 import requests
 
-from utils.config import SITE_URL  # 🔥 importante
+from utils.config import SITE_URL
 
 dash.register_page(
     __name__,
@@ -15,6 +15,7 @@ dash.register_page(
 layout = dbc.Container(
     [
         dcc.Location(id="premium-ok-url", refresh=False),
+        dcc.Store(id="premium-access", storage_type="local"),
 
         dbc.Row(
             [
@@ -104,7 +105,6 @@ layout = dbc.Container(
     prevent_initial_call=True,
 )
 def validate_premium_access(n_clicks, email):
-
     email = (email or "").strip().lower()
 
     if not email:
@@ -119,8 +119,8 @@ def validate_premium_access(n_clicks, email):
 
     try:
         response = requests.post(
-            f"{SITE_URL}/api/check-premium",  # 🔥 ya no hardcode
-            json={"email": email},  # 🔥 SIN product_code
+            f"{SITE_URL}/api/check-premium",
+            json={"email": email},
             timeout=8,
         )
 
