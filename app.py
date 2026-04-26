@@ -2,6 +2,7 @@ import json
 from datetime import date
 
 import dash
+import stripe
 from dash import Dash, html, dcc, page_container
 import dash_bootstrap_components as dbc
 from flask import Response, request, jsonify
@@ -9,6 +10,7 @@ from flask import Response, request, jsonify
 from components.navbar import build_navbar
 from components.footer import build_footer
 from utils.supabase_client import get_supabase_admin
+from utils.config import STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PREMIUM_PRODUCT_CODE
 
 # =========================================================
 # CONFIG
@@ -21,6 +23,8 @@ SITE_DESCRIPTION = (
 )
 SITE_IMAGE = f"{SITE_URL}/assets/og-default.jpg"
 GA_MEASUREMENT_ID = "G-VJS7ZLKTBX"
+
+stripe.api_key = STRIPE_SECRET_KEY
 
 # =========================================================
 # APP
@@ -44,7 +48,60 @@ app = Dash(
 server = app.server
 
 # =========================================================
-# API PREMIUM GLOBAL (CORREGIDO)
+# STRIPE WEBHOOK
+# =========================================================
+@server.route("/api/stripe-webhook", methods=["POST"])
+def stripe_webhook():
+    payload = request.data
+    sig_header = request.headers.get("Stripe-Signature")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload,
+            sig_header,
+            STRIPE_WEBHOOK_SECRET,
+        )
+    except Exception as e:
+        print("❌ Error verificando webhook Stripe:", str(e))
+        return jsonify({"error": str(e)}), 400
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+
+        email = (
+            session.get("customer_details", {}).get("email")
+            or session.get("customer_email")
+            or ""
+        ).strip().lower()
+
+        if not email:
+            print("❌ Webhook sin email")
+            return jsonify({"received": True, "warning": "missing_email"}), 200
+
+        try:
+            supabase = get_supabase_admin()
+
+            supabase.table("purchases").upsert(
+                {
+                    "email": email,
+                    "premium_active": True,
+                    "product_code": PREMIUM_PRODUCT_CODE,
+                    "stripe_session_id": session.get("id"),
+                },
+                on_conflict="email",
+            ).execute()
+
+            print(f"✅ Premium guardado en Supabase para {email}")
+
+        except Exception as e:
+            print("❌ Error guardando compra en Supabase:", str(e))
+            return jsonify({"error": "supabase_error"}), 500
+
+    return jsonify({"received": True}), 200
+
+
+# =========================================================
+# API PREMIUM GLOBAL
 # =========================================================
 @server.route("/api/check-premium", methods=["POST"])
 def check_premium():
@@ -67,11 +124,9 @@ def check_premium():
             .execute()
         )
 
-        unlocked = bool(result.data)
-
         return jsonify({
-            "unlocked": unlocked,
-            "email": email
+            "unlocked": bool(result.data),
+            "email": email,
         }), 200
 
     except Exception as e:
@@ -120,7 +175,6 @@ def sitemap():
             continue
 
         loc = f"{SITE_URL}{path}"
-
         priority = priorities.get(path, "0.7")
         changefreq = changefreqs.get(path, "monthly")
 
