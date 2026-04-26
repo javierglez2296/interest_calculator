@@ -92,7 +92,7 @@ layout = dbc.Container(
 
 
 # =========================================================
-# CALLBACK VALIDACIÓN PREMIUM (SIN API, DIRECTO SUPABASE)
+# CALLBACK VALIDACIÓN PREMIUM
 # =========================================================
 @callback(
     Output("premium-access", "data"),
@@ -117,17 +117,9 @@ def validate_premium_access(n_clicks, email):
     try:
         supabase = get_supabase_admin()
 
-        result = (
-            supabase
-            .table("purchases")
-            .select("email, premium_active")
-            .eq("email", email)
-            .eq("premium_active", True)
-            .limit(1)
-            .execute()
-        )
+        result = supabase.check_premium(email)
 
-        if result.data:
+        if result:
             return (
                 {"unlocked": True, "email": email},
                 dbc.Alert(
