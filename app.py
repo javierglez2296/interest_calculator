@@ -81,15 +81,14 @@ def stripe_webhook():
         try:
             supabase = get_supabase_admin()
 
-            supabase.table("purchases").upsert(
+            supabase.upsert_purchase(
                 {
                     "email": email,
                     "premium_active": True,
                     "product_code": PREMIUM_PRODUCT_CODE,
                     "stripe_session_id": session.get("id"),
-                },
-                on_conflict="email",
-            ).execute()
+                }
+            )
 
             print(f"✅ Premium guardado en Supabase para {email}")
 
@@ -113,19 +112,10 @@ def check_premium():
             return jsonify({"unlocked": False, "reason": "missing_email"}), 400
 
         supabase = get_supabase_admin()
-
-        result = (
-            supabase
-            .table("purchases")
-            .select("email, premium_active")
-            .eq("email", email)
-            .eq("premium_active", True)
-            .limit(1)
-            .execute()
-        )
+        result = supabase.check_premium(email)
 
         return jsonify({
-            "unlocked": bool(result.data),
+            "unlocked": bool(result),
             "email": email,
         }), 200
 
