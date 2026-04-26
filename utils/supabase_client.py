@@ -1,9 +1,9 @@
 import os
-from supabase import create_client, Client
+from supabase import create_client
 
-def get_supabase_admin() -> Client:
+def get_supabase_admin():
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # 👈 ESTA ES LA CLAVE
 
     if not url:
         raise ValueError("SUPABASE_URL no configurada")
