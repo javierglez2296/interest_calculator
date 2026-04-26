@@ -3,6 +3,7 @@ from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 
 from utils.supabase_client import get_supabase_admin
+from utils.config import PREMIUM_PRODUCT_CODE
 
 dash.register_page(
     __name__,
@@ -91,9 +92,6 @@ layout = dbc.Container(
 )
 
 
-# =========================================================
-# CALLBACK VALIDACIÓN PREMIUM
-# =========================================================
 @callback(
     Output("premium-access", "data"),
     Output("premium-validation-feedback", "children"),
@@ -117,11 +115,15 @@ def validate_premium_access(n_clicks, email):
     try:
         supabase = get_supabase_admin()
 
-        result = supabase.check_premium(email)
+        result = supabase.check_premium(email, PREMIUM_PRODUCT_CODE)
 
         if result:
             return (
-                {"unlocked": True, "email": email},
+                {
+                    "unlocked": True,
+                    "email": email,
+                    "product_code": PREMIUM_PRODUCT_CODE,
+                },
                 dbc.Alert(
                     "✅ Premium activado correctamente.",
                     color="success",
@@ -130,7 +132,11 @@ def validate_premium_access(n_clicks, email):
             )
 
         return (
-            {"unlocked": False, "email": email},
+            {
+                "unlocked": False,
+                "email": email,
+                "product_code": PREMIUM_PRODUCT_CODE,
+            },
             dbc.Alert(
                 "❌ No hemos encontrado una compra premium con ese email.",
                 color="danger",
