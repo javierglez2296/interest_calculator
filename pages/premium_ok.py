@@ -70,16 +70,11 @@ layout = dbc.Container(
 
                                 html.Div(id="premium-validation-feedback", className="mb-4"),
 
-                                html.Div(
-                                    [
-                                        dbc.Button(
-                                            "Ir a la app",
-                                            href="/",
-                                            color="primary",
-                                            className="rounded-pill px-4",
-                                        ),
-                                    ],
-                                    className="text-center",
+                                dbc.Button(
+                                    "Ir a la app",
+                                    href="/",
+                                    color="primary",
+                                    className="rounded-pill px-4",
                                 ),
                             ],
                             className="text-center p-4 p-md-5",
@@ -98,7 +93,7 @@ layout = dbc.Container(
 
 
 @callback(
-    Output("premium-access", "data", allow_duplicate=True),
+    Output("premium-access", "data"),
     Output("premium-validation-feedback", "children"),
     Input("premium-validate-btn", "n_clicks"),
     State("premium-email-input", "value"),
@@ -130,7 +125,6 @@ def validate_premium_access(n_clicks, email):
             return (
                 {
                     "unlocked": True,
-                    "source": "server_validation",
                     "email": email,
                 },
                 dbc.Alert(
@@ -141,13 +135,9 @@ def validate_premium_access(n_clicks, email):
             )
 
         return (
-            {
-                "unlocked": False,
-                "source": "server_validation",
-                "email": email,
-            },
+            {"unlocked": False, "email": email},
             dbc.Alert(
-                "No hemos encontrado una compra premium con ese email.",
+                "❌ No hemos encontrado una compra premium con ese email.",
                 color="danger",
                 class_name="rounded-4",
             ),
