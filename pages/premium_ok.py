@@ -1,9 +1,8 @@
 import dash
 from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
-import requests
 
-from utils.config import SITE_URL
+from utils.supabase_client import get_supabase_admin
 
 dash.register_page(
     __name__,
@@ -92,6 +91,9 @@ layout = dbc.Container(
 )
 
 
+# =========================================================
+# CALLBACK VALIDACIÓN PREMIUM (SIN API, DIRECTO SUPABASE)
+# =========================================================
 @callback(
     Output("premium-access", "data"),
     Output("premium-validation-feedback", "children"),
@@ -113,20 +115,21 @@ def validate_premium_access(n_clicks, email):
         )
 
     try:
-        response = requests.post(
-            f"{SITE_URL}/api/check-premium",
-            json={"email": email},
-            timeout=8,
+        supabase = get_supabase_admin()
+
+        result = (
+            supabase
+            .table("purchases")
+            .select("email, premium_active")
+            .eq("email", email)
+            .eq("premium_active", True)
+            .limit(1)
+            .execute()
         )
 
-        data = response.json()
-
-        if response.ok and data.get("unlocked"):
+        if result.data:
             return (
-                {
-                    "unlocked": True,
-                    "email": email,
-                },
+                {"unlocked": True, "email": email},
                 dbc.Alert(
                     "✅ Premium activado correctamente.",
                     color="success",
@@ -145,6 +148,7 @@ def validate_premium_access(n_clicks, email):
 
     except Exception as e:
         print("❌ Error validando premium:", e)
+
         return (
             dash.no_update,
             dbc.Alert(
