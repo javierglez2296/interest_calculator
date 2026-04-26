@@ -48,7 +48,11 @@ def stripe_webhook():
         livemode = session.get("livemode", False)
 
         customer_details = session.get("customer_details") or {}
-        email = (customer_details.get("email") or "").strip().lower()
+        email = (
+            customer_details.get("email")
+            or session.get("customer_email")
+            or ""
+        ).strip().lower()
 
         payment_link_id = session.get("payment_link")
         metadata = session.get("metadata") or {}
@@ -65,31 +69,18 @@ def stripe_webhook():
         try:
             supabase = get_supabase_admin()
 
-            existing = (
-                supabase.table("purchases")
-                .select("id")
-                .eq("stripe_event_id", event_id)
-                .limit(1)
-                .execute()
-            )
-
-            if existing.data:
-                print(f"ℹ️ Evento ya procesado: {event_id}")
-                return jsonify({"status": "already_processed"}), 200
-
-            supabase.table("purchases").upsert(
+            supabase.upsert_purchase(
                 {
                     "email": email,
+                    "customer_email": email,
                     "product_code": product_code,
                     "premium_active": True,
                     "stripe_event_id": event_id,
                     "stripe_session_id": session_id,
                     "stripe_payment_link_id": payment_link_id,
                     "stripe_livemode": livemode,
-                    "customer_email": email,
-                },
-                on_conflict="email,product_code",
-            ).execute()
+                }
+            )
 
             print(f"✅ Premium global activado para {email}")
 
