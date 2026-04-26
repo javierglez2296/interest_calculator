@@ -48,6 +48,18 @@ app = Dash(
 server = app.server
 
 # =========================================================
+# ROBOTS.TXT
+# =========================================================
+@server.route("/robots.txt")
+def robots():
+    return Response(
+        "User-agent: *\n"
+        "Allow: /\n\n"
+        "Sitemap: https://interescompuesto.app/sitemap.xml\n",
+        mimetype="text/plain",
+    )
+
+# =========================================================
 # STRIPE WEBHOOK
 # =========================================================
 @server.route("/api/stripe-webhook", methods=["POST"])
@@ -98,7 +110,6 @@ def stripe_webhook():
 
     return jsonify({"received": True}), 200
 
-
 # =========================================================
 # API PREMIUM GLOBAL
 # =========================================================
@@ -112,7 +123,7 @@ def check_premium():
             return jsonify({"unlocked": False, "reason": "missing_email"}), 400
 
         supabase = get_supabase_admin()
-        result = supabase.check_premium(email)
+        result = supabase.check_premium(email, PREMIUM_PRODUCT_CODE)
 
         return jsonify({
             "unlocked": bool(result),
@@ -122,7 +133,6 @@ def check_premium():
     except Exception as e:
         print("❌ Error check-premium:", str(e))
         return jsonify({"unlocked": False, "reason": "server_error"}), 500
-
 
 # =========================================================
 # SITEMAP
@@ -188,7 +198,6 @@ def sitemap():
 </urlset>"""
 
     return Response(xml, mimetype="application/xml")
-
 
 # =========================================================
 # HTML BASE
