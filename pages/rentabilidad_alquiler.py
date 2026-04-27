@@ -1233,3 +1233,219 @@ def update_calculator(
         grafico_comparativa(base["inversion_total"], capital_aportado, base["rent_neta"], rent_sobre_capital, sp500_return, usar_deuda),
         html.Ul(insights, className="mb-0"),
     )
+# =========================================================
+# CALLBACK PRO
+# =========================================================
+@callback(
+    Output("pro-content", "children"),
+    Input("premium-access", "data"),
+    Input("precio_compra", "value"),
+    Input("gastos_compra", "value"),
+    Input("reforma", "value"),
+    Input("alquiler_mensual", "value"),
+    Input("ocupacion", "value"),
+    Input("ibi", "value"),
+    Input("comunidad", "value"),
+    Input("seguro", "value"),
+    Input("mantenimiento", "value"),
+    Input("gestion_pct", "value"),
+    Input("irpf_pct", "value"),
+    Input("sp500_return", "value"),
+)
+def render_pro_content(
+    premium_access,
+    precio_compra,
+    gastos_compra,
+    reforma,
+    alquiler_mensual,
+    ocupacion,
+    ibi,
+    comunidad,
+    seguro,
+    mantenimiento,
+    gestion_pct,
+    irpf_pct,
+    sp500_return,
+):
+    unlocked = bool((premium_access or {}).get("unlocked"))
+
+    if not unlocked:
+        return html.Div(
+            [
+                html.H3(
+                    "Evita comprar un piso con números incompletos",
+                    className="h5 fw-bold mb-3",
+                ),
+                html.P(
+                    "La parte gratis te da una primera lectura. La versión PRO te ayuda a decidir si comprar o no con proyección a 10 años, payback, coste de oportunidad y comparación frente al S&P 500.",
+                    className="text-muted mb-3",
+                ),
+                html.Div(
+                    [
+                        html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
+                        html.Div("12,84 %", className="display-6 fw-bold text-primary"),
+                        html.P(
+                            "Gráfico, payback, coste de oportunidad y recomendación final bloqueados.",
+                            className="text-muted mt-3 mb-0",
+                        ),
+                    ],
+                    style={
+                        "padding": "1rem",
+                        "borderRadius": "16px",
+                        "background": "#f8fafc",
+                        "border": "1px dashed #cbd5e1",
+                        "filter": "blur(2px)",
+                        "opacity": 0.8,
+                    },
+                ),
+                dbc.Button(
+                    "Ver si comprar o no comprar por 9€",
+                    href=STRIPE_PAYMENT_LINK,
+                    target="_self",
+                    color="primary",
+                    className="rounded-pill px-4 mt-4",
+                ),
+            ]
+        )
+
+    precio_compra = safe_float(precio_compra)
+    gastos_compra = safe_float(gastos_compra)
+    reforma = safe_float(reforma)
+    alquiler_mensual = safe_float(alquiler_mensual)
+    ocupacion = safe_float(ocupacion, 95)
+    ibi = safe_float(ibi)
+    comunidad = safe_float(comunidad)
+    seguro = safe_float(seguro)
+    mantenimiento = safe_float(mantenimiento)
+    gestion_pct = safe_float(gestion_pct)
+    irpf_pct = safe_float(irpf_pct)
+    sp500_return = safe_float(sp500_return, SP500_RETURN_DEFAULT)
+
+    inversion_inicial = precio_compra + gastos_compra + reforma
+    ingresos_base = alquiler_mensual * 12 * (ocupacion / 100.0)
+    gasto_gestion = ingresos_base * (gestion_pct / 100.0)
+    gastos_anuales = ibi + comunidad + seguro + mantenimiento + gasto_gestion
+
+    years, inmueble_vals, sp500_vals, rows = proyeccion_10_anios(
+        inversion_inicial=inversion_inicial,
+        alquiler_mensual=alquiler_mensual,
+        ocupacion_pct=ocupacion,
+        gastos_anuales=gastos_anuales,
+        irpf_pct=irpf_pct,
+        crecimiento_alquiler_pct=2.0,
+        crecimiento_gastos_pct=2.0,
+        revalorizacion_inmueble_pct=2.0,
+        sp500_pct=sp500_return,
+    )
+
+    inmueble_final = inmueble_vals[-1]
+    sp500_final = sp500_vals[-1]
+    beneficio_neto_anual_base = rows[0]["beneficio_neto"] if rows else 0
+    payback_years = calc_payback_years(inversion_inicial, beneficio_neto_anual_base)
+
+    return html.Div(
+        [
+            html.H3("Versión PRO desbloqueada", className="h5 fw-bold mb-3"),
+            html.P(
+                "Aquí ves una lectura mucho más útil para decidir si el inmueble merece la pena o no.",
+                className="text-muted mb-4",
+            ),
+
+            dbc.Row(
+                [
+                    dbc.Col(
+                        build_pro_decision_card(
+                            inmueble_final=inmueble_final,
+                            sp500_final=sp500_final,
+                            payback_years=payback_years,
+                            beneficio_neto_anual=beneficio_neto_anual_base,
+                        ),
+                        lg=4,
+                    ),
+                    dbc.Col(
+                        build_coste_oportunidad_card(
+                            inmueble_final=inmueble_final,
+                            sp500_final=sp500_final,
+                        ),
+                        lg=4,
+                    ),
+                    dbc.Col(
+                        build_payback_card(payback_years),
+                        lg=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+
+            dbc.Row(
+                [
+                    dbc.Col(
+                        metric_card(
+                            "Valor inmueble año 10",
+                            fmt_eur(inmueble_final, 0),
+                            "Revalorización + cashflow acumulado",
+                            accent=True,
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Valor S&P 500 año 10",
+                            fmt_eur(sp500_final, 0),
+                            "Capital inicial capitalizado",
+                        ),
+                        md=4,
+                    ),
+                    dbc.Col(
+                        metric_card(
+                            "Diferencia final",
+                            fmt_eur(inmueble_final - sp500_final, 0),
+                            "Inmueble - S&P 500",
+                        ),
+                        md=4,
+                    ),
+                ],
+                class_name="g-4 mb-4",
+            ),
+
+            dbc.Card(
+                dbc.CardBody(
+                    dcc.Graph(
+                        figure=build_pro_years_chart(years, inmueble_vals, sp500_vals),
+                        config={"displayModeBar": False},
+                    )
+                ),
+                className="border-0 shadow-sm rounded-4 mb-4",
+            ),
+
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    section_eyebrow("RESUMEN"),
+                                    build_pro_summary(rows),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 h-100",
+                        ),
+                        lg=5,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    section_eyebrow("TABLA ANUAL"),
+                                    build_pro_table(rows),
+                                ]
+                            ),
+                            className="border-0 shadow-sm rounded-4 h-100",
+                        ),
+                        lg=7,
+                    ),
+                ],
+                class_name="g-4",
+            ),
+        ]
+    )
