@@ -156,7 +156,21 @@ def build_rentas_page(renta):
 
 
 def build_objetivo_page(objetivo):
-    escenarios = [
+    escenarios_10 = [
+        ("300 €/mes", calc_compuesto(0, 300, 7, 10)[0]),
+        ("500 €/mes", calc_compuesto(0, 500, 7, 10)[0]),
+        ("700 €/mes", calc_compuesto(0, 700, 7, 10)[0]),
+        ("1.000 €/mes", calc_compuesto(0, 1000, 7, 10)[0]),
+    ]
+
+    escenarios_20 = [
+        ("300 €/mes", calc_compuesto(0, 300, 7, 20)[0]),
+        ("500 €/mes", calc_compuesto(0, 500, 7, 20)[0]),
+        ("700 €/mes", calc_compuesto(0, 700, 7, 20)[0]),
+        ("1.000 €/mes", calc_compuesto(0, 1000, 7, 20)[0]),
+    ]
+
+    escenarios_30 = [
         ("300 €/mes", calc_compuesto(0, 300, 7, 30)[0]),
         ("500 €/mes", calc_compuesto(0, 500, 7, 30)[0]),
         ("700 €/mes", calc_compuesto(0, 700, 7, 30)[0]),
@@ -164,27 +178,165 @@ def build_objetivo_page(objetivo):
     ]
 
     title = f"Cómo conseguir {fmt_eur(objetivo)} invirtiendo"
-    description = f"Simulación para alcanzar {fmt_eur(objetivo)} mediante ahorro mensual e interés compuesto."
+    description = (
+        f"Guía realista para alcanzar {fmt_eur(objetivo)} mediante ahorro mensual, "
+        "inversión a largo plazo e interés compuesto."
+    )
 
     return html.Div([
         hero(title, description),
 
+        metric_row([
+            ("A 10 años con 500 €/mes", fmt_eur(calc_compuesto(0, 500, 7, 10)[0])),
+            ("A 20 años con 500 €/mes", fmt_eur(calc_compuesto(0, 500, 7, 20)[0])),
+            ("A 30 años con 500 €/mes", fmt_eur(calc_compuesto(0, 500, 7, 30)[0])),
+        ]),
+
         section("¿Es posible alcanzar este objetivo?", [
-            html.P(f"Sí, alcanzar {fmt_eur(objetivo)} es posible, pero depende de tres variables: cuánto aportas, durante cuántos años inviertes y qué rentabilidad media consigues."),
-            html.P("El interés compuesto empieza lento, pero con el paso de los años el crecimiento se acelera."),
+            html.P(
+                f"Sí, conseguir {fmt_eur(objetivo)} es posible, pero depende sobre todo "
+                "de tres factores: cuánto dinero inviertes cada mes, durante cuántos años "
+                "mantienes la inversión y qué rentabilidad media consigues."
+            ),
+            html.P(
+                "El interés compuesto empieza lento, pero con el paso del tiempo el crecimiento "
+                "se acelera. Por eso, empezar antes suele ser más importante que intentar encontrar "
+                "la inversión perfecta."
+            ),
+            html.P([
+                "Puedes ajustar estos cálculos con tus propios datos en la ",
+                dcc.Link("calculadora de interés compuesto", href="/calculadora"),
+                "."
+            ]),
+        ]),
+
+        section(f"Cuánto podrías acumular invirtiendo cada mes", [
+            html.P(
+                "La siguiente tabla muestra una simulación orientativa usando una rentabilidad media "
+                "del 7% anual. No es una garantía, pero sirve para entender el impacto del tiempo."
+            ),
         ]),
 
         table([
-            ["Aportación mensual", "Capital estimado a 30 años"],
-            *[[x[0], fmt_eur(x[1])] for x in escenarios],
+            ["Aportación mensual", "A 10 años", "A 20 años", "A 30 años"],
+            [
+                "300 €/mes",
+                fmt_eur(escenarios_10[0][1]),
+                fmt_eur(escenarios_20[0][1]),
+                fmt_eur(escenarios_30[0][1]),
+            ],
+            [
+                "500 €/mes",
+                fmt_eur(escenarios_10[1][1]),
+                fmt_eur(escenarios_20[1][1]),
+                fmt_eur(escenarios_30[1][1]),
+            ],
+            [
+                "700 €/mes",
+                fmt_eur(escenarios_10[2][1]),
+                fmt_eur(escenarios_20[2][1]),
+                fmt_eur(escenarios_30[2][1]),
+            ],
+            [
+                "1.000 €/mes",
+                fmt_eur(escenarios_10[3][1]),
+                fmt_eur(escenarios_20[3][1]),
+                fmt_eur(escenarios_30[3][1]),
+            ],
         ]),
 
-        section("La clave: constancia y tiempo", [
-            html.P("Para objetivos grandes, el tiempo suele ser más importante que intentar buscar la inversión perfecta."),
-            html.P("Una estrategia sencilla, diversificada y mantenida durante años suele ser más realista que cambiar constantemente de producto."),
+        section("¿Cuánto tiempo se tarda en conseguir esa cantidad?", [
+            html.P(
+                f"Para llegar a {fmt_eur(objetivo)}, el tiempo necesario cambia mucho según la "
+                "aportación mensual. Una persona que invierte 300 € al mes necesitará bastante más "
+                "tiempo que alguien que puede invertir 700 € o 1.000 € mensuales."
+            ),
+            html.P(
+                "La clave no es solo ahorrar más, sino mantener el hábito durante muchos años. "
+                "En objetivos grandes, el tiempo trabaja a favor del inversor paciente."
+            ),
+            html.P([
+                "También puedes ver escenarios específicos como ",
+                dcc.Link("invertir 500 € al mes", href="/invertir-500-euros-mes"),
+                " o ",
+                dcc.Link("invertir 1.000 € al mes", href="/invertir-1000-euros-mes"),
+                "."
+            ]),
+        ]),
+
+        section("Qué pasa si empiezas más tarde", [
+            html.P(
+                "Retrasar la inversión puede tener un coste importante. Si empiezas cinco o diez años "
+                "más tarde, necesitarás aportar bastante más dinero al mes para llegar al mismo objetivo."
+            ),
+            html.P(
+                "Esto ocurre porque pierdes años de crecimiento compuesto. Al principio parece que la "
+                "diferencia es pequeña, pero a largo plazo puede ser enorme."
+            ),
+        ]),
+
+        section("¿Qué rentabilidad es realista?", [
+            html.P(
+                "Una rentabilidad media del 7% anual suele usarse como referencia histórica razonable "
+                "para inversión en bolsa global o índices amplios a largo plazo, aunque ningún resultado "
+                "está garantizado."
+            ),
+            html.P(
+                "Habrá años muy buenos, años malos y caídas fuertes. Por eso es importante invertir con "
+                "horizonte largo, diversificar y no depender de ese dinero a corto plazo."
+            ),
+        ]),
+
+        section("Estrategia sencilla para alcanzar el objetivo", [
+            html.P(
+                "Una estrategia realista podría consistir en invertir cada mes una cantidad fija, usar "
+                "productos diversificados de bajo coste y revisar el plan una o dos veces al año."
+            ),
+            html.P(
+                "Para la mayoría de personas, la constancia, el ahorro automático y los costes bajos "
+                "son más importantes que intentar adivinar cuándo subirá o bajará el mercado."
+            ),
         ]),
 
         cta_calculadora(),
+
+        section("Preguntas frecuentes", [
+            html.H3(f"¿Es posible conseguir {fmt_eur(objetivo)} sin invertir?", className="fw-bold mt-4"),
+            html.P(
+                "Sí, pero normalmente sería más lento, porque dependerías solo del ahorro. La inversión "
+                "puede acelerar el proceso gracias al interés compuesto."
+            ),
+
+            html.H3("¿Qué pasa si el mercado cae?", className="fw-bold mt-4"),
+            html.P(
+                "Las caídas forman parte de la inversión. Por eso conviene invertir con horizonte largo, "
+                "diversificar y no usar dinero que puedas necesitar en pocos años."
+            ),
+
+            html.H3("¿Es mejor invertir poco a poco o todo de golpe?", className="fw-bold mt-4"),
+            html.P(
+                "Invertir poco a poco ayuda psicológicamente y reduce el riesgo de entrar justo antes de "
+                "una caída. Invertir todo de golpe puede ser más rentable si el mercado sube, pero exige "
+                "más tolerancia al riesgo."
+            ),
+
+            html.H3("¿Dónde puedo simular mi caso concreto?", className="fw-bold mt-4"),
+            html.P([
+                "Puedes usar la ",
+                dcc.Link("calculadora de interés compuesto", href="/calculadora"),
+                " para cambiar capital inicial, aportación mensual, rentabilidad, inflación y horizonte temporal."
+            ]),
+        ]),
+
+        section("Otras guías relacionadas", [
+            html.Ul([
+                html.Li(dcc.Link("Invertir 300 € al mes", href="/invertir-300-euros-mes")),
+                html.Li(dcc.Link("Invertir 500 € al mes", href="/invertir-500-euros-mes")),
+                html.Li(dcc.Link("Invertir 1.000 € al mes", href="/invertir-1000-euros-mes")),
+                html.Li(dcc.Link("Cuánto dinero necesitas para vivir con 2.000 € al mes", href="/cuanto-dinero-necesitas-para-vivir-con-2000-euros-mes")),
+            ])
+        ]),
+
         cta_myinvestor(),
     ])
 
