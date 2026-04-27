@@ -582,19 +582,19 @@ def make_title(cfg):
     cantidad = cfg["cantidad"]
 
     if tipo == "aportacion":
-        return f"Invertir {cantidad} euros al mes | Simulación interés compuesto"
+        return f"Invertir {cantidad} euros al mes: cuánto puedes ganar"
 
     if tipo == "rentas":
         return f"Cuánto dinero necesitas para vivir con {cantidad} euros al mes"
 
     if tipo == "objetivo":
-        return f"Cómo conseguir {fmt_eur(cantidad)} invirtiendo"
+        return f"Cómo conseguir {fmt_eur(cantidad)} invirtiendo: guía realista"
 
     if tipo == "capital":
-        return f"Dónde invertir {fmt_eur(cantidad)}"
+        return f"Dónde invertir {fmt_eur(cantidad)}: opciones y simulación"
 
     if tipo == "comparativa":
-        return "Invertir en S&P 500 o Nasdaq 100"
+        return "Invertir en S&P 500 o Nasdaq 100: comparativa"
 
     if tipo == "myinvestor":
         return "MyInvestor opiniones: análisis para invertir"
