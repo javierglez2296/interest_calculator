@@ -13,11 +13,13 @@ def sitemap():
         if not path:
             continue
 
-        # evitar 404
         if "not_found" in str(page.get("module", "")).lower():
             continue
 
-        loc = f"{SITE_URL}{path}"
+        if not path.startswith("/"):
+            path = "/" + path
+
+        loc = f"{SITE_URL.rstrip('/')}{path}"
 
         urls.append(f"""
   <url>
@@ -32,4 +34,4 @@ def sitemap():
 {''.join(urls)}
 </urlset>"""
 
-    return Response(xml, content_type="application/xml")
+    return Response(xml, mimetype="application/xml")
