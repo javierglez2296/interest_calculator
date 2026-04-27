@@ -8,7 +8,7 @@ from components.disclaimer_afiliados import build_disclaimer
 dash.register_page(
     __name__,
     path="/rentabilidad-alquiler",
-    title="Calculadora rentabilidad alquiler (2026) | Bruta, neta y cashflow",
+    title="Rentabilidad alquiler: cuánto se gana realmente con un piso",
     name="Rentabilidad alquiler",
     description=(
         "Calculadora de rentabilidad de alquiler en España. Calcula rentabilidad bruta, "
@@ -31,9 +31,6 @@ SEO_RELATED_LINKS = [
 ]
 
 
-# =========================================================
-# HELPERS
-# =========================================================
 def safe_float(value, default=0.0):
     try:
         if value in (None, ""):
@@ -152,22 +149,6 @@ def cuota_hipoteca_mensual(capital, interes_anual_pct, años):
     return capital * (r * (1 + r) ** n) / ((1 + r) ** n - 1)
 
 
-def build_pro_years_chart(years, inmueble_vals, sp500_vals):
-    fig = go.Figure()
-    fig.add_scatter(x=years, y=inmueble_vals, mode="lines+markers", name="Inmueble")
-    fig.add_scatter(x=years, y=sp500_vals, mode="lines+markers", name="S&P 500")
-    fig.update_layout(
-        height=360,
-        margin=dict(l=20, r=20, t=10, b=20),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        yaxis_title="Valor acumulado (€)",
-        xaxis_title="Año",
-        legend_title="",
-    )
-    return fig
-
-
 def calc_operacion(
     precio_compra,
     gastos_compra,
@@ -223,6 +204,70 @@ def badge_estado(label, color):
         pill=True,
         class_name="px-3 py-2",
         style={"fontSize": "0.95rem"},
+    )
+
+
+def decision_final_card(rent_mostrar, cashflow_mensual, usar_deuda, sp500_return):
+    if cashflow_mensual < 0:
+        label = "Cuidado"
+        color = "danger"
+        titulo = "La operación exige poner dinero cada mes"
+        texto = (
+            "Aunque la rentabilidad pueda parecer aceptable, el cashflow mensual sale negativo. "
+            "Esto aumenta el riesgo si hay meses sin alquilar, averías, derramas o subida de gastos."
+        )
+    elif rent_mostrar >= max(5, sp500_return - 1):
+        label = "Interesante"
+        color = "success"
+        titulo = "La operación puede merecer análisis profundo"
+        texto = (
+            "La rentabilidad y el cashflow son razonables. Antes de comprar, conviene revisar "
+            "escenario a 10 años, vacancia, gastos futuros y coste de oportunidad frente a una inversión indexada."
+        )
+    elif rent_mostrar >= 3:
+        label = "Dudosa"
+        color = "warning"
+        titulo = "La operación está ajustada"
+        texto = (
+            "Puede tener sentido si la zona es muy buena o esperas revalorización, pero los números "
+            "no son claramente superiores a una inversión más pasiva."
+        )
+    else:
+        label = "Floja"
+        color = "danger"
+        titulo = "La rentabilidad no compensa demasiado"
+        texto = (
+            "Con estos supuestos, revisaría precio de compra, alquiler esperado o gastos. "
+            "También compararía contra una alternativa indexada más simple."
+        )
+
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                section_eyebrow("DECISIÓN RÁPIDA"),
+                dbc.Badge(label, color=color, pill=True, class_name="px-3 py-2 mb-3"),
+                html.H3(titulo, className="h4 fw-bold mb-3"),
+                html.P(texto, className="text-muted mb-4"),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Ver análisis PRO",
+                            href="#pro-content",
+                            color="primary",
+                            className="rounded-pill px-4 me-2 mb-2",
+                        ),
+                        dbc.Button(
+                            "Comparar con bolsa",
+                            href=COMPARADOR_URL,
+                            color="light",
+                            className="rounded-pill px-4 border mb-2",
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        className="border-0 shadow-sm rounded-4 mb-4",
+        style={"background": "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"},
     )
 
 
@@ -336,6 +381,22 @@ def proyeccion_10_anios(
     return years, inmueble_vals, sp500_vals, rows
 
 
+def build_pro_years_chart(years, inmueble_vals, sp500_vals):
+    fig = go.Figure()
+    fig.add_scatter(x=years, y=inmueble_vals, mode="lines+markers", name="Inmueble")
+    fig.add_scatter(x=years, y=sp500_vals, mode="lines+markers", name="S&P 500")
+    fig.update_layout(
+        height=360,
+        margin=dict(l=20, r=20, t=10, b=20),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        yaxis_title="Valor acumulado (€)",
+        xaxis_title="Año",
+        legend_title="",
+    )
+    return fig
+
+
 def calc_payback_years(inversion_inicial, beneficio_neto_anual):
     if beneficio_neto_anual <= 0:
         return None
@@ -394,19 +455,17 @@ def build_pro_table(rows):
         responsive=True,
         class_name="align-middle mb-0",
     )
-
-
 def build_pro_decision_card(inmueble_final, sp500_final, payback_years, beneficio_neto_anual):
     diferencia = inmueble_final - sp500_final
 
     if beneficio_neto_anual <= 0:
         label = "No comprar"
         color = "danger"
-        texto = "La operación genera un beneficio neto no positivo. Con estos supuestos, no parece una buena compra."
+        texto = "La operación genera beneficio neto no positivo. Con estos supuestos, no parece una buena compra."
     elif diferencia < 0 and (payback_years is None or payback_years > 20):
         label = "No comprar"
         color = "danger"
-        texto = "La inversión sale peor que la referencia indexada y además tarda demasiado en recuperarse."
+        texto = "La inversión sale peor que la referencia indexada y tarda demasiado en recuperarse."
     elif diferencia < 0 or (payback_years is not None and payback_years > 15):
         label = "Dudoso"
         color = "warning"
@@ -420,7 +479,7 @@ def build_pro_decision_card(inmueble_final, sp500_final, payback_years, benefici
         dbc.CardBody(
             [
                 section_eyebrow("RECOMENDACIÓN FINAL"),
-                dbc.Badge(label, color=color, pill=True, class_name="px-3 py-2 mb-3", style={"fontSize": "1rem"}),
+                dbc.Badge(label, color=color, pill=True, class_name="px-3 py-2 mb-3"),
                 html.P(texto, className="text-muted mb-0"),
             ]
         ),
@@ -462,9 +521,6 @@ def build_payback_card(payback_years):
     )
 
 
-# =========================================================
-# PRO / SEO COMPONENTS
-# =========================================================
 def pro_card(unlocked=False):
     if unlocked:
         return dbc.Card(
@@ -484,39 +540,22 @@ def pro_card(unlocked=False):
         dbc.CardBody(
             [
                 section_eyebrow("VERSIÓN PRO"),
-                html.H3("Desbloquea el análisis completo", className="h4 fw-bold mb-3"),
+                html.H3("Evita comprar un piso con números incompletos", className="h4 fw-bold mb-3"),
                 html.P(
-                    "La parte gratuita te sirve para filtrar. La PRO te ayuda a decidir si comprar o no al instante.",
+                    "La parte gratis te da una primera lectura. La versión PRO te ayuda a decidir si comprar o no con proyección a 10 años, payback, coste de oportunidad y comparación frente al S&P 500.",
                     className="text-muted mb-3",
                 ),
                 html.Div(
                     [
                         dbc.Badge("10 años", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("Payback", color="light", text_color="dark", class_name="me-2 mb-2"),
-                        dbc.Badge("Revalorización", color="light", text_color="dark", class_name="me-2 mb-2"),
-                        dbc.Badge("Comparativa S&P 500", color="light", text_color="dark", class_name="me-2 mb-2"),
-                        dbc.Badge("Decisión comprar / no comprar", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("Coste oportunidad", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("Comprar / no comprar", color="light", text_color="dark", class_name="me-2 mb-2"),
                     ],
-                    className="mb-4",
-                ),
-                html.Div(
-                    [
-                        html.Div("🔒 Resultado premium bloqueado", className="fw-semibold mb-2"),
-                        html.Div(
-                            "Rentabilidad acumulada, payback, coste de oportunidad y comparativa a 10 años.",
-                            className="text-muted small",
-                        ),
-                    ],
-                    style={
-                        "border": "1px dashed #cbd5e1",
-                        "borderRadius": "16px",
-                        "padding": "1rem",
-                        "background": "#f8fafc",
-                    },
                     className="mb-4",
                 ),
                 dbc.Button(
-                    "Desbloquear análisis completo",
+                    "Ver si comprar o no por 9€",
                     href=STRIPE_PAYMENT_LINK,
                     target="_self",
                     color="primary",
@@ -525,27 +564,10 @@ def pro_card(unlocked=False):
             ]
         ),
         className="border-0 shadow-sm rounded-4 h-100",
-        style={"background": "linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%)"},
     )
 
 
 def locked_preview(unlocked=False):
-    if unlocked:
-        return dbc.Card(
-            dbc.CardBody(
-                [
-                    section_eyebrow("PREVIEW PRO"),
-                    html.H3("Vista premium activa", className="h5 fw-bold mb-3"),
-                    html.P(
-                        "El usuario ya tiene acceso al bloque avanzado: proyección a 10 años, payback y comparativa ampliada.",
-                        className="text-muted mb-3",
-                    ),
-                    dbc.Alert("✅ Ya no hace falta desbloquear nada en esta página.", color="success", className="rounded-4 mb-0"),
-                ]
-            ),
-            className="border-0 shadow-sm rounded-4 h-100",
-        )
-
     return dbc.Card(
         dbc.CardBody(
             [
@@ -553,29 +575,13 @@ def locked_preview(unlocked=False):
                 html.H3("Lo que vería el usuario premium", className="h5 fw-bold mb-3"),
                 html.Div(
                     [
-                        html.Div(
-                            [
-                                html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
-                                html.Div("12,84 %", className="display-6 fw-bold text-primary"),
-                            ],
-                            className="mb-3",
-                            style={"filter": "blur(5px)", "opacity": 0.65},
-                        ),
-                        html.Div(
-                            [
-                                html.Div("Cashflow acumulado", className="fw-semibold mb-2"),
-                                html.Div("28.420 €", className="h2 fw-bold"),
-                            ],
-                            className="mb-3",
-                            style={"filter": "blur(5px)", "opacity": 0.65},
-                        ),
-                        html.Div(
-                            "Gráfico a 10 años, payback, recomendación final y comparativa real con indexados.",
-                            className="text-muted",
-                            style={"filter": "blur(3px)", "opacity": 0.75},
-                        ),
+                        html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
+                        html.Div("12,84 %", className="display-6 fw-bold text-primary"),
+                        html.P("Payback, coste de oportunidad y recomendación final bloqueados.", className="text-muted mt-3 mb-0"),
                     ],
                     style={
+                        "filter": "blur(3px)" if not unlocked else "none",
+                        "opacity": 0.75 if not unlocked else 1,
                         "borderRadius": "18px",
                         "padding": "1rem",
                         "background": "#f8fafc",
@@ -588,7 +594,7 @@ def locked_preview(unlocked=False):
                     target="_self",
                     color="dark",
                     className="rounded-pill px-4 mt-4 w-100",
-                ),
+                ) if not unlocked else dbc.Alert("✅ PRO activo", color="success", className="rounded-4 mt-4 mb-0"),
             ]
         ),
         className="border-0 shadow-sm rounded-4 h-100",
@@ -615,29 +621,16 @@ def seo_text_block():
     return html.Div(
         dbc.Container(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                section_eyebrow("GUÍA PARA ANALIZAR UN ALQUILER"),
-                                html.H2("Cómo calcular la rentabilidad real de un piso en alquiler", className="fw-bold mb-3"),
-                                html.P(
-                                    "La rentabilidad de un alquiler no se calcula solo dividiendo el alquiler anual entre el precio de compra. "
-                                    "Para saber si una vivienda es realmente rentable hay que incluir impuestos, gastos de compra, reforma, IBI, "
-                                    "comunidad, seguro, mantenimiento, posibles meses sin alquilar, gestión e hipoteca si compras con financiación.",
-                                    className="text-muted",
-                                ),
-                                html.P(
-                                    "Esta calculadora de rentabilidad de alquiler te permite estimar la rentabilidad bruta, la rentabilidad neta, "
-                                    "el cashflow mensual y el capital que tienes que aportar. También puedes comparar la operación frente a una "
-                                    "inversión indexada como el S&P 500 para entender el coste de oportunidad.",
-                                    className="text-muted",
-                                ),
-                            ],
-                            lg=10,
-                        )
-                    ]
-                )
+                section_eyebrow("GUÍA PARA ANALIZAR UN ALQUILER"),
+                html.H2("Cómo calcular la rentabilidad real de un piso en alquiler", className="fw-bold mb-3"),
+                html.P(
+                    "La rentabilidad de un alquiler no se calcula solo dividiendo el alquiler anual entre el precio de compra. Para saber si una vivienda es realmente rentable hay que incluir impuestos, gastos de compra, reforma, IBI, comunidad, seguro, mantenimiento, posibles meses sin alquilar, gestión e hipoteca.",
+                    className="text-muted",
+                ),
+                html.P(
+                    "Esta calculadora estima rentabilidad bruta, rentabilidad neta, cashflow mensual, capital aportado y comparación frente a una inversión indexada como el S&P 500.",
+                    className="text-muted",
+                ),
             ]
         ),
         className="py-5",
@@ -652,54 +645,9 @@ def seo_how_to_block():
                 html.H2("Qué métricas debes mirar antes de comprar para alquilar", className="fw-bold mb-4"),
                 dbc.Row(
                     [
-                        dbc.Col(
-                            dbc.Card(
-                                dbc.CardBody(
-                                    [
-                                        html.H3("Rentabilidad bruta", className="h5 fw-bold"),
-                                        html.P(
-                                            "Ingresos anuales por alquiler divididos entre inversión total. Es rápida, pero incompleta.",
-                                            className="text-muted small mb-0",
-                                        ),
-                                    ]
-                                ),
-                                className="border-0 shadow-sm rounded-4 h-100",
-                            ),
-                            md=4,
-                            className="mb-3",
-                        ),
-                        dbc.Col(
-                            dbc.Card(
-                                dbc.CardBody(
-                                    [
-                                        html.H3("Rentabilidad neta", className="h5 fw-bold"),
-                                        html.P(
-                                            "Tiene en cuenta gastos, impuestos, mantenimiento, seguro, comunidad, IBI y gestión.",
-                                            className="text-muted small mb-0",
-                                        ),
-                                    ]
-                                ),
-                                className="border-0 shadow-sm rounded-4 h-100",
-                            ),
-                            md=4,
-                            className="mb-3",
-                        ),
-                        dbc.Col(
-                            dbc.Card(
-                                dbc.CardBody(
-                                    [
-                                        html.H3("Cashflow mensual", className="h5 fw-bold"),
-                                        html.P(
-                                            "Mide cuánto dinero queda cada mes después de gastos y, si aplica, cuota hipotecaria.",
-                                            className="text-muted small mb-0",
-                                        ),
-                                    ]
-                                ),
-                                className="border-0 shadow-sm rounded-4 h-100",
-                            ),
-                            md=4,
-                            className="mb-3",
-                        ),
+                        dbc.Col(dbc.Card(dbc.CardBody([html.H3("Rentabilidad bruta", className="h5 fw-bold"), html.P("Ingresos anuales por alquiler divididos entre inversión total.", className="text-muted small mb-0")]), className="border-0 shadow-sm rounded-4 h-100"), md=4, className="mb-3"),
+                        dbc.Col(dbc.Card(dbc.CardBody([html.H3("Rentabilidad neta", className="h5 fw-bold"), html.P("Beneficio real después de gastos, impuestos, mantenimiento e IBI.", className="text-muted small mb-0")]), className="border-0 shadow-sm rounded-4 h-100"), md=4, className="mb-3"),
+                        dbc.Col(dbc.Card(dbc.CardBody([html.H3("Cashflow mensual", className="h5 fw-bold"), html.P("Dinero que queda cada mes después de gastos y cuota hipotecaria.", className="text-muted small mb-0")]), className="border-0 shadow-sm rounded-4 h-100"), md=4, className="mb-3"),
                     ]
                 ),
             ]
@@ -714,10 +662,7 @@ def seo_related_block():
             [
                 section_eyebrow("GUÍAS RELACIONADAS"),
                 html.H2("Sigue analizando la inversión inmobiliaria", className="fw-bold mb-3"),
-                html.P(
-                    "Estas guías complementan la calculadora y ayudan a comparar vivienda, bolsa, hipoteca y rentabilidad real.",
-                    className="text-muted mb-4",
-                ),
+                html.P("Estas guías complementan la calculadora y ayudan a comparar vivienda, bolsa, hipoteca y rentabilidad real.", className="text-muted mb-4"),
                 dbc.Row([seo_link_card(title, href) for title, href in SEO_RELATED_LINKS]),
             ]
         ),
@@ -733,37 +678,12 @@ def seo_faq_block():
                 html.H2("Dudas habituales sobre rentabilidad de alquiler", className="fw-bold mb-4"),
                 dbc.Accordion(
                     [
-                        dbc.AccordionItem(
-                            html.P(
-                                "Depende de la ciudad, el precio de compra, los gastos y el alquiler. Como referencia, una rentabilidad neta superior al 5% suele ser interesante, pero hay que analizar el riesgo y la gestión.",
-                                className="mb-0",
-                            ),
-                            title="¿Qué rentabilidad es buena para un piso en alquiler?",
-                        ),
-                        dbc.AccordionItem(
-                            html.P(
-                                "La rentabilidad bruta solo usa ingresos y precio. La neta descuenta gastos, impuestos, mantenimiento, seguro, comunidad, IBI y otros costes reales.",
-                                className="mb-0",
-                            ),
-                            title="¿Qué diferencia hay entre rentabilidad bruta y neta?",
-                        ),
-                        dbc.AccordionItem(
-                            html.P(
-                                "Puede ser rentable si el alquiler cubre gastos, intereses y cuota, pero también aumenta el riesgo. Por eso conviene mirar cashflow mensual y rentabilidad sobre capital aportado.",
-                                className="mb-0",
-                            ),
-                            title="¿Es mejor comprar con hipoteca para alquilar?",
-                        ),
-                        dbc.AccordionItem(
-                            html.P(
-                                "La vivienda puede ofrecer apalancamiento e ingresos mensuales. La bolsa suele ser más líquida, diversificada y pasiva. Lo ideal es comparar ambas con números.",
-                                className="mb-0",
-                            ),
-                            title="¿Es mejor invertir en vivienda o en bolsa?",
-                        ),
+                        dbc.AccordionItem(html.P("Depende de la ciudad, precio, gastos y alquiler. Como referencia, una rentabilidad neta superior al 5% suele ser interesante.", className="mb-0"), title="¿Qué rentabilidad es buena para un piso en alquiler?"),
+                        dbc.AccordionItem(html.P("La rentabilidad bruta solo usa ingresos y precio. La neta descuenta gastos, impuestos, mantenimiento, comunidad, IBI y otros costes.", className="mb-0"), title="¿Qué diferencia hay entre rentabilidad bruta y neta?"),
+                        dbc.AccordionItem(html.P("Puede mejorar la rentabilidad sobre capital aportado, pero aumenta riesgo y puede empeorar el cashflow mensual.", className="mb-0"), title="¿Es mejor comprar con hipoteca para alquilar?"),
+                        dbc.AccordionItem(html.P("La vivienda puede ofrecer apalancamiento e ingresos. La bolsa suele ser más líquida, diversificada y pasiva.", className="mb-0"), title="¿Es mejor invertir en vivienda o en bolsa?"),
                     ],
                     start_collapsed=True,
-                    always_open=False,
                 ),
             ]
         ),
@@ -771,9 +691,6 @@ def seo_faq_block():
     )
 
 
-# =========================================================
-# LAYOUT
-# =========================================================
 layout = dbc.Container(
     [
         dcc.Location(id="url", refresh=False),
@@ -814,28 +731,8 @@ layout = dbc.Container(
                         ),
                         html.Div(
                             [
-                                dbc.Button(
-                                    "Probar calculadora gratis",
-                                    id="hero-cta-gratis",
-                                    href="#calculadora-rentabilidad",
-                                    color="primary",
-                                    className="rounded-pill px-4 me-2 mb-2",
-                                ),
-                                dbc.Button(
-                                    "Ver calculadora hipoteca",
-                                    id="hero-cta-hipoteca",
-                                    href=HIPOTECA_URL,
-                                    color="light",
-                                    className="rounded-pill px-4 border mb-2",
-                                ),
-                            ]
-                        ),
-                        html.Div(
-                            [
-                                dbc.Badge("Rentabilidad bruta", color="light", text_color="dark", class_name="me-2 mt-2"),
-                                dbc.Badge("Rentabilidad neta", color="light", text_color="dark", class_name="me-2 mt-2"),
-                                dbc.Badge("Cashflow mensual", color="light", text_color="dark", class_name="me-2 mt-2"),
-                                dbc.Badge("Con hipoteca", color="light", text_color="dark", class_name="mt-2"),
+                                dbc.Button("Probar calculadora gratis", id="hero-cta-gratis", href="#calculadora-rentabilidad", color="primary", className="rounded-pill px-4 me-2 mb-2"),
+                                dbc.Button("Ver calculadora hipoteca", id="hero-cta-hipoteca", href=HIPOTECA_URL, color="light", className="rounded-pill px-4 border mb-2"),
                             ]
                         ),
                     ],
@@ -847,10 +744,7 @@ layout = dbc.Container(
                             [
                                 section_eyebrow("LECTURA RÁPIDA"),
                                 html.H2("¿Merece la pena comprar para alquilar?", className="h4 fw-bold mb-3"),
-                                html.P(
-                                    "Introduce los datos y mira al instante si la operación tiene una rentabilidad atractiva, si el cashflow es positivo y si mejora o no una alternativa indexada.",
-                                    className="text-muted mb-3",
-                                ),
+                                html.P("Introduce los datos y mira al instante si la operación tiene una rentabilidad atractiva, cashflow positivo y si mejora o no una alternativa indexada.", className="text-muted mb-3"),
                                 html.Ul(
                                     [
                                         html.Li("Rentabilidad bruta y neta"),
@@ -953,6 +847,8 @@ layout = dbc.Container(
                             class_name="g-4 mb-4",
                         ),
 
+                        html.Div(id="decision_final_wrap"),
+
                         dbc.Card(
                             dbc.CardBody(
                                 [
@@ -1047,24 +943,15 @@ layout = dbc.Container(
                         dbc.Col(
                             html.Div(
                                 [
-                                    html.Div("¿Quieres el análisis completo?", className="fw-bold"),
-                                    html.Div(
-                                        "Desbloquea la versión PRO con escenarios, payback y comparativa a 10 años.",
-                                        className="small text-muted",
-                                    ),
+                                    html.Div("¿Quieres saber si comprar o no comprar?", className="fw-bold"),
+                                    html.Div("Desbloquea el análisis PRO con payback, coste de oportunidad y comparativa a 10 años.", className="small text-muted"),
                                 ]
                             ),
                             xs=7,
                             md=8,
                         ),
                         dbc.Col(
-                            dbc.Button(
-                                "Quiero la PRO",
-                                href=STRIPE_PAYMENT_LINK,
-                                target="_self",
-                                color="primary",
-                                className="rounded-pill w-100",
-                            ),
+                            dbc.Button("Ver PRO", href=STRIPE_PAYMENT_LINK, target="_self", color="primary", className="rounded-pill w-100"),
                             xs=5,
                             md=4,
                         ),
@@ -1097,9 +984,6 @@ layout = dbc.Container(
 )
 
 
-# =========================================================
-# CALLBACKS UI
-# =========================================================
 @callback(
     Output("gtag-pro-open-store", "data"),
     Input("premium-access", "data"),
@@ -1177,9 +1061,6 @@ clientside_callback(
 )
 
 
-# =========================================================
-# CALLBACK PRINCIPAL
-# =========================================================
 @callback(
     Output("metric_bruta", "children"),
     Output("metric_neta", "children"),
@@ -1187,6 +1068,7 @@ clientside_callback(
     Output("metric_desembolso", "children"),
     Output("metric_cuota", "children"),
     Output("metric_capital", "children"),
+    Output("decision_final_wrap", "children"),
     Output("signal_badge", "children"),
     Output("signal_text", "children"),
     Output("breakdown_chart", "figure"),
@@ -1281,12 +1163,14 @@ def update_calculator(
     rent_mostrar = rent_sobre_capital if usar_deuda else base["rent_neta"]
     etiqueta, color, mensaje = semaforo(rent_mostrar)
 
-    metric_bruta = metric_card(
-        "Rentabilidad bruta",
-        fmt_pct(base["rent_bruta"]),
-        "Ingresos anuales / inversión total",
-        accent=True,
+    decision_final = decision_final_card(
+        rent_mostrar=rent_mostrar,
+        cashflow_mensual=cashflow_despues_hipoteca if usar_deuda else base["cashflow_mensual"],
+        usar_deuda=usar_deuda,
+        sp500_return=sp500_return,
     )
+
+    metric_bruta = metric_card("Rentabilidad bruta", fmt_pct(base["rent_bruta"]), "Ingresos anuales / inversión total", accent=True)
 
     metric_neta = metric_card(
         "Rentabilidad neta",
@@ -1301,76 +1185,31 @@ def update_calculator(
         "Sin deuda" if not usar_deuda else "Después de cuota hipotecaria",
     )
 
-    metric_desembolso = metric_card(
-        "Desembolso inicial",
-        fmt_eur(base["inversion_total"]),
-        "Compra + gastos + reforma",
-    )
-
-    metric_cuota = metric_card(
-        "Cuota hipotecaria",
-        fmt_eur(cuota_mensual),
-        "Mensual" if usar_deuda else "No aplica",
-    )
-
-    metric_capital = metric_card(
-        "Capital aportado",
-        fmt_eur(capital_aportado),
-        "Tu dinero inicial",
-    )
+    metric_desembolso = metric_card("Desembolso inicial", fmt_eur(base["inversion_total"]), "Compra + gastos + reforma")
+    metric_cuota = metric_card("Cuota hipotecaria", fmt_eur(cuota_mensual), "Mensual" if usar_deuda else "No aplica")
+    metric_capital = metric_card("Capital aportado", fmt_eur(capital_aportado), "Tu dinero inicial")
 
     signal_text = html.Div(
         [
             html.P([html.Strong("Ingresos anuales: "), fmt_eur(base["ingresos_anuales"])], className="mb-2"),
             html.P([html.Strong("Gastos + IRPF: "), fmt_eur(base["gastos_anuales"] + base["irpf"])], className="mb-2"),
-            html.P(
-                [html.Strong("Intereses anuales estimados: "), fmt_eur(intereses_anuales_estimados)]
-                if usar_deuda
-                else [html.Strong("Intereses anuales estimados: "), "No aplica"],
-                className="mb-2",
-            ),
-            html.P(
-                [
-                    html.Strong("Resultado económico anual: "),
-                    fmt_eur(base["beneficio_neto"]) if not usar_deuda else fmt_eur(beneficio_neto_economico_con_deuda),
-                ],
-                className="mb-2",
-            ),
-            html.P(
-                [
-                    html.Strong("Cashflow anual después de cuota: "),
-                    fmt_eur(base["beneficio_neto"]) if not usar_deuda else fmt_eur(beneficio_neto_despues_hipoteca),
-                ],
-                className="mb-2",
-            ),
+            html.P([html.Strong("Intereses anuales estimados: "), fmt_eur(intereses_anuales_estimados)] if usar_deuda else [html.Strong("Intereses anuales estimados: "), "No aplica"], className="mb-2"),
+            html.P([html.Strong("Resultado económico anual: "), fmt_eur(base["beneficio_neto"]) if not usar_deuda else fmt_eur(beneficio_neto_economico_con_deuda)], className="mb-2"),
+            html.P([html.Strong("Cashflow anual después de cuota: "), fmt_eur(base["beneficio_neto"]) if not usar_deuda else fmt_eur(beneficio_neto_despues_hipoteca)], className="mb-2"),
             html.P(mensaje, className="mb-0"),
         ]
     )
 
-    insights = [
-        html.Li(f"Rentabilidad neta sin deuda: {fmt_pct(base['rent_neta'])}.", className="mb-2"),
-    ]
+    insights = [html.Li(f"Rentabilidad neta sin deuda: {fmt_pct(base['rent_neta'])}.", className="mb-2")]
 
     if usar_deuda:
         spread_apalancamiento = base["rent_neta"] - interes_hipoteca
-
         insights += [
             html.Li(f"Cuota hipotecaria mensual estimada: {fmt_eur(cuota_mensual)}.", className="mb-2"),
-            html.Li(f"Intereses anuales estimados: {fmt_eur(intereses_anuales_estimados)}.", className="mb-2"),
             html.Li(f"Cashflow mensual después de hipoteca: {fmt_eur(cashflow_despues_hipoteca)}.", className="mb-2"),
             html.Li(f"Rentabilidad sobre capital aportado: {fmt_pct(rent_sobre_capital)}.", className="mb-2"),
-            html.Li(
-                f"Spread de apalancamiento: {fmt_pct(spread_apalancamiento)}.",
-                className="mb-2",
-            ),
+            html.Li(f"Spread de apalancamiento: {fmt_pct(spread_apalancamiento)}.", className="mb-2"),
         ]
-
-        if spread_apalancamiento > 1:
-            insights.append(html.Li("La deuda parece aportar valor: la rentabilidad neta supera el coste financiero.", className="mb-2"))
-        elif spread_apalancamiento > 0:
-            insights.append(html.Li("La deuda podría ayudar, pero el margen es estrecho.", className="mb-2"))
-        else:
-            insights.append(html.Li("La deuda está penalizando la operación.", className="mb-2"))
 
     if rent_mostrar >= sp500_return:
         insights.append(html.Li(f"La rentabilidad mostrada supera la referencia del S&P 500 ({fmt_pct(sp500_return)}).", className="mb-2"))
@@ -1387,172 +1226,10 @@ def update_calculator(
         metric_desembolso,
         metric_cuota,
         metric_capital,
+        decision_final,
         badge_estado(etiqueta, color),
         signal_text,
         grafico_breakdown(base, cuota_anual if usar_deuda else 0.0),
-        grafico_comparativa(
-            base["inversion_total"],
-            capital_aportado,
-            base["rent_neta"],
-            rent_sobre_capital,
-            sp500_return,
-            usar_deuda,
-        ),
+        grafico_comparativa(base["inversion_total"], capital_aportado, base["rent_neta"], rent_sobre_capital, sp500_return, usar_deuda),
         html.Ul(insights, className="mb-0"),
-    )
-
-
-# =========================================================
-# CALLBACK PRO
-# =========================================================
-@callback(
-    Output("pro-content", "children"),
-    Input("premium-access", "data"),
-    Input("precio_compra", "value"),
-    Input("gastos_compra", "value"),
-    Input("reforma", "value"),
-    Input("alquiler_mensual", "value"),
-    Input("ocupacion", "value"),
-    Input("ibi", "value"),
-    Input("comunidad", "value"),
-    Input("seguro", "value"),
-    Input("mantenimiento", "value"),
-    Input("gestion_pct", "value"),
-    Input("irpf_pct", "value"),
-    Input("sp500_return", "value"),
-)
-def render_pro_content(
-    premium_access,
-    precio_compra,
-    gastos_compra,
-    reforma,
-    alquiler_mensual,
-    ocupacion,
-    ibi,
-    comunidad,
-    seguro,
-    mantenimiento,
-    gestion_pct,
-    irpf_pct,
-    sp500_return,
-):
-    unlocked = bool((premium_access or {}).get("unlocked"))
-
-    if not unlocked:
-        return html.Div(
-            [
-                html.H3("Desbloquea la versión PRO", className="h5 fw-bold mb-3"),
-                html.P(
-                    "Incluye proyección a 10 años, comparativa acumulada contra S&P 500, payback y recomendación final.",
-                    className="text-muted mb-3",
-                ),
-                html.Div(
-                    [
-                        html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
-                        html.Div("12,84 %", className="display-6 fw-bold text-primary"),
-                        html.P("Gráfico y resultados avanzados bloqueados.", className="text-muted mt-3 mb-0"),
-                    ],
-                    style={
-                        "padding": "1rem",
-                        "borderRadius": "16px",
-                        "background": "#f8fafc",
-                        "border": "1px dashed #cbd5e1",
-                        "filter": "blur(2px)",
-                        "opacity": 0.8,
-                    },
-                ),
-                dbc.Button(
-                    "Comprar versión PRO",
-                    href=STRIPE_PAYMENT_LINK,
-                    target="_self",
-                    color="primary",
-                    className="rounded-pill px-4 mt-4",
-                ),
-            ]
-        )
-
-    precio_compra = safe_float(precio_compra)
-    gastos_compra = safe_float(gastos_compra)
-    reforma = safe_float(reforma)
-    alquiler_mensual = safe_float(alquiler_mensual)
-    ocupacion = safe_float(ocupacion, 95)
-    ibi = safe_float(ibi)
-    comunidad = safe_float(comunidad)
-    seguro = safe_float(seguro)
-    mantenimiento = safe_float(mantenimiento)
-    gestion_pct = safe_float(gestion_pct)
-    irpf_pct = safe_float(irpf_pct)
-    sp500_return = safe_float(sp500_return, SP500_RETURN_DEFAULT)
-
-    inversion_inicial = precio_compra + gastos_compra + reforma
-    ingresos_base = alquiler_mensual * 12 * (ocupacion / 100.0)
-    gasto_gestion = ingresos_base * (gestion_pct / 100.0)
-    gastos_anuales = ibi + comunidad + seguro + mantenimiento + gasto_gestion
-
-    years, inmueble_vals, sp500_vals, rows = proyeccion_10_anios(
-        inversion_inicial=inversion_inicial,
-        alquiler_mensual=alquiler_mensual,
-        ocupacion_pct=ocupacion,
-        gastos_anuales=gastos_anuales,
-        irpf_pct=irpf_pct,
-        crecimiento_alquiler_pct=2.0,
-        crecimiento_gastos_pct=2.0,
-        revalorizacion_inmueble_pct=2.0,
-        sp500_pct=sp500_return,
-    )
-
-    inmueble_final = inmueble_vals[-1]
-    sp500_final = sp500_vals[-1]
-    beneficio_neto_anual_base = rows[0]["beneficio_neto"] if rows else 0
-    payback_years = calc_payback_years(inversion_inicial, beneficio_neto_anual_base)
-
-    return html.Div(
-        [
-            html.H3("Versión PRO desbloqueada", className="h5 fw-bold mb-3"),
-            html.P("Aquí ves una lectura mucho más útil para decidir si el inmueble merece la pena o no.", className="text-muted mb-4"),
-            dbc.Row(
-                [
-                    dbc.Col(build_pro_decision_card(inmueble_final, sp500_final, payback_years, beneficio_neto_anual_base), lg=4),
-                    dbc.Col(build_coste_oportunidad_card(inmueble_final, sp500_final), lg=4),
-                    dbc.Col(build_payback_card(payback_years), lg=4),
-                ],
-                class_name="g-4 mb-4",
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(metric_card("Valor inmueble año 10", fmt_eur(inmueble_final, 0), "Revalorización + cashflow acumulado", accent=True), md=4),
-                    dbc.Col(metric_card("Valor S&P 500 año 10", fmt_eur(sp500_final, 0), "Capital inicial capitalizado"), md=4),
-                    dbc.Col(metric_card("Diferencia final", fmt_eur(inmueble_final - sp500_final, 0), "Inmueble - S&P 500"), md=4),
-                ],
-                class_name="g-4 mb-4",
-            ),
-            dbc.Card(
-                dbc.CardBody(
-                    dcc.Graph(
-                        figure=build_pro_years_chart(years, inmueble_vals, sp500_vals),
-                        config={"displayModeBar": False},
-                    )
-                ),
-                className="border-0 shadow-sm rounded-4 mb-4",
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody([section_eyebrow("RESUMEN"), build_pro_summary(rows)]),
-                            className="border-0 shadow-sm rounded-4 h-100",
-                        ),
-                        lg=5,
-                    ),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody([section_eyebrow("TABLA ANUAL"), build_pro_table(rows)]),
-                            className="border-0 shadow-sm rounded-4 h-100",
-                        ),
-                        lg=7,
-                    ),
-                ],
-                class_name="g-4",
-            ),
-        ]
     )
