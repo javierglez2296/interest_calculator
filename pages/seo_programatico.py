@@ -85,6 +85,16 @@ SEO_PAGES = [
     {"slug": "como-conseguir-500000-euros", "tipo": "objetivo", "cantidad": 500000},
     {"slug": "como-conseguir-un-millon-de-euros", "tipo": "objetivo", "cantidad": 1000000},
 
+    # Satélites SEO alquiler
+    {"slug": "calcular-rentabilidad-piso-alquiler", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "rentabilidad-bruta-neta-alquiler", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "cashflow-inmobiliario", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "gastos-comprar-piso-para-alquilar", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "comprar-piso-para-alquilar-rentable", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "rentabilidad-alquiler-con-hipoteca", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "rentabilidad-alquiler-sin-hipoteca", "tipo": "alquiler_sat", "cantidad": 0},
+    {"slug": "como-saber-si-un-piso-es-rentable", "tipo": "alquiler_sat", "cantidad": 0},
+
     # Capital inicial
     {"slug": "donde-invertir-1000-euros", "tipo": "capital", "cantidad": 1000},
     {"slug": "donde-invertir-5000-euros", "tipo": "capital", "cantidad": 5000},
@@ -878,7 +888,141 @@ def build_myinvestor_page():
         cta_myinvestor(),
     ])
 
+def build_alquiler_sat_page(slug):
+    data = {
+        "calcular-rentabilidad-piso-alquiler": {
+            "title": "Cómo calcular la rentabilidad de un piso en alquiler",
+            "desc": "Aprende a calcular rentabilidad bruta, neta, cashflow, gastos e hipoteca antes de comprar un piso para alquilar.",
+        },
+        "rentabilidad-bruta-neta-alquiler": {
+            "title": "Rentabilidad bruta y neta de un alquiler",
+            "desc": "Diferencias entre rentabilidad bruta y rentabilidad neta al analizar una vivienda en alquiler.",
+        },
+        "cashflow-inmobiliario": {
+            "title": "Qué es el cashflow inmobiliario",
+            "desc": "Calcula si un piso deja dinero cada mes después de gastos, impuestos e hipoteca.",
+        },
+        "gastos-comprar-piso-para-alquilar": {
+            "title": "Gastos al comprar un piso para alquilar",
+            "desc": "Lista de gastos que debes incluir antes de comprar una vivienda para ponerla en alquiler.",
+        },
+        "comprar-piso-para-alquilar-rentable": {
+            "title": "Cómo saber si comprar un piso para alquilar es rentable",
+            "desc": "Guía práctica para decidir si una operación inmobiliaria merece la pena.",
+        },
+        "rentabilidad-alquiler-con-hipoteca": {
+            "title": "Rentabilidad de alquiler con hipoteca",
+            "desc": "Cómo afecta la financiación a la rentabilidad, cashflow y riesgo de una vivienda en alquiler.",
+        },
+        "rentabilidad-alquiler-sin-hipoteca": {
+            "title": "Rentabilidad de alquiler sin hipoteca",
+            "desc": "Cómo calcular la rentabilidad neta de una vivienda comprada sin financiación.",
+        },
+        "como-saber-si-un-piso-es-rentable": {
+            "title": "Cómo saber si un piso es rentable",
+            "desc": "Checklist para analizar precio, alquiler, gastos, cashflow y rentabilidad neta.",
+        },
+    }
 
+    info = data.get(slug, data["calcular-rentabilidad-piso-alquiler"])
+
+    return page_shell([
+        hero(
+            info["title"],
+            info["desc"],
+            badge="INVERSIÓN INMOBILIARIA · ALQUILER"
+        ),
+
+        metric_row([
+            ("Métrica principal", "Rentabilidad neta"),
+            ("Riesgo clave", "Cashflow negativo"),
+            ("Herramienta", "Calculadora"),
+        ]),
+
+        section("La rentabilidad real no es solo el alquiler mensual", [
+            html.P(
+                "Para analizar bien una vivienda en alquiler no basta con mirar el precio de compra y el alquiler mensual. "
+                "También hay que incluir gastos de compra, reforma, impuestos, IBI, comunidad, seguro, mantenimiento, vacancia, gestión e hipoteca."
+            ),
+            html.P([
+                "Puedes hacer el cálculo completo en la ",
+                dcc.Link("calculadora de rentabilidad de alquiler", href="/rentabilidad-alquiler"),
+                "."
+            ]),
+        ]),
+
+        table([
+            ["Concepto", "Por qué importa"],
+            ["Precio de compra", "Marca la inversión principal"],
+            ["Gastos de compra", "Aumentan el capital necesario"],
+            ["Reforma", "Reduce rentabilidad inicial, pero puede aumentar alquiler"],
+            ["Alquiler mensual", "Es la fuente principal de ingresos"],
+            ["IBI y comunidad", "Reducen la rentabilidad neta"],
+            ["Seguro y mantenimiento", "Evitan sorpresas en el cashflow"],
+            ["Vacancia", "Meses sin cobrar alquiler"],
+            ["Hipoteca", "Puede mejorar rentabilidad sobre capital, pero empeorar cashflow"],
+        ]),
+
+        section("Rentabilidad bruta, neta y cashflow", [
+            html.P(
+                "La rentabilidad bruta sirve como primer filtro, pero la rentabilidad neta es mucho más útil porque descuenta gastos reales."
+            ),
+            html.P(
+                "El cashflow mensual es clave: te dice si la operación deja dinero cada mes o si tendrás que poner dinero de tu bolsillo."
+            ),
+        ]),
+
+        table([
+            ["Métrica", "Fórmula simple", "Para qué sirve"],
+            ["Rentabilidad bruta", "Alquiler anual / inversión total", "Filtro rápido"],
+            ["Rentabilidad neta", "Beneficio neto anual / inversión total", "Medir rentabilidad real"],
+            ["Cashflow", "Ingresos - gastos - cuota", "Ver si deja dinero cada mes"],
+            ["Rentabilidad sobre capital", "Beneficio / dinero aportado", "Analizar operaciones con hipoteca"],
+        ]),
+
+        section("Cuándo puede ser una buena operación", [
+            html.P(
+                "Una operación empieza a ser interesante cuando combina precio razonable, demanda de alquiler, gastos controlados, rentabilidad neta suficiente y cashflow positivo."
+            ),
+            html.P(
+                "También conviene comparar el resultado frente a alternativas como bolsa indexada, fondos monetarios o amortizar deuda."
+            ),
+        ]),
+
+        section("Errores habituales", [
+            html.Ul([
+                html.Li("No incluir impuestos y gastos de compra."),
+                html.Li("Olvidar comunidad, IBI, seguro y mantenimiento."),
+                html.Li("Suponer ocupación del 100% todos los años."),
+                html.Li("No calcular cashflow después de hipoteca."),
+                html.Li("No comparar contra bolsa u otras alternativas."),
+                html.Li("Mirar solo rentabilidad bruta y no rentabilidad neta."),
+            ])
+        ]),
+
+        cta_box(
+            "Calcula tu caso exacto",
+            "Introduce precio, alquiler, gastos, hipoteca e impuestos para calcular rentabilidad bruta, rentabilidad neta y cashflow.",
+            "/rentabilidad-alquiler",
+            "Abrir calculadora de alquiler"
+        ),
+
+        related_links([
+            ("Rentabilidad alquiler vivienda España", "/rentabilidad-alquiler-vivienda-espana"),
+            ("Comprar piso o invertir en bolsa", "/comprar-piso-para-alquilar-o-invertir-en-bolsa"),
+            ("Invertir en vivienda o S&P 500", "/invertir-en-vivienda-o-sp500"),
+            ("Calculadora de hipoteca", "/hipoteca"),
+        ]),
+
+        faq([
+            ("¿Qué rentabilidad neta es buena en un alquiler?", "Depende de la zona y del riesgo, pero una rentabilidad neta superior al 5% suele ser más interesante que una operación por debajo del 3%."),
+            ("¿Es mejor comprar con hipoteca?", "La hipoteca puede mejorar la rentabilidad sobre capital aportado, pero también aumenta riesgo y puede empeorar el cashflow mensual."),
+            ("¿Qué es más importante: rentabilidad o cashflow?", "Las dos importan. La rentabilidad mide eficiencia; el cashflow mide si la operación deja dinero cada mes."),
+            ("¿Dónde puedo calcularlo?", "Puedes usar la calculadora de rentabilidad de alquiler para simular precio, alquiler, gastos, impuestos e hipoteca."),
+        ]),
+
+        cta_alquiler(),
+    ])
 # =========================================================
 # ROUTING
 # =========================================================
@@ -886,6 +1030,9 @@ def build_myinvestor_page():
 def make_layout(cfg):
     tipo = cfg["tipo"]
     cantidad = cfg["cantidad"]
+
+    if tipo == "alquiler_sat":
+        return lambda **kwargs: build_alquiler_sat_page(cfg["slug"])
 
     if tipo == "aportacion":
         return lambda **kwargs: build_aportacion_page(cantidad)
@@ -924,11 +1071,25 @@ def make_layout(cfg):
         return lambda **kwargs: build_myinvestor_page()
 
     return lambda **kwargs: html.Div("Página no encontrada")
+    
 
 
 def make_title(cfg):
     tipo = cfg["tipo"]
     cantidad = cfg["cantidad"]
+
+    if tipo == "alquiler_sat":
+        titles = {
+            "calcular-rentabilidad-piso-alquiler": "Calcular rentabilidad piso alquiler: guía y calculadora",
+            "rentabilidad-bruta-neta-alquiler": "Rentabilidad bruta y neta alquiler: diferencias",
+            "cashflow-inmobiliario": "Cashflow inmobiliario: qué es y cómo calcularlo",
+            "gastos-comprar-piso-para-alquilar": "Gastos comprar piso para alquilar: lista completa",
+            "comprar-piso-para-alquilar-rentable": "Comprar piso para alquilar: cómo saber si es rentable",
+            "rentabilidad-alquiler-con-hipoteca": "Rentabilidad alquiler con hipoteca: cálculo real",
+            "rentabilidad-alquiler-sin-hipoteca": "Rentabilidad alquiler sin hipoteca: cálculo neto",
+            "como-saber-si-un-piso-es-rentable": "Cómo saber si un piso es rentable para alquilar",
+        }
+        return titles.get(cfg["slug"], "Rentabilidad alquiler: guía práctica")
 
     if tipo == "aportacion":
         return f"Invertir {cantidad} euros al mes: cuánto puedes ganar"
@@ -1014,6 +1175,9 @@ def make_description(cfg):
 
     if tipo == "myinvestor":
         return "Opiniones sobre MyInvestor, ventajas, límites y para qué tipo de inversor puede tener sentido."
+
+    if tipo == "alquiler_sat":
+        return "Guía práctica para calcular rentabilidad de alquiler, cashflow, gastos, hipoteca y rentabilidad neta de una vivienda."
 
     return "Guía de inversión."
 
