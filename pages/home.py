@@ -1,5 +1,5 @@
 import dash
-from dash import html
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 from components.disclaimer_afiliados import build_disclaimer
@@ -10,21 +10,23 @@ MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCo
 dash.register_page(
     __name__,
     path="/",
-    title="Calculadoras financieras de interés compuesto, FIRE, hipoteca y rentabilidad | interescompuesto.app",
+    title="Calculadoras financieras: interés compuesto, FIRE, hipoteca e inversión",
     name="Inicio",
     description=(
-        "Calculadoras financieras en español para interés compuesto, FIRE, hipoteca, "
-        "rentabilidad de alquiler y comparativas. Gratis, claras y prácticas."
+        "Calculadoras financieras gratis en español para interés compuesto, FIRE, "
+        "hipoteca, rentabilidad de alquiler, inversión y libertad financiera."
     ),
 )
+
 
 # =========================================================
 # DATA
 # =========================================================
+
 CALCULADORAS = [
     {
         "titulo": "Interés compuesto",
-        "descripcion": "Descubre cuánto puede crecer tu dinero con aportaciones periódicas y visión a largo plazo.",
+        "descripcion": "Simula cuánto puede crecer tu dinero con aportaciones periódicas, rentabilidad e inflación.",
         "href": "/calculadora",
         "icono": "📈",
         "badge": "Más usada",
@@ -32,7 +34,7 @@ CALCULADORAS = [
     },
     {
         "titulo": "FIRE",
-        "descripcion": "Calcula cuánto necesitas para vivir de tus inversiones y cuánto podrías tardar en conseguirlo.",
+        "descripcion": "Calcula cuánto necesitas para vivir de tus inversiones y alcanzar libertad financiera.",
         "href": "/fire",
         "icono": "🔥",
         "badge": "Libertad financiera",
@@ -40,7 +42,7 @@ CALCULADORAS = [
     },
     {
         "titulo": "Hipoteca",
-        "descripcion": "Simula cuota, intereses, coste total y esfuerzo financiero antes de comprar vivienda.",
+        "descripcion": "Estima cuota mensual, intereses totales, entrada necesaria y esfuerzo financiero.",
         "href": "/hipoteca",
         "icono": "🏠",
         "badge": "Vivienda",
@@ -48,7 +50,7 @@ CALCULADORAS = [
     },
     {
         "titulo": "Rentabilidad alquiler",
-        "descripcion": "Analiza cashflow, rentabilidad neta y el impacto de financiar una inversión inmobiliaria.",
+        "descripcion": "Analiza cashflow, rentabilidad neta, gastos, hipoteca y retorno inmobiliario.",
         "href": "/rentabilidad-alquiler",
         "icono": "💸",
         "badge": "Inmobiliario",
@@ -56,11 +58,99 @@ CALCULADORAS = [
     },
     {
         "titulo": "Comparador de inversión",
-        "descripcion": "Compara vivienda, bolsa y otras alternativas para ver qué opción encaja mejor contigo.",
+        "descripcion": "Compara vivienda, bolsa, fondos, monetarios y otras alternativas con números.",
         "href": "/comparador",
         "icono": "⚖️",
         "badge": "Comparativa",
         "destacada": False,
+    },
+]
+
+GUIAS_POPULARES = [
+    {
+        "titulo": "Invertir 500 € al mes",
+        "texto": "Simula cuánto podrías acumular invirtiendo 500 € mensuales a largo plazo.",
+        "href": "/invertir-500-euros-mes",
+        "tag": "Inversión mensual",
+    },
+    {
+        "titulo": "Cómo conseguir 100.000 €",
+        "texto": "Guía realista para llegar a 100.000 € mediante ahorro e interés compuesto.",
+        "href": "/como-conseguir-100000-euros",
+        "tag": "Objetivo patrimonio",
+    },
+    {
+        "titulo": "Vivir con 2.000 € al mes",
+        "texto": "Calcula cuánto capital necesitas para generar 2.000 € mensuales.",
+        "href": "/cuanto-dinero-necesitas-para-vivir-con-2000-euros-mes",
+        "tag": "FIRE",
+    },
+    {
+        "titulo": "Dónde invertir 10.000 €",
+        "texto": "Ideas y simulación para invertir 10.000 € a medio y largo plazo.",
+        "href": "/donde-invertir-10000-euros",
+        "tag": "Capital inicial",
+    },
+]
+
+CLUSTERS_SEO = [
+    {
+        "titulo": "Invertir cada mes",
+        "descripcion": "Escenarios de aportación mensual para ver el efecto del interés compuesto.",
+        "links": [
+            ("Invertir 100 € al mes", "/invertir-100-euros-mes"),
+            ("Invertir 300 € al mes", "/invertir-300-euros-mes"),
+            ("Invertir 500 € al mes", "/invertir-500-euros-mes"),
+            ("Invertir 1.000 € al mes", "/invertir-1000-euros-mes"),
+        ],
+    },
+    {
+        "titulo": "Objetivos de patrimonio",
+        "descripcion": "Guías para calcular cuánto puedes tardar en alcanzar ciertos objetivos.",
+        "links": [
+            ("Conseguir 100.000 €", "/como-conseguir-100000-euros"),
+            ("Conseguir 200.000 €", "/como-conseguir-200000-euros"),
+            ("Conseguir 500.000 €", "/como-conseguir-500000-euros"),
+            ("Conseguir un millón", "/como-conseguir-un-millon-de-euros"),
+        ],
+    },
+    {
+        "titulo": "Vivir de inversiones",
+        "descripcion": "Calcula cuánto capital necesitas para generar ingresos mensuales.",
+        "links": [
+            ("Vivir con 1.000 € al mes", "/cuanto-dinero-necesitas-para-vivir-con-1000-euros-mes"),
+            ("Vivir con 1.500 € al mes", "/cuanto-dinero-necesitas-para-vivir-con-1500-euros-mes"),
+            ("Vivir con 2.000 € al mes", "/cuanto-dinero-necesitas-para-vivir-con-2000-euros-mes"),
+            ("Vivir de rentas en España", "/cuanto-dinero-necesitas-para-vivir-de-rentas-en-espana"),
+        ],
+    },
+    {
+        "titulo": "Comparativas de inversión",
+        "descripcion": "Compara alternativas habituales antes de tomar una decisión.",
+        "links": [
+            ("S&P 500 o Nasdaq 100", "/invertir-en-sp500-o-nasdaq"),
+            ("S&P 500 o MSCI World", "/sp500-o-msci-world"),
+            ("Fondos indexados o ETFs", "/fondos-indexados-o-etfs"),
+            ("Bolsa o amortizar hipoteca", "/invertir-en-bolsa-o-amortizar-hipoteca"),
+        ],
+    },
+]
+
+ARTICULOS_DESTACADOS = [
+    {
+        "titulo": "Qué es el interés compuesto",
+        "texto": "Entiende cómo funciona y por qué puede marcar tanta diferencia a largo plazo.",
+        "href": "/blog/interes-compuesto",
+    },
+    {
+        "titulo": "Qué es FIRE",
+        "texto": "Descubre cuánto dinero necesitas para vivir de tus inversiones.",
+        "href": "/blog/fire",
+    },
+    {
+        "titulo": "Cómo calcular una hipoteca",
+        "texto": "Aprende a interpretar cuota, intereses y coste total antes de comprar vivienda.",
+        "href": "/blog/hipoteca",
     },
 ]
 
@@ -79,27 +169,9 @@ LIBROS = [
     },
     {
         "titulo": "El inversor inteligente",
-        "texto": "Más exigente, pero una referencia atemporal para invertir con criterio.",
+        "texto": "Una referencia para invertir con más criterio y visión a largo plazo.",
         "href": "https://amzn.to/4sQ3Lt1",
         "badge": "Clásico",
-    },
-]
-
-ARTICULOS_DESTACADOS = [
-    {
-        "titulo": "Qué es el interés compuesto",
-        "texto": "Entiende cómo funciona y por qué puede marcar tanta diferencia a largo plazo.",
-        "href": "/blog/interes-compuesto",
-    },
-    {
-        "titulo": "Qué es FIRE",
-        "texto": "Descubre cuánto dinero necesitas para vivir de tus inversiones y cómo se calcula.",
-        "href": "/blog/fire",
-    },
-    {
-        "titulo": "Cómo calcular una hipoteca",
-        "texto": "Aprende a interpretar cuota, intereses y coste total antes de comprar vivienda.",
-        "href": "/blog/hipoteca",
     },
 ]
 
@@ -107,6 +179,7 @@ ARTICULOS_DESTACADOS = [
 # =========================================================
 # HELPERS UI
 # =========================================================
+
 def hero_metric(label, value):
     return html.Div(
         [
@@ -114,6 +187,16 @@ def hero_metric(label, value):
             html.Div(value, className="hero-metric-value"),
         ],
         className="hero-metric-card",
+    )
+
+
+def section_header(eyebrow, title, subtitle=None):
+    return html.Div(
+        [
+            html.Div(eyebrow, className="section-eyebrow"),
+            html.H2(title, className="section-title fw-bold mb-3"),
+            html.P(subtitle, className="section-subtitle mb-4") if subtitle else None,
+        ]
     )
 
 
@@ -152,7 +235,7 @@ def calculadora_card(titulo, descripcion, href, icono="📊", badge=None, destac
                     html.P(
                         descripcion,
                         className="text-muted small mb-4",
-                        style={"minHeight": "68px"},
+                        style={"minHeight": "72px"},
                     ),
                     dbc.Button(
                         "Usar calculadora",
@@ -167,22 +250,6 @@ def calculadora_card(titulo, descripcion, href, icono="📊", badge=None, destac
         xl=4,
         md=6,
         className="mb-4",
-    )
-
-
-def calculadoras_grid():
-    return dbc.Row(
-        [
-            calculadora_card(
-                c["titulo"],
-                c["descripcion"],
-                c["href"],
-                c["icono"],
-                c["badge"],
-                c["destacada"],
-            )
-            for c in CALCULADORAS
-        ]
     )
 
 
@@ -202,6 +269,78 @@ def quick_action_card(title, text, href, button_text):
                 ]
             ),
             className="border-0 shadow-sm rounded-4 h-100 quick-card",
+        ),
+        md=4,
+        className="mb-3",
+    )
+
+
+def guide_card(titulo, texto, href, tag):
+    return dbc.Col(
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.Div(tag, className="book-badge mb-2"),
+                    html.H3(titulo, className="h5 fw-bold mb-2"),
+                    html.P(texto, className="text-muted small mb-3"),
+                    dbc.Button(
+                        "Leer guía",
+                        href=href,
+                        color="light",
+                        className="rounded-pill border fw-semibold px-3",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
+        ),
+        lg=3,
+        md=6,
+        className="mb-4",
+    )
+
+
+def cluster_card(cluster):
+    return dbc.Col(
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H3(cluster["titulo"], className="h5 fw-bold mb-2"),
+                    html.P(cluster["descripcion"], className="text-muted small mb-3"),
+                    html.Ul(
+                        [
+                            html.Li(
+                                dcc.Link(text, href=href, className="text-decoration-none fw-semibold")
+                            )
+                            for text, href in cluster["links"]
+                        ],
+                        className="mb-0 ps-3",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
+        ),
+        lg=3,
+        md=6,
+        className="mb-4",
+    )
+
+
+def articulo_card(titulo, texto, href):
+    return dbc.Col(
+        dbc.Card(
+            dbc.CardBody(
+                [
+                    html.H3(titulo, className="h5 fw-bold mb-2"),
+                    html.P(texto, className="text-muted small mb-3"),
+                    dbc.Button(
+                        "Leer artículo",
+                        href=href,
+                        color="light",
+                        className="rounded-pill border fw-semibold px-3",
+                    ),
+                ]
+            ),
+            className="border-0 shadow-sm rounded-4 h-100",
         ),
         md=4,
         className="mb-3",
@@ -234,171 +373,112 @@ def book_card(titulo, texto, href, badge=None):
     )
 
 
-def articulo_card(titulo, texto, href):
-    return dbc.Col(
-        dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H3(titulo, className="h5 fw-bold mb-2"),
-                    html.P(texto, className="text-muted small mb-3"),
-                    dbc.Button(
-                        "Leer artículo",
-                        href=href,
-                        color="light",
-                        className="rounded-pill border fw-semibold px-3",
-                    ),
-                ]
-            ),
-            className="border-0 shadow-sm rounded-4 h-100",
-        ),
-        md=4,
-        className="mb-3",
-    )
-
-
-def books_section_v3():
-    return html.Div(
-        dbc.Container(
-            [
-                html.Div("Libros recomendados", className="section-eyebrow"),
-                html.H2(
-                    "Aprende a invertir mejor",
-                    className="section-title fw-bold mb-3",
-                ),
-                html.P(
-                    "Una selección sencilla para mejorar mentalidad financiera, criterio de inversión y visión a largo plazo.",
-                    className="section-subtitle mb-4",
-                ),
-                dbc.Row(
-                    [
-                        book_card(
-                            libro["titulo"],
-                            libro["texto"],
-                            libro["href"],
-                            libro["badge"],
-                        )
-                        for libro in LIBROS
-                    ]
-                ),
-            ]
-        ),
-        className="books-section",
-    )
-
-
 # =========================================================
 # SECTIONS
 # =========================================================
+
 hero_section = html.Div(
     dbc.Container(
-        [
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            html.Div(
-                                "FINANZAS PERSONALES · INVERSIÓN · FIRE · HIPOTECA",
-                                className="hero-badge mb-3",
-                            ),
-                            html.H1(
-                                "Calculadoras financieras para interés compuesto, FIRE, hipoteca y rentabilidad",
-                                className="hero-title fw-bold mb-3",
-                            ),
-                            html.P(
-                                "Simula tu inversión, calcula tu libertad financiera, estima tu hipoteca y analiza la rentabilidad de alquiler con herramientas claras, prácticas y gratis.",
-                                className="hero-subtitle mb-4",
-                            ),
-                            html.Div(
-                                [
-                                    dbc.Button(
-                                        "Probar interés compuesto",
-                                        href="/calculadora",
-                                        color="primary",
-                                        className="rounded-pill px-4 py-2 fw-semibold me-2 mb-2",
-                                    ),
-                                    dbc.Button(
-                                        "Ver hipoteca",
-                                        href="/hipoteca",
-                                        color="light",
-                                        className="rounded-pill px-4 py-2 fw-semibold border mb-2",
-                                    ),
-                                ],
-                                className="mb-2",
-                            ),
-                            html.Div(
-                                [
-                                    hero_metric("Herramientas", "5 calculadoras"),
-                                    hero_metric("Uso", "Gratis"),
-                                    hero_metric("Enfoque", "100% práctico"),
-                                ],
-                                className="hero-metrics",
-                            ),
-                        ],
-                        lg=7,
-                        className="mb-4 mb-lg-0",
-                    ),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.Div(
-                                        "Empieza por aquí",
-                                        className="text-primary fw-bold small mb-2",
-                                    ),
-                                    html.H2(
-                                        "Tu hoja de ruta financiera",
-                                        className="h4 fw-bold mb-3",
-                                    ),
-                                    html.P(
-                                        "Explora las áreas clave de la web: inversión, independencia financiera, compra de vivienda y análisis inmobiliario.",
-                                        className="text-muted small mb-4",
-                                    ),
-                                    dbc.Row(
-                                        [
-                                            dbc.Col(
-                                                teaser_card(
-                                                    "Interés compuesto",
-                                                    "Descubre cuánto puede crecer tu dinero con aportaciones periódicas.",
-                                                    "/calculadora",
-                                                    "Abrir calculadora",
-                                                    "📈",
-                                                ),
-                                                md=12,
-                                                className="mb-3",
-                                            ),
-                                            dbc.Col(
-                                                teaser_card(
-                                                    "FIRE",
-                                                    "Calcula cuánto necesitas para vivir de tus inversiones.",
-                                                    "/fire",
-                                                    "Ver FIRE",
-                                                    "🔥",
-                                                ),
-                                                md=12,
-                                                className="mb-3",
-                                            ),
-                                            dbc.Col(
-                                                teaser_card(
-                                                    "Hipoteca",
-                                                    "Estima cuota, coste total y esfuerzo financiero antes de comprar.",
-                                                    "/hipoteca",
-                                                    "Calcular hipoteca",
-                                                    "🏠",
-                                                ),
-                                                md=12,
-                                            ),
-                                        ]
-                                    ),
-                                ]
-                            ),
-                            className="border-0 shadow-sm rounded-4 h-100 hero-side-card",
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.Div(
+                            "CALCULADORAS FINANCIERAS · INVERSIÓN · FIRE · VIVIENDA",
+                            className="hero-badge mb-3",
                         ),
-                        lg=5,
+                        html.H1(
+                            "Calculadoras financieras para invertir mejor, comprar vivienda y alcanzar libertad financiera",
+                            className="hero-title fw-bold mb-3",
+                        ),
+                        html.P(
+                            "Simula interés compuesto, calcula tu número FIRE, estima tu hipoteca y analiza la rentabilidad de un alquiler con herramientas claras, prácticas y gratuitas.",
+                            className="hero-subtitle mb-4",
+                        ),
+                        html.Div(
+                            [
+                                dbc.Button(
+                                    "Empezar con interés compuesto",
+                                    href="/calculadora",
+                                    color="primary",
+                                    className="rounded-pill px-4 py-2 fw-semibold me-2 mb-2",
+                                ),
+                                dbc.Button(
+                                    "Calcular libertad financiera",
+                                    href="/fire",
+                                    color="light",
+                                    className="rounded-pill px-4 py-2 fw-semibold border mb-2",
+                                ),
+                            ],
+                            className="mb-2",
+                        ),
+                        html.Div(
+                            [
+                                hero_metric("Herramientas", "5 calculadoras"),
+                                hero_metric("Guías", "40+ escenarios"),
+                                hero_metric("Precio", "Gratis"),
+                            ],
+                            className="hero-metrics",
+                        ),
+                    ],
+                    lg=7,
+                    className="mb-4 mb-lg-0",
+                ),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.Div("Empieza por aquí", className="text-primary fw-bold small mb-2"),
+                                html.H2("Tu hoja de ruta financiera", className="h4 fw-bold mb-3"),
+                                html.P(
+                                    "Elige según tu objetivo: invertir, vivir de rentas, comprar vivienda o comparar alternativas.",
+                                    className="text-muted small mb-4",
+                                ),
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            teaser_card(
+                                                "Quiero invertir",
+                                                "Simula cuánto puede crecer tu dinero con aportaciones mensuales.",
+                                                "/calculadora",
+                                                "Abrir calculadora",
+                                                "📈",
+                                            ),
+                                            md=12,
+                                            className="mb-3",
+                                        ),
+                                        dbc.Col(
+                                            teaser_card(
+                                                "Quiero vivir de rentas",
+                                                "Calcula cuánto patrimonio necesitas para generar ingresos.",
+                                                "/cuanto-dinero-necesitas-para-vivir-con-2000-euros-mes",
+                                                "Ver guía",
+                                                "🔥",
+                                            ),
+                                            md=12,
+                                            className="mb-3",
+                                        ),
+                                        dbc.Col(
+                                            teaser_card(
+                                                "Quiero comprar vivienda",
+                                                "Estima cuota, intereses y esfuerzo financiero.",
+                                                "/hipoteca",
+                                                "Calcular hipoteca",
+                                                "🏠",
+                                            ),
+                                            md=12,
+                                        ),
+                                    ]
+                                ),
+                            ]
+                        ),
+                        className="border-0 shadow-sm rounded-4 h-100 hero-side-card",
                     ),
-                ],
-                className="align-items-center",
-            )
-        ]
+                    lg=5,
+                ),
+            ],
+            className="align-items-center",
+        )
     ),
     className="home-hero",
 )
@@ -409,31 +489,21 @@ calculadoras_section = html.Div(
             dbc.Row(
                 [
                     dbc.Col(
-                        [
-                            html.Div("Todas tus herramientas", className="section-eyebrow"),
-                            html.H2(
-                                "Todo lo que necesitas para simular tus decisiones financieras",
-                                className="section-title fw-bold mb-3",
-                            ),
-                            html.P(
-                                "Desde inversión a vivienda, pasando por FIRE, rentabilidad inmobiliaria y comparativas. La home debe funcionar como un hub real de herramientas.",
-                                className="section-subtitle mb-0",
-                            ),
-                        ],
+                        section_header(
+                            "Calculadoras principales",
+                            "Herramientas para tomar mejores decisiones con tu dinero",
+                            "Empieza por una calculadora y después profundiza con las guías relacionadas.",
+                        ),
                         lg=8,
                     ),
                     dbc.Col(
                         html.Div(
                             [
                                 html.Div(
-                                    "Más clics internos, más tiempo en página y más opciones de monetización.",
+                                    "Más simulación, más claridad y mejores decisiones.",
                                     className="small text-muted mb-2",
                                 ),
-                                html.Div(
-                                    "Acceso directo a 5 calculadoras",
-                                    className="fw-bold",
-                                    style={"color": "#101828"},
-                                ),
+                                html.Div("Acceso directo a 5 herramientas", className="fw-bold"),
                             ],
                             className="calc-highlight-box mt-4 mt-lg-0",
                         ),
@@ -442,44 +512,85 @@ calculadoras_section = html.Div(
                 ],
                 className="align-items-end mb-4",
             ),
-            calculadoras_grid(),
+            dbc.Row(
+                [
+                    calculadora_card(
+                        c["titulo"],
+                        c["descripcion"],
+                        c["href"],
+                        c["icono"],
+                        c["badge"],
+                        c["destacada"],
+                    )
+                    for c in CALCULADORAS
+                ]
+            ),
         ],
         id="todas-las-calculadoras",
     ),
     className="calculadoras-section",
 )
 
+guias_populares_section = html.Div(
+    dbc.Container(
+        [
+            section_header(
+                "Guías populares",
+                "Escenarios que la gente busca antes de invertir",
+                "Estas páginas ayudan a Google a entender mejor la estructura de la web y llevan tráfico hacia las calculadoras.",
+            ),
+            dbc.Row(
+                [
+                    guide_card(g["titulo"], g["texto"], g["href"], g["tag"])
+                    for g in GUIAS_POPULARES
+                ]
+            ),
+        ]
+    ),
+    className="articulos-section py-5",
+)
+
+clusters_section = html.Div(
+    dbc.Container(
+        [
+            section_header(
+                "Explora por objetivo",
+                "Guías organizadas para invertir, ahorrar, vivir de rentas y comparar opciones",
+                "Un hub de contenidos para navegar por las principales decisiones financieras personales.",
+            ),
+            dbc.Row([cluster_card(cluster) for cluster in CLUSTERS_SEO]),
+        ]
+    ),
+    className="quick-actions-section py-5",
+)
+
 quick_actions_section = html.Div(
     dbc.Container(
         [
-            html.Div("Empieza según tu objetivo", className="section-eyebrow"),
-            html.H2(
+            section_header(
+                "Empieza según tu objetivo",
                 "No todo el mundo busca lo mismo",
-                className="section-title fw-bold mb-3",
-            ),
-            html.P(
-                "Te dejo accesos rápidos según el tipo de decisión que quieras tomar ahora.",
-                className="section-subtitle mb-4",
+                "Elige la ruta que más encaja con la decisión que quieres tomar ahora.",
             ),
             dbc.Row(
                 [
                     quick_action_card(
                         "Quiero invertir mejor",
-                        "Empieza por interés compuesto si quieres ver cuánto puede crecer tu dinero.",
-                        "/calculadora",
+                        "Empieza por interés compuesto y después revisa guías de aportaciones mensuales.",
+                        "/invertir-500-euros-mes",
                         "Ver inversión",
                     ),
                     quick_action_card(
                         "Quiero comprar vivienda",
-                        "Usa la calculadora de hipoteca para ver cuota, intereses y coste total.",
+                        "Usa la calculadora de hipoteca para estimar cuota, intereses y coste total.",
                         "/hipoteca",
                         "Ver hipoteca",
                     ),
                     quick_action_card(
-                        "Quiero comparar opciones",
-                        "Comprueba si te encaja más invertir en bolsa, vivienda u otra alternativa.",
-                        "/comparador",
-                        "Comparar opciones",
+                        "Quiero vivir de rentas",
+                        "Comprueba cuánto patrimonio necesitas para generar ingresos mensuales.",
+                        "/fire",
+                        "Calcular FIRE",
                     ),
                 ]
             ),
@@ -503,22 +614,19 @@ premium_section = html.Div(
                                     className="premium-title mb-3",
                                 ),
                                 html.P(
-                                    "Accede a Monte Carlo, guardado de simulaciones, exportación de resultados y futuras funciones avanzadas con un solo pago.",
+                                    "Accede a funciones avanzadas como Monte Carlo, comparativas, exportación y futuras mejoras premium.",
                                     className="section-subtitle mb-4",
                                 ),
                                 html.Div(
                                     [
                                         html.Div("✔ Monte Carlo", className="premium-feature-chip"),
                                         html.Div("✔ Guardar simulaciones", className="premium-feature-chip"),
-                                        html.Div("✔ Exportar CSV", className="premium-feature-chip"),
+                                        html.Div("✔ Exportar resultados", className="premium-feature-chip"),
                                         html.Div("✔ Comparativas avanzadas", className="premium-feature-chip"),
                                     ],
                                     className="premium-feature-grid mb-4",
                                 ),
-                                html.Div(
-                                    "Sin suscripción. Acceso inmediato en este dispositivo.",
-                                    className="premium-mini-note mb-4",
-                                ),
+                                html.Div("Sin suscripción. Pago único.", className="premium-mini-note mb-4"),
                             ],
                             lg=8,
                             className="mb-4 mb-lg-0",
@@ -534,7 +642,7 @@ premium_section = html.Div(
                                         className="premium-cta-btn w-100 mb-3",
                                     ),
                                     dbc.Button(
-                                        "Ver calculadora premium",
+                                        "Probar calculadora",
                                         href="/calculadora",
                                         color="light",
                                         className="rounded-pill fw-semibold border w-100",
@@ -557,17 +665,27 @@ premium_section = html.Div(
 seo_text_section = html.Div(
     dbc.Container(
         [
-            html.Div("Tu centro de simulación financiera", className="section-eyebrow"),
-            html.H2(
-                "Una web para calcular decisiones de inversión, vivienda y libertad financiera",
-                className="section-title fw-bold mb-3",
+            section_header(
+                "Centro de simulación financiera",
+                "Calculadoras para inversión, vivienda, FIRE y rentabilidad",
             ),
             html.P(
-                "interescompuesto.app reúne calculadoras financieras en español para ayudarte a tomar decisiones con más contexto. Puedes usar la calculadora de interés compuesto para estimar cuánto podría crecer tu dinero con aportaciones periódicas, la calculadora FIRE para proyectar cuándo podrías alcanzar la independencia financiera, la calculadora de hipoteca para entender cuota, intereses y coste total, y la calculadora de rentabilidad de alquiler para analizar cashflow y retorno inmobiliario.",
+                [
+                    "interescompuesto.app reúne herramientas financieras en español para ayudarte a tomar decisiones con más contexto. "
+                    "Puedes usar la ",
+                    dcc.Link("calculadora de interés compuesto", href="/calculadora"),
+                    " para estimar cuánto podría crecer tu dinero, la ",
+                    dcc.Link("calculadora FIRE", href="/fire"),
+                    " para proyectar independencia financiera, la ",
+                    dcc.Link("calculadora de hipoteca", href="/hipoteca"),
+                    " para analizar una compra de vivienda y la ",
+                    dcc.Link("calculadora de rentabilidad de alquiler", href="/rentabilidad-alquiler"),
+                    " para estudiar operaciones inmobiliarias.",
+                ],
                 className="section-subtitle mb-3",
             ),
             html.P(
-                "La idea no es complicarlo, sino darte herramientas prácticas para simular escenarios reales y comparar alternativas. Tanto si quieres empezar a invertir como si estás valorando comprar vivienda o construir ingresos pasivos, aquí puedes hacerlo de forma clara, visual y gratuita.",
+                "La idea no es complicarlo, sino ayudarte a simular escenarios reales, comparar alternativas y evitar decisiones impulsivas.",
                 className="section-subtitle mb-0",
             ),
         ]
@@ -578,60 +696,15 @@ seo_text_section = html.Div(
 articulos_section = html.Div(
     dbc.Container(
         [
-            html.Div("Aprende antes de decidir", className="section-eyebrow"),
-            html.H2(
+            section_header(
+                "Aprende antes de decidir",
                 "Guías y artículos para entender mejor tus números",
-                className="section-title fw-bold mb-3",
+                "Contenido base para complementar las calculadoras y reforzar el enlazado interno.",
             ),
-            html.P(
-                "Además de las calculadoras, tienes contenido para profundizar en inversión, FIRE e hipoteca.",
-                className="section-subtitle mb-4",
-            ),
-            dbc.Row(
-                [articulo_card(a["titulo"], a["texto"], a["href"]) for a in ARTICULOS_DESTACADOS]
-            ),
+            dbc.Row([articulo_card(a["titulo"], a["texto"], a["href"]) for a in ARTICULOS_DESTACADOS]),
         ]
     ),
     className="articulos-section",
-)
-
-simulaciones_section = html.Div(
-    dbc.Container(
-        [
-            html.Div("Ideas para empezar", className="section-eyebrow"),
-            html.H2(
-                "Simulaciones que suelen interesar más",
-                className="section-title fw-bold mb-3",
-            ),
-            html.P(
-                "Empieza por uno de estos escenarios típicos y luego ajusta tus números.",
-                className="section-subtitle mb-4",
-            ),
-            dbc.Row(
-                [
-                    quick_action_card(
-                        "Invertir 300 € al mes",
-                        "Hazte una idea de cuánto podrías acumular a largo plazo con aportaciones periódicas.",
-                        "/calculadora",
-                        "Simular ahora",
-                    ),
-                    quick_action_card(
-                        "Calcular independencia financiera",
-                        "Comprueba cuánto patrimonio necesitarías para vivir de tus inversiones.",
-                        "/fire",
-                        "Ver FIRE",
-                    ),
-                    quick_action_card(
-                        "Estimar una hipoteca",
-                        "Visualiza cuota, intereses y coste total antes de decidir si comprar vivienda.",
-                        "/hipoteca",
-                        "Ver hipoteca",
-                    ),
-                ]
-            ),
-        ]
-    ),
-    className="simulaciones-section",
 )
 
 affiliate_cta_section = html.Div(
@@ -643,10 +716,7 @@ affiliate_cta_section = html.Div(
                         dbc.Col(
                             [
                                 html.Div("Dar el siguiente paso", className="section-eyebrow mb-3"),
-                                html.H2(
-                                    "Cuando quieras pasar de simular a actuar",
-                                    className="fw-bold mb-2",
-                                ),
+                                html.H2("Cuando quieras pasar de simular a actuar", className="fw-bold mb-2"),
                                 html.P(
                                     "Después de hacer tus números, el siguiente paso suele ser elegir una plataforma sencilla para empezar a invertir con aportaciones periódicas.",
                                     className="text-muted mb-0",
@@ -661,6 +731,7 @@ affiliate_cta_section = html.Div(
                                     "Ver opción para empezar",
                                     href=MYINVESTOR_AFFILIATE_URL,
                                     target="_blank",
+                                    rel="sponsored noopener noreferrer",
                                     color="success",
                                     className="rounded-pill px-4 py-2 fw-semibold w-100",
                                 ),
@@ -680,39 +751,39 @@ affiliate_cta_section = html.Div(
 faq_section = html.Div(
     dbc.Container(
         [
-            html.Div("Preguntas frecuentes", className="section-eyebrow"),
-            html.H2(
+            section_header(
+                "Preguntas frecuentes",
                 "Dudas habituales antes de usar las calculadoras",
-                className="section-title fw-bold mb-4",
             ),
             dbc.Accordion(
                 [
                     dbc.AccordionItem(
-                        [
-                            html.P(
-                                "Sí. Puedes usar gratis las calculadoras de interés compuesto, FIRE, hipoteca, rentabilidad de alquiler y comparador de inversión.",
-                                className="mb-0",
-                            )
-                        ],
+                        html.P(
+                            "Sí. Puedes usar gratis las calculadoras de interés compuesto, FIRE, hipoteca, rentabilidad de alquiler y comparador de inversión.",
+                            className="mb-0",
+                        ),
                         title="¿Las calculadoras son gratis?",
                     ),
                     dbc.AccordionItem(
-                        [
-                            html.P(
-                                "Son simulaciones orientativas. Te ayudan a tomar mejores decisiones, pero no sustituyen asesoramiento financiero personalizado.",
-                                className="mb-0",
-                            )
-                        ],
+                        html.P(
+                            "Son simulaciones orientativas. Te ayudan a tomar mejores decisiones, pero no sustituyen asesoramiento financiero personalizado.",
+                            className="mb-0",
+                        ),
                         title="¿Los resultados son exactos?",
                     ),
                     dbc.AccordionItem(
-                        [
-                            html.P(
-                                "Depende de lo que quieras analizar. Si buscas inversión a largo plazo, empieza por interés compuesto. Si quieres libertad financiera, usa FIRE. Si vas a comprar vivienda, empieza por hipoteca.",
-                                className="mb-0",
-                            )
-                        ],
+                        html.P(
+                            "Depende de tu objetivo. Para inversión a largo plazo, empieza por interés compuesto. Para libertad financiera, usa FIRE. Para vivienda, empieza por hipoteca.",
+                            className="mb-0",
+                        ),
                         title="¿Por qué calculadora debería empezar?",
+                    ),
+                    dbc.AccordionItem(
+                        html.P(
+                            "Sí. Muchas guías incluyen enlaces a calculadoras para que puedas adaptar los números a tu caso concreto.",
+                            className="mb-0",
+                        ),
+                        title="¿Puedo simular mi propio caso?",
                     ),
                 ],
                 start_collapsed=True,
@@ -721,6 +792,25 @@ faq_section = html.Div(
         ]
     ),
     className="faq-section py-5",
+)
+
+books_section = html.Div(
+    dbc.Container(
+        [
+            section_header(
+                "Libros recomendados",
+                "Aprende a invertir mejor",
+                "Una selección sencilla para mejorar mentalidad financiera, criterio de inversión y visión a largo plazo.",
+            ),
+            dbc.Row(
+                [
+                    book_card(libro["titulo"], libro["texto"], libro["href"], libro["badge"])
+                    for libro in LIBROS
+                ]
+            ),
+        ]
+    ),
+    className="books-section",
 )
 
 cta_section = html.Div(
@@ -732,10 +822,7 @@ cta_section = html.Div(
                         dbc.Col(
                             [
                                 html.Div("Acceso rápido", className="section-eyebrow mb-3"),
-                                html.H2(
-                                    "Haz tu primera simulación en menos de un minuto",
-                                    className="fw-bold mb-2",
-                                ),
+                                html.H2("Haz tu primera simulación en menos de un minuto", className="fw-bold mb-2"),
                                 html.P(
                                     "Empieza por la calculadora que más impacto tenga en tu decisión actual.",
                                     className="text-muted mb-0",
@@ -754,8 +841,8 @@ cta_section = html.Div(
                                         className="rounded-pill px-4 py-2 fw-semibold me-2 mb-2",
                                     ),
                                     dbc.Button(
-                                        "Ver todas las calculadoras",
-                                        href="#todas-las-calculadoras",
+                                        "Ver guías populares",
+                                        href="#guias-populares",
                                         color="light",
                                         className="rounded-pill px-4 py-2 fw-semibold border mb-2",
                                     ),
@@ -774,19 +861,25 @@ cta_section = html.Div(
     className="cta-section",
 )
 
+
+# =========================================================
+# LAYOUT
+# =========================================================
+
 layout = html.Div(
     [
         hero_section,
         calculadoras_section,
+        html.Div(guias_populares_section, id="guias-populares"),
+        clusters_section,
         quick_actions_section,
         premium_section,
         seo_text_section,
         articulos_section,
-        simulaciones_section,
         affiliate_cta_section,
         faq_section,
         cta_section,
-        books_section_v3(),
+        books_section,
         build_disclaimer(title="Empieza a dar el siguiente paso"),
     ]
 )
