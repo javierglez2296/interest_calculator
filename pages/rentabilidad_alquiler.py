@@ -683,35 +683,6 @@ layout = dbc.Container(
     [
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
-
-        html.Style(
-            """
-            .dash-graph-responsive,
-            .dash-graph-responsive .js-plotly-plot,
-            .dash-graph-responsive .plot-container,
-            .dash-graph-responsive .svg-container {
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-
-            .dash-graph-responsive {
-                min-height: 340px;
-                overflow-x: hidden;
-            }
-
-            @media (max-width: 768px) {
-                .dash-graph-responsive {
-                    height: 360px !important;
-                    min-height: 360px;
-                }
-
-                .js-plotly-plot {
-                    width: 100% !important;
-                }
-            }
-            """
-        ),
-
         dbc.Row(
             [
                 dbc.Col(
