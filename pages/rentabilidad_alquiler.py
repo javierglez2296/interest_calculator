@@ -1,9 +1,26 @@
 import dash
 from dash import html, dcc, Input, Output, callback, clientside_callback
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
 
 from components.disclaimer_afiliados import build_disclaimer
+
+from utils.impuestos import get_paises, get_ubicaciones, calcular_motor_fiscal_pro
+from utils.rentabilidad_alquiler import (
+    safe_float,
+    fmt_eur,
+    fmt_pct,
+    cuota_hipoteca_mensual,
+    calc_operacion,
+    semaforo,
+    proyeccion_10_anios,
+    calc_payback_years,
+)
+from utils.graficos_alquiler import (
+    grafico_breakdown,
+    grafico_comparativa,
+    build_pro_years_chart,
+)
+
 
 dash.register_page(
     __name__,
@@ -29,33 +46,6 @@ SEO_RELATED_LINKS = [
     ("Calculadora de hipoteca", "/hipoteca"),
     ("Comparador de inversión", "/comparador"),
 ]
-
-
-def safe_float(value, default=0.0):
-    try:
-        if value in (None, ""):
-            return default
-        return float(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def fmt_eur(value, dec=2):
-    try:
-        value = float(value)
-        fmt = f"{{:,.{dec}f}}"
-        txt = fmt.format(value)
-        txt = txt.replace(",", "X").replace(".", ",").replace("X", ".")
-        return f"{txt} €"
-    except Exception:
-        return "0,00 €"
-
-
-def fmt_pct(value, dec=2):
-    try:
-        return f"{float(value):.{dec}f} %".replace(".", ",")
-    except Exception:
-        return "0,00 %"
 
 
 def section_eyebrow(text):
@@ -139,62 +129,19 @@ def input_pct(label, input_id, value, step=0.5, help_text=None, max_value=None):
     return html.Div(children, className="mb-3")
 
 
-def cuota_hipoteca_mensual(capital, interes_anual_pct, años):
-    if capital <= 0 or años <= 0:
-        return 0.0
-    r = interes_anual_pct / 100 / 12
-    n = años * 12
-    if r == 0:
-        return capital / n
-    return capital * (r * (1 + r) ** n) / ((1 + r) ** n - 1)
-
-
-def calc_operacion(
-    precio_compra,
-    gastos_compra,
-    reforma,
-    alquiler_mensual,
-    ocupacion_pct,
-    ibi,
-    comunidad,
-    seguro,
-    mantenimiento,
-    gestion_pct,
-    irpf_pct,
-):
-    inversion_total = precio_compra + gastos_compra + reforma
-    ingresos_anuales = alquiler_mensual * 12 * (ocupacion_pct / 100.0)
-    gasto_gestion = ingresos_anuales * (gestion_pct / 100.0)
-    gastos_anuales = ibi + comunidad + seguro + mantenimiento + gasto_gestion
-    beneficio_antes_irpf = ingresos_anuales - gastos_anuales
-    irpf = max(beneficio_antes_irpf, 0) * (irpf_pct / 100.0)
-    beneficio_neto = beneficio_antes_irpf - irpf
-    rent_bruta = (ingresos_anuales / inversion_total * 100.0) if inversion_total > 0 else 0.0
-    rent_neta = (beneficio_neto / inversion_total * 100.0) if inversion_total > 0 else 0.0
-    cashflow_mensual = beneficio_neto / 12.0
-
-    return {
-        "inversion_total": inversion_total,
-        "ingresos_anuales": ingresos_anuales,
-        "gasto_gestion": gasto_gestion,
-        "gastos_anuales": gastos_anuales,
-        "beneficio_antes_irpf": beneficio_antes_irpf,
-        "irpf": irpf,
-        "beneficio_neto": beneficio_neto,
-        "rent_bruta": rent_bruta,
-        "rent_neta": rent_neta,
-        "cashflow_mensual": cashflow_mensual,
-    }
-
-
-def semaforo(rent_neta):
-    if rent_neta >= 7:
-        return "Muy atractiva", "success", "La operación parece muy interesante para una primera estimación."
-    if rent_neta >= 5:
-        return "Buena", "primary", "La rentabilidad parece sólida y merece análisis más profundo."
-    if rent_neta >= 3:
-        return "Aceptable", "warning", "Puede tener sentido, pero está más ajustada."
-    return "Floja", "danger", "Con estos supuestos, revisaría precio, gastos o renta esperada."
+def select_input(label, input_id, options, value=None, help_text=None):
+    children = [
+        html.Label(label, className="fw-semibold mb-2"),
+        dbc.Select(
+            id=input_id,
+            options=options,
+            value=value,
+            class_name="rounded-4 mb-2",
+        ),
+    ]
+    if help_text:
+        children.append(html.Div(help_text, className="text-muted small"))
+    return html.Div(children, className="mb-3")
 
 
 def badge_estado(label, color):
@@ -207,7 +154,7 @@ def badge_estado(label, color):
     )
 
 
-def decision_final_card(rent_mostrar, cashflow_mensual, usar_deuda, sp500_return):
+def decision_final_card(rent_mostrar, cashflow_mensual, sp500_return):
     if cashflow_mensual < 0:
         label = "Cuidado"
         color = "danger"
@@ -271,198 +218,30 @@ def decision_final_card(rent_mostrar, cashflow_mensual, usar_deuda, sp500_return
     )
 
 
-def grafico_breakdown(data, cuota_anual_hipoteca=0):
-    categorias = ["Ingresos", "Gastos", "IRPF", "Beneficio neto"]
-    beneficio_final = data["beneficio_neto"] - cuota_anual_hipoteca
-    valores = [
-        data["ingresos_anuales"],
-        data["gastos_anuales"] + cuota_anual_hipoteca,
-        data["irpf"],
-        max(beneficio_final, 0),
-    ]
-    textos = [fmt_eur(v, 0) for v in valores]
+def build_tax_preview_card(motor_fiscal, pais, ubicacion, tipo_vivienda):
+    compra = motor_fiscal["compra"]
+    alquiler = motor_fiscal["alquiler"]
 
-    fig = go.Figure()
-    fig.add_bar(x=categorias, y=valores, text=textos, textposition="outside")
-    fig.update_layout(
-        autosize=True,
-        height=330,
-        margin=dict(l=20, r=20, t=10, b=20),
-        showlegend=False,
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        yaxis_title="Euros / año",
-    )
-    fig.update_xaxes(automargin=True)
-    fig.update_yaxes(automargin=True)
-    return fig
-
-
-def grafico_comparativa(
-    inversion_total,
-    capital_aportado,
-    rent_neta_sin_deuda,
-    rent_sobre_capital,
-    sp500_return,
-    usar_hipoteca,
-):
-    valor_sin_deuda = inversion_total * (1 + rent_neta_sin_deuda / 100.0)
-    valor_sp500 = inversion_total * (1 + sp500_return / 100.0)
-
-    x = ["Alquiler sin deuda", "S&P 500"]
-    y = [valor_sin_deuda, valor_sp500]
-    texts = [fmt_eur(valor_sin_deuda, 0), fmt_eur(valor_sp500, 0)]
-
-    if usar_hipoteca:
-        valor_con_hipoteca = capital_aportado * (1 + rent_sobre_capital / 100.0)
-        x.insert(1, "Alquiler con deuda")
-        y.insert(1, valor_con_hipoteca)
-        texts.insert(1, fmt_eur(valor_con_hipoteca, 0))
-
-    fig = go.Figure()
-    fig.add_bar(x=x, y=y, text=texts, textposition="outside")
-    fig.update_layout(
-        autosize=True,
-        height=330,
-        margin=dict(l=20, r=20, t=10, b=20),
-        showlegend=False,
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        yaxis_title="Valor orientativo tras 1 año",
-    )
-    fig.update_xaxes(automargin=True)
-    fig.update_yaxes(automargin=True)
-    return fig
-
-
-def proyeccion_10_anios(
-    inversion_inicial,
-    alquiler_mensual,
-    ocupacion_pct,
-    gastos_anuales,
-    irpf_pct,
-    crecimiento_alquiler_pct,
-    crecimiento_gastos_pct,
-    revalorizacion_inmueble_pct,
-    sp500_pct,
-):
-    years = list(range(1, 11))
-    alquiler_actual = alquiler_mensual
-    gastos_actuales = gastos_anuales
-    valor_inmueble = inversion_inicial
-    valor_sp500 = inversion_inicial
-    inmueble_vals = []
-    sp500_vals = []
-    rows = []
-    cash_acumulado = 0.0
-
-    for y in years:
-        ingresos = alquiler_actual * 12 * (ocupacion_pct / 100.0)
-        beneficio_antes_irpf = ingresos - gastos_actuales
-        irpf = max(beneficio_antes_irpf, 0) * (irpf_pct / 100.0)
-        beneficio_neto = beneficio_antes_irpf - irpf
-
-        cash_acumulado += beneficio_neto
-        valor_inmueble = valor_inmueble * (1 + revalorizacion_inmueble_pct / 100.0)
-        valor_total_inmueble = valor_inmueble + cash_acumulado
-        valor_sp500 = valor_sp500 * (1 + sp500_pct / 100.0)
-
-        inmueble_vals.append(valor_total_inmueble)
-        sp500_vals.append(valor_sp500)
-
-        rows.append(
-            {
-                "anio": y,
-                "ingresos": ingresos,
-                "gastos": gastos_actuales,
-                "beneficio_neto": beneficio_neto,
-                "valor_total_inmueble": valor_total_inmueble,
-                "valor_sp500": valor_sp500,
-            }
-        )
-
-        alquiler_actual *= (1 + crecimiento_alquiler_pct / 100.0)
-        gastos_actuales *= (1 + crecimiento_gastos_pct / 100.0)
-
-    return years, inmueble_vals, sp500_vals, rows
-
-
-def build_pro_years_chart(years, inmueble_vals, sp500_vals):
-    fig = go.Figure()
-    fig.add_scatter(x=years, y=inmueble_vals, mode="lines+markers", name="Inmueble")
-    fig.add_scatter(x=years, y=sp500_vals, mode="lines+markers", name="S&P 500")
-    fig.update_layout(
-        autosize=True,
-        height=360,
-        margin=dict(l=20, r=20, t=10, b=20),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        yaxis_title="Valor acumulado (€)",
-        xaxis_title="Año",
-        legend_title="",
-    )
-    fig.update_xaxes(automargin=True)
-    fig.update_yaxes(automargin=True)
-    return fig
-
-
-def calc_payback_years(inversion_inicial, beneficio_neto_anual):
-    if beneficio_neto_anual <= 0:
-        return None
-    return inversion_inicial / beneficio_neto_anual
-
-
-def build_pro_summary(rows):
-    final = rows[-1]
-    diff = final["valor_total_inmueble"] - final["valor_sp500"]
-
-    if diff > 0:
-        lectura = f"En esta simulación, el inmueble termina por encima del S&P 500 por {fmt_eur(diff)}."
-    elif diff < 0:
-        lectura = f"En esta simulación, el S&P 500 termina por encima del inmueble por {fmt_eur(abs(diff))}."
-    else:
-        lectura = "En esta simulación, ambas alternativas terminan prácticamente iguales."
-
-    return html.Div(
+    return dbc.Alert(
         [
-            html.P([html.Strong("Valor total estimado del inmueble en año 10: "), fmt_eur(final["valor_total_inmueble"])], className="mb-2"),
-            html.P([html.Strong("Valor estimado del S&P 500 en año 10: "), fmt_eur(final["valor_sp500"])], className="mb-2"),
-            html.P(lectura, className="mb-0"),
-        ]
-    )
-
-
-def build_pro_table(rows):
-    return dbc.Table(
-        [
-            html.Thead(
-                html.Tr(
-                    [
-                        html.Th("Año"),
-                        html.Th("Beneficio neto"),
-                        html.Th("Valor inmueble"),
-                        html.Th("Valor S&P 500"),
-                    ]
-                )
-            ),
-            html.Tbody(
+            html.Div("Motor fiscal PRO aplicado", className="fw-bold mb-2"),
+            html.Div([html.Strong("Zona: "), f"{pais} · {ubicacion}"], className="mb-1"),
+            html.Div(
                 [
-                    html.Tr(
-                        [
-                            html.Td(r["anio"]),
-                            html.Td(fmt_eur(r["beneficio_neto"], 0)),
-                            html.Td(fmt_eur(r["valor_total_inmueble"], 0)),
-                            html.Td(fmt_eur(r["valor_sp500"], 0)),
-                        ]
-                    )
-                    for r in rows
-                ]
+                    html.Strong("Tipo vivienda: "),
+                    "Segunda mano" if tipo_vivienda == "segunda_mano" else "Obra nueva",
+                ],
+                className="mb-1",
             ),
+            html.Div([html.Strong(f"{compra.get('impuesto_nombre', 'Impuesto')}: "), fmt_eur(compra.get("impuesto", 0))], className="mb-1"),
+            html.Div([html.Strong("Notaría / registro estimado: "), fmt_eur(compra.get("notaria", 0))], className="mb-1"),
+            html.Div([html.Strong("Gastos compra estimados: "), fmt_eur(compra.get("total", 0))], className="mb-1"),
+            html.Hr(className="my-2"),
+            html.Div([html.Strong("Base IRPF alquiler estimada: "), fmt_eur(alquiler.get("base_irpf", 0))], className="mb-1"),
+            html.Div([html.Strong("IRPF alquiler estimado: "), fmt_eur(alquiler.get("irpf", 0))], className="mb-0"),
         ],
-        bordered=False,
-        hover=True,
-        responsive=True,
-        class_name="align-middle mb-0",
+        color="primary",
+        className="rounded-4 mb-0",
     )
 
 
@@ -532,6 +311,60 @@ def build_payback_card(payback_years):
     )
 
 
+def build_pro_summary(rows):
+    final = rows[-1]
+    diff = final["valor_total_inmueble"] - final["valor_sp500"]
+
+    if diff > 0:
+        lectura = f"En esta simulación, el inmueble termina por encima del S&P 500 por {fmt_eur(diff)}."
+    elif diff < 0:
+        lectura = f"En esta simulación, el S&P 500 termina por encima del inmueble por {fmt_eur(abs(diff))}."
+    else:
+        lectura = "En esta simulación, ambas alternativas terminan prácticamente iguales."
+
+    return html.Div(
+        [
+            html.P([html.Strong("Valor total estimado del inmueble en año 10: "), fmt_eur(final["valor_total_inmueble"])], className="mb-2"),
+            html.P([html.Strong("Valor estimado del S&P 500 en año 10: "), fmt_eur(final["valor_sp500"])], className="mb-2"),
+            html.P(lectura, className="mb-0"),
+        ]
+    )
+
+
+def build_pro_table(rows):
+    return dbc.Table(
+        [
+            html.Thead(
+                html.Tr(
+                    [
+                        html.Th("Año"),
+                        html.Th("Beneficio neto"),
+                        html.Th("Valor inmueble"),
+                        html.Th("Valor S&P 500"),
+                    ]
+                )
+            ),
+            html.Tbody(
+                [
+                    html.Tr(
+                        [
+                            html.Td(r["anio"]),
+                            html.Td(fmt_eur(r["beneficio_neto"], 0)),
+                            html.Td(fmt_eur(r["valor_total_inmueble"], 0)),
+                            html.Td(fmt_eur(r["valor_sp500"], 0)),
+                        ]
+                    )
+                    for r in rows
+                ]
+            ),
+        ],
+        bordered=False,
+        hover=True,
+        responsive=True,
+        class_name="align-middle mb-0",
+    )
+
+
 def pro_card(unlocked=False):
     if unlocked:
         return dbc.Card(
@@ -551,16 +384,17 @@ def pro_card(unlocked=False):
         dbc.CardBody(
             [
                 section_eyebrow("VERSIÓN PRO"),
-                html.H3("Evita comprar un piso con números incompletos", className="h4 fw-bold mb-3"),
+                html.H3("Evita comprar un piso con impuestos mal calculados", className="h4 fw-bold mb-3"),
                 html.P(
-                    "La parte gratis te da una primera lectura. La versión PRO te ayuda a decidir si comprar o no con proyección a 10 años, payback, coste de oportunidad y comparación frente al S&P 500.",
+                    "La versión PRO calcula impuestos por zona, fiscalidad del alquiler, proyección a 10 años, payback, coste de oportunidad y comparación frente al S&P 500.",
                     className="text-muted mb-3",
                 ),
                 html.Div(
                     [
+                        dbc.Badge("Motor fiscal", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("ITP / AJD / ISAI", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("10 años", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("Payback", color="light", text_color="dark", class_name="me-2 mb-2"),
-                        dbc.Badge("Coste oportunidad", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("Comprar / no comprar", color="light", text_color="dark", class_name="me-2 mb-2"),
                     ],
                     className="mb-4",
@@ -586,9 +420,9 @@ def locked_preview(unlocked=False):
                 html.H3("Lo que vería el usuario premium", className="h5 fw-bold mb-3"),
                 html.Div(
                     [
-                        html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
+                        html.Div("Motor fiscal + rentabilidad a 10 años", className="fw-semibold mb-2"),
                         html.Div("12,84 %", className="display-6 fw-bold text-primary"),
-                        html.P("Payback, coste de oportunidad y recomendación final bloqueados.", className="text-muted mt-3 mb-0"),
+                        html.P("Impuestos por zona, payback, coste de oportunidad y recomendación final bloqueados.", className="text-muted mt-3 mb-0"),
                     ],
                     style={
                         "filter": "blur(3px)" if not unlocked else "none",
@@ -787,8 +621,8 @@ layout = dbc.Container(
                                 html.Ul(
                                     [
                                         html.Li("Rentabilidad bruta y neta"),
+                                        html.Li("Impuestos por zona en PRO"),
                                         html.Li("Cashflow antes y después de hipoteca"),
-                                        html.Li("Capital aportado"),
                                         html.Li("Comparativa contra S&P 500"),
                                     ],
                                     className="text-muted mb-0",
@@ -815,8 +649,35 @@ layout = dbc.Container(
 
                                 html.H4("Compra", className="h6 fw-bold mb-3"),
                                 input_eur("Precio de compra", "precio_compra", 180000, step=1000),
-                                input_eur("Impuestos y gastos de compra", "gastos_compra", 18000, step=500),
+
+                                select_input(
+                                    "País",
+                                    "pais_fiscal",
+                                    options=[{"label": p, "value": p} for p in get_paises()],
+                                    value="España",
+                                    help_text="El motor fiscal PRO ajusta impuestos según el país.",
+                                ),
+
+                                select_input(
+                                    "Comunidad / Estado",
+                                    "ubicacion_fiscal",
+                                    options=[{"label": u, "value": u} for u in get_ubicaciones("España")],
+                                    value="Madrid",
+                                    help_text="Se usa para estimar ITP, AJD, ISAI y gastos de compra.",
+                                ),
+
+                                select_input(
+                                    "Tipo de vivienda",
+                                    "tipo_vivienda",
+                                    options=[
+                                        {"label": "Segunda mano", "value": "segunda_mano"},
+                                        {"label": "Obra nueva", "value": "obra_nueva"},
+                                    ],
+                                    value="segunda_mano",
+                                ),
+
                                 input_eur("Reforma y puesta a punto", "reforma", 10000, step=500),
+                                html.Div(id="tax_preview_wrap", className="mt-3"),
 
                                 html.Hr(className="my-4"),
 
@@ -993,7 +854,7 @@ layout = dbc.Container(
                             html.Div(
                                 [
                                     html.Div("¿Quieres saber si comprar o no comprar?", className="fw-bold"),
-                                    html.Div("Desbloquea el análisis PRO con payback, coste de oportunidad y comparativa a 10 años.", className="small text-muted"),
+                                    html.Div("Desbloquea el análisis PRO con motor fiscal, payback y comparativa a 10 años.", className="small text-muted"),
                                 ]
                             ),
                             xs=7,
@@ -1031,6 +892,18 @@ layout = dbc.Container(
     fluid=True,
     class_name="px-3 px-lg-4",
 )
+
+
+@callback(
+    Output("ubicacion_fiscal", "options"),
+    Output("ubicacion_fiscal", "value"),
+    Input("pais_fiscal", "value"),
+)
+def update_ubicaciones_fiscales(pais):
+    ubicaciones = get_ubicaciones(pais or "España")
+    options = [{"label": u, "value": u} for u in ubicaciones]
+    value = "Madrid" if pais == "España" and "Madrid" in ubicaciones else ubicaciones[0] if ubicaciones else None
+    return options, value
 
 
 @callback(
@@ -1123,8 +996,11 @@ clientside_callback(
     Output("breakdown_chart", "figure"),
     Output("compare_chart", "figure"),
     Output("insights_wrap", "children"),
+    Output("tax_preview_wrap", "children"),
     Input("precio_compra", "value"),
-    Input("gastos_compra", "value"),
+    Input("pais_fiscal", "value"),
+    Input("ubicacion_fiscal", "value"),
+    Input("tipo_vivienda", "value"),
     Input("reforma", "value"),
     Input("alquiler_mensual", "value"),
     Input("ocupacion", "value"),
@@ -1142,7 +1018,9 @@ clientside_callback(
 )
 def update_calculator(
     precio_compra,
-    gastos_compra,
+    pais_fiscal,
+    ubicacion_fiscal,
+    tipo_vivienda,
     reforma,
     alquiler_mensual,
     ocupacion,
@@ -1159,7 +1037,6 @@ def update_calculator(
     sp500_return,
 ):
     precio_compra = safe_float(precio_compra)
-    gastos_compra = safe_float(gastos_compra)
     reforma = safe_float(reforma)
     alquiler_mensual = safe_float(alquiler_mensual)
     ocupacion = safe_float(ocupacion, 95)
@@ -1173,6 +1050,34 @@ def update_calculator(
     interes_hipoteca = safe_float(interes_hipoteca)
     años_hipoteca = max(int(safe_float(años_hipoteca, 25)), 1)
     sp500_return = safe_float(sp500_return, SP500_RETURN_DEFAULT)
+
+    usar_deuda = usar_hipoteca == "si"
+
+    capital_hipoteca = precio_compra * (ltv_pct / 100) if usar_deuda else 0
+    cuota_mensual = cuota_hipoteca_mensual(capital_hipoteca, interes_hipoteca, años_hipoteca) if usar_deuda else 0
+    cuota_anual = cuota_mensual * 12
+    intereses_anuales_estimados = capital_hipoteca * (interes_hipoteca / 100) if usar_deuda else 0
+
+    ingresos_anuales_estimados = alquiler_mensual * 12 * (ocupacion / 100)
+    gasto_gestion = ingresos_anuales_estimados * (gestion_pct / 100)
+    gastos_anuales_base = ibi + comunidad + seguro + mantenimiento + gasto_gestion
+
+    motor_fiscal = calcular_motor_fiscal_pro(
+        precio_compra=precio_compra,
+        pais=pais_fiscal or "España",
+        ubicacion=ubicacion_fiscal or "Madrid",
+        tipo_vivienda=tipo_vivienda or "segunda_mano",
+        alquiler_mensual=alquiler_mensual,
+        ocupacion_pct=ocupacion,
+        gastos_anuales=gastos_anuales_base,
+        intereses_hipoteca_anuales=intereses_anuales_estimados,
+        reforma=reforma,
+        precio_venta_estimado=None,
+        reduccion_alquiler_pct=50,
+        tipo_marginal_irpf_pct=irpf_pct,
+    )
+
+    gastos_compra = motor_fiscal["compra"]["total"]
 
     base = calc_operacion(
         precio_compra=precio_compra,
@@ -1188,44 +1093,29 @@ def update_calculator(
         irpf_pct=irpf_pct,
     )
 
-    usar_deuda = usar_hipoteca == "si"
-
-    capital_hipoteca = precio_compra * (ltv_pct / 100.0) if usar_deuda else 0.0
-    cuota_mensual = cuota_hipoteca_mensual(capital_hipoteca, interes_hipoteca, años_hipoteca) if usar_deuda else 0.0
-    cuota_anual = cuota_mensual * 12.0
-
     capital_aportado = base["inversion_total"] - capital_hipoteca if usar_deuda else base["inversion_total"]
-    capital_aportado = max(capital_aportado, 0.0)
-
-    intereses_anuales_estimados = capital_hipoteca * (interes_hipoteca / 100.0) if usar_deuda else 0.0
+    capital_aportado = max(capital_aportado, 0)
 
     cashflow_despues_hipoteca = base["cashflow_mensual"] - cuota_mensual
     beneficio_neto_despues_hipoteca = base["beneficio_neto"] - cuota_anual
     beneficio_neto_economico_con_deuda = base["beneficio_neto"] - intereses_anuales_estimados
 
     rent_sobre_capital = (
-        (beneficio_neto_economico_con_deuda / capital_aportado) * 100.0
+        beneficio_neto_economico_con_deuda / capital_aportado * 100
         if capital_aportado > 0
-        else 0.0
+        else 0
     )
 
     rent_mostrar = rent_sobre_capital if usar_deuda else base["rent_neta"]
     etiqueta, color, mensaje = semaforo(rent_mostrar)
 
-    decision_final = decision_final_card(
-        rent_mostrar=rent_mostrar,
-        cashflow_mensual=cashflow_despues_hipoteca if usar_deuda else base["cashflow_mensual"],
-        usar_deuda=usar_deuda,
-        sp500_return=sp500_return,
-    )
-
     metric_bruta = metric_card("Rentabilidad bruta", fmt_pct(base["rent_bruta"]), "Ingresos anuales / inversión total", accent=True)
 
     metric_neta = metric_card(
         "Rentabilidad neta",
-        fmt_pct(base["rent_neta"]) if not usar_deuda else fmt_pct(rent_sobre_capital),
+        fmt_pct(rent_mostrar),
         "Sin deuda" if not usar_deuda else "Sobre capital aportado",
-        accent=True if rent_mostrar >= 5 else False,
+        accent=rent_mostrar >= 5,
     )
 
     metric_cashflow = metric_card(
@@ -1234,9 +1124,15 @@ def update_calculator(
         "Sin deuda" if not usar_deuda else "Después de cuota hipotecaria",
     )
 
-    metric_desembolso = metric_card("Desembolso inicial", fmt_eur(base["inversion_total"]), "Compra + gastos + reforma")
+    metric_desembolso = metric_card("Desembolso inicial", fmt_eur(base["inversion_total"]), "Compra + impuestos + reforma")
     metric_cuota = metric_card("Cuota hipotecaria", fmt_eur(cuota_mensual), "Mensual" if usar_deuda else "No aplica")
     metric_capital = metric_card("Capital aportado", fmt_eur(capital_aportado), "Tu dinero inicial")
+
+    decision_final = decision_final_card(
+        rent_mostrar=rent_mostrar,
+        cashflow_mensual=cashflow_despues_hipoteca if usar_deuda else base["cashflow_mensual"],
+        sp500_return=sp500_return,
+    )
 
     signal_text = html.Div(
         [
@@ -1249,7 +1145,10 @@ def update_calculator(
         ]
     )
 
-    insights = [html.Li(f"Rentabilidad neta sin deuda: {fmt_pct(base['rent_neta'])}.", className="mb-2")]
+    insights = [
+        html.Li(f"Gastos de compra estimados automáticamente: {fmt_eur(gastos_compra)}.", className="mb-2"),
+        html.Li(f"Rentabilidad neta sin deuda: {fmt_pct(base['rent_neta'])}.", className="mb-2"),
+    ]
 
     if usar_deuda:
         spread_apalancamiento = base["rent_neta"] - interes_hipoteca
@@ -1278,9 +1177,22 @@ def update_calculator(
         decision_final,
         badge_estado(etiqueta, color),
         signal_text,
-        grafico_breakdown(base, cuota_anual if usar_deuda else 0.0),
-        grafico_comparativa(base["inversion_total"], capital_aportado, base["rent_neta"], rent_sobre_capital, sp500_return, usar_deuda),
+        grafico_breakdown(base, cuota_anual if usar_deuda else 0),
+        grafico_comparativa(
+            base["inversion_total"],
+            capital_aportado,
+            base["rent_neta"],
+            rent_sobre_capital,
+            sp500_return,
+            usar_deuda,
+        ),
         html.Ul(insights, className="mb-0"),
+        build_tax_preview_card(
+            motor_fiscal=motor_fiscal,
+            pais=pais_fiscal or "España",
+            ubicacion=ubicacion_fiscal or "Madrid",
+            tipo_vivienda=tipo_vivienda or "segunda_mano",
+        ),
     )
 
 
@@ -1288,7 +1200,9 @@ def update_calculator(
     Output("pro-content", "children"),
     Input("premium-access", "data"),
     Input("precio_compra", "value"),
-    Input("gastos_compra", "value"),
+    Input("pais_fiscal", "value"),
+    Input("ubicacion_fiscal", "value"),
+    Input("tipo_vivienda", "value"),
     Input("reforma", "value"),
     Input("alquiler_mensual", "value"),
     Input("ocupacion", "value"),
@@ -1303,7 +1217,9 @@ def update_calculator(
 def render_pro_content(
     premium_access,
     precio_compra,
-    gastos_compra,
+    pais_fiscal,
+    ubicacion_fiscal,
+    tipo_vivienda,
     reforma,
     alquiler_mensual,
     ocupacion,
@@ -1320,22 +1236,16 @@ def render_pro_content(
     if not unlocked:
         return html.Div(
             [
-                html.H3(
-                    "Evita comprar un piso con números incompletos",
-                    className="h5 fw-bold mb-3",
-                ),
+                html.H3("Evita comprar un piso con números incompletos", className="h5 fw-bold mb-3"),
                 html.P(
-                    "La parte gratis te da una primera lectura. La versión PRO te ayuda a decidir si comprar o no con proyección a 10 años, payback, coste de oportunidad y comparación frente al S&P 500.",
+                    "La parte gratis te da una primera lectura. La versión PRO añade motor fiscal por zona, proyección a 10 años, payback, coste de oportunidad y comparación frente al S&P 500.",
                     className="text-muted mb-3",
                 ),
                 html.Div(
                     [
-                        html.Div("Rentabilidad acumulada a 10 años", className="fw-semibold mb-2"),
+                        html.Div("Motor fiscal + rentabilidad a 10 años", className="fw-semibold mb-2"),
                         html.Div("12,84 %", className="display-6 fw-bold text-primary"),
-                        html.P(
-                            "Gráfico, payback, coste de oportunidad y recomendación final bloqueados.",
-                            className="text-muted mt-3 mb-0",
-                        ),
+                        html.P("Impuestos por zona, gráfico, payback, coste de oportunidad y recomendación final bloqueados.", className="text-muted mt-3 mb-0"),
                     ],
                     style={
                         "padding": "1rem",
@@ -1357,7 +1267,6 @@ def render_pro_content(
         )
 
     precio_compra = safe_float(precio_compra)
-    gastos_compra = safe_float(gastos_compra)
     reforma = safe_float(reforma)
     alquiler_mensual = safe_float(alquiler_mensual)
     ocupacion = safe_float(ocupacion, 95)
@@ -1369,10 +1278,27 @@ def render_pro_content(
     irpf_pct = safe_float(irpf_pct)
     sp500_return = safe_float(sp500_return, SP500_RETURN_DEFAULT)
 
-    inversion_inicial = precio_compra + gastos_compra + reforma
-    ingresos_base = alquiler_mensual * 12 * (ocupacion / 100.0)
-    gasto_gestion = ingresos_base * (gestion_pct / 100.0)
+    ingresos_base = alquiler_mensual * 12 * (ocupacion / 100)
+    gasto_gestion = ingresos_base * (gestion_pct / 100)
     gastos_anuales = ibi + comunidad + seguro + mantenimiento + gasto_gestion
+
+    motor_fiscal = calcular_motor_fiscal_pro(
+        precio_compra=precio_compra,
+        pais=pais_fiscal or "España",
+        ubicacion=ubicacion_fiscal or "Madrid",
+        tipo_vivienda=tipo_vivienda or "segunda_mano",
+        alquiler_mensual=alquiler_mensual,
+        ocupacion_pct=ocupacion,
+        gastos_anuales=gastos_anuales,
+        intereses_hipoteca_anuales=0,
+        reforma=reforma,
+        precio_venta_estimado=precio_compra * (1.02 ** 10),
+        reduccion_alquiler_pct=50,
+        tipo_marginal_irpf_pct=irpf_pct,
+    )
+
+    gastos_compra = motor_fiscal["compra"]["total"]
+    inversion_inicial = precio_compra + gastos_compra + reforma
 
     years, inmueble_vals, sp500_vals, rows = proyeccion_10_anios(
         inversion_inicial=inversion_inicial,
@@ -1399,6 +1325,55 @@ def render_pro_content(
                 className="text-muted mb-4",
             ),
 
+            dbc.Card(
+                dbc.CardBody(
+                    [
+                        section_eyebrow("MOTOR FISCAL PRO"),
+                        html.H4("Impuestos y fiscalidad estimada", className="h5 fw-bold mb-3"),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    metric_card(
+                                        motor_fiscal["compra"].get("impuesto_nombre", "Impuesto compra"),
+                                        fmt_eur(motor_fiscal["compra"].get("impuesto", 0), 0),
+                                        f"{pais_fiscal or 'España'} · {ubicacion_fiscal or 'Madrid'}",
+                                        accent=True,
+                                    ),
+                                    md=4,
+                                ),
+                                dbc.Col(
+                                    metric_card(
+                                        "Gastos compra totales",
+                                        fmt_eur(motor_fiscal["compra"].get("total", 0), 0),
+                                        "Impuestos + notaría / registro",
+                                        accent=True,
+                                    ),
+                                    md=4,
+                                ),
+                                dbc.Col(
+                                    metric_card(
+                                        "IRPF alquiler estimado",
+                                        fmt_eur(motor_fiscal["alquiler"].get("irpf", 0), 0),
+                                        "Según beneficio fiscal estimado",
+                                    ),
+                                    md=4,
+                                ),
+                            ],
+                            class_name="g-4",
+                        ),
+                        html.Div(
+                            [
+                                html.P([html.Strong("Base fiscal alquiler: "), fmt_eur(motor_fiscal["alquiler"].get("base_irpf", 0))], className="mb-2 mt-4"),
+                                html.P([html.Strong("Beneficio neto fiscal alquiler: "), fmt_eur(motor_fiscal["alquiler"].get("beneficio_neto", 0))], className="mb-2"),
+                                html.P([html.Strong("Rentabilidad neta fiscal: "), fmt_pct(motor_fiscal.get("rentabilidad_neta_fiscal", 0))], className="mb-0"),
+                            ],
+                            className="text-muted",
+                        ),
+                    ]
+                ),
+                className="border-0 shadow-sm rounded-4 mb-4",
+            ),
+
             dbc.Row(
                 [
                     dbc.Col(
@@ -1417,10 +1392,7 @@ def render_pro_content(
                         ),
                         lg=4,
                     ),
-                    dbc.Col(
-                        build_payback_card(payback_years),
-                        lg=4,
-                    ),
+                    dbc.Col(build_payback_card(payback_years), lg=4),
                 ],
                 class_name="g-4 mb-4",
             ),
