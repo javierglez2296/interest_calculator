@@ -1,24 +1,22 @@
-# utils/impuestos.py
-
 TAXES_BY_LOCATION = {
     "España": {
-        "Madrid": {"itp": 6.0, "ajd": 0.75, "notaria_registro": 1.0},
         "Andalucía": {"itp": 7.0, "ajd": 1.2, "notaria_registro": 1.0},
-        "Cataluña": {"itp": 10.0, "ajd": 1.5, "notaria_registro": 1.0},
-        "Comunidad Valenciana": {"itp": 10.0, "ajd": 1.5, "notaria_registro": 1.0},
-        "Castilla y León": {"itp": 8.0, "ajd": 1.5, "notaria_registro": 1.0},
-        "Galicia": {"itp": 10.0, "ajd": 1.5, "notaria_registro": 1.0},
-        "Murcia": {"itp": 8.0, "ajd": 1.5, "notaria_registro": 1.0},
         "Aragón": {"itp": 8.0, "ajd": 1.5, "notaria_registro": 1.0},
         "Asturias": {"itp": 8.0, "ajd": 1.2, "notaria_registro": 1.0},
         "Baleares": {"itp": 8.0, "ajd": 1.2, "notaria_registro": 1.0},
         "Canarias": {"itp": 6.5, "ajd": 1.0, "notaria_registro": 1.0},
         "Cantabria": {"itp": 9.0, "ajd": 1.5, "notaria_registro": 1.0},
         "Castilla-La Mancha": {"itp": 9.0, "ajd": 1.5, "notaria_registro": 1.0},
+        "Castilla y León": {"itp": 8.0, "ajd": 1.5, "notaria_registro": 1.0},
+        "Cataluña": {"itp": 10.0, "ajd": 1.5, "notaria_registro": 1.0},
+        "Comunidad Valenciana": {"itp": 10.0, "ajd": 1.5, "notaria_registro": 1.0},
         "Extremadura": {"itp": 8.0, "ajd": 1.5, "notaria_registro": 1.0},
-        "La Rioja": {"itp": 7.0, "ajd": 1.0, "notaria_registro": 1.0},
+        "Galicia": {"itp": 10.0, "ajd": 1.5, "notaria_registro": 1.0},
+        "Madrid": {"itp": 6.0, "ajd": 0.75, "notaria_registro": 1.0},
+        "Murcia": {"itp": 8.0, "ajd": 1.5, "notaria_registro": 1.0},
         "Navarra": {"itp": 6.0, "ajd": 0.5, "notaria_registro": 1.0},
         "País Vasco": {"itp": 7.0, "ajd": 0.5, "notaria_registro": 1.0},
+        "La Rioja": {"itp": 7.0, "ajd": 1.0, "notaria_registro": 1.0},
         "Ceuta": {"itp": 6.0, "ajd": 0.5, "notaria_registro": 1.0},
         "Melilla": {"itp": 6.0, "ajd": 0.5, "notaria_registro": 1.0},
     },
@@ -42,19 +40,34 @@ IRPF_AHORRO_ES = [
 ]
 
 
+def get_paises():
+    return list(TAXES_BY_LOCATION.keys())
+
+
+def get_ubicaciones(pais):
+    return list(TAXES_BY_LOCATION.get(pais, {}).keys())
+
+
 def calcular_gastos_compra(precio, pais, ubicacion, tipo_vivienda="segunda_mano"):
+    precio = float(precio or 0)
+    pais = pais or "España"
+    ubicacion = ubicacion or "Madrid"
+
     datos = TAXES_BY_LOCATION.get(pais, {}).get(ubicacion)
 
     if not datos:
-        datos = TAXES_BY_LOCATION["España"]["Madrid"] if pais == "España" else TAXES_BY_LOCATION["México"]["Estimación nacional"]
+        if pais == "México":
+            datos = TAXES_BY_LOCATION["México"]["Estimación nacional"]
+        else:
+            datos = TAXES_BY_LOCATION["España"]["Madrid"]
 
     if pais == "España":
-        if tipo_vivienda == "segunda_mano":
-            impuesto = precio * datos["itp"] / 100
-            impuesto_nombre = "ITP"
-        else:
+        if tipo_vivienda == "obra_nueva":
             impuesto = precio * 0.10 + precio * datos["ajd"] / 100
             impuesto_nombre = "IVA + AJD"
+        else:
+            impuesto = precio * datos["itp"] / 100
+            impuesto_nombre = "ITP"
 
         notaria = precio * datos["notaria_registro"] / 100
 
@@ -77,7 +90,7 @@ def calcular_gastos_compra(precio, pais, ubicacion, tipo_vivienda="segunda_mano"
 
 
 def calcular_irpf_tramos_ahorro_es(ganancia):
-    restante = max(ganancia, 0)
+    restante = max(float(ganancia or 0), 0)
     impuesto = 0
     anterior = 0
 
@@ -100,13 +113,13 @@ def calcular_fiscalidad_alquiler_es(
     tipo_marginal_irpf_pct=24,
 ):
     beneficio_bruto = ingresos_anuales - gastos_deducibles - intereses_hipoteca
-    base_reducida = max(beneficio_bruto, 0) * (1 - reduccion_alquiler_pct / 100)
-    irpf = base_reducida * tipo_marginal_irpf_pct / 100
+    base_irpf = max(beneficio_bruto, 0) * (1 - reduccion_alquiler_pct / 100)
+    irpf = base_irpf * tipo_marginal_irpf_pct / 100
     beneficio_neto = beneficio_bruto - irpf
 
     return {
         "beneficio_bruto": beneficio_bruto,
-        "base_irpf": base_reducida,
+        "base_irpf": base_irpf,
         "irpf": irpf,
         "beneficio_neto": beneficio_neto,
     }
@@ -123,14 +136,13 @@ def calcular_fiscalidad_venta_es(
     valor_transmision = precio_venta - gastos_venta
     ganancia = valor_transmision - valor_adquisicion
     irpf_venta = calcular_irpf_tramos_ahorro_es(ganancia)
-    neto_venta = precio_venta - gastos_venta - irpf_venta
 
     return {
         "valor_adquisicion": valor_adquisicion,
         "valor_transmision": valor_transmision,
         "ganancia": ganancia,
         "irpf_venta": irpf_venta,
-        "neto_venta": neto_venta,
+        "neto_venta": precio_venta - gastos_venta - irpf_venta,
     }
 
 
@@ -176,24 +188,16 @@ def calcular_motor_fiscal_pro(
         }
 
     venta = None
-    if precio_venta_estimado:
-        gastos_venta = precio_venta_estimado * gastos_venta_pct / 100
-
-        if pais == "España":
-            venta = calcular_fiscalidad_venta_es(
-                precio_compra=precio_compra,
-                gastos_compra=compra["total"],
-                reforma=reforma,
-                precio_venta=precio_venta_estimado,
-                gastos_venta=gastos_venta,
-            )
+    if precio_venta_estimado and pais == "España":
+        venta = calcular_fiscalidad_venta_es(
+            precio_compra=precio_compra,
+            gastos_compra=compra["total"],
+            reforma=reforma,
+            precio_venta=precio_venta_estimado,
+            gastos_venta=precio_venta_estimado * gastos_venta_pct / 100,
+        )
 
     inversion_total = precio_compra + compra["total"] + reforma
-    rentabilidad_neta = (
-        alquiler["beneficio_neto"] / inversion_total * 100
-        if inversion_total > 0
-        else 0
-    )
 
     return {
         "compra": compra,
@@ -201,13 +205,5 @@ def calcular_motor_fiscal_pro(
         "venta": venta,
         "inversion_total": inversion_total,
         "ingresos_anuales": ingresos_anuales,
-        "rentabilidad_neta_fiscal": rentabilidad_neta,
+        "rentabilidad_neta_fiscal": alquiler["beneficio_neto"] / inversion_total * 100 if inversion_total > 0 else 0,
     }
-
-
-def get_paises():
-    return list(TAXES_BY_LOCATION.keys())
-
-
-def get_ubicaciones(pais):
-    return list(TAXES_BY_LOCATION.get(pais, {}).keys())
