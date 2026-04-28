@@ -154,67 +154,50 @@ def badge_estado(label, color):
     )
 
 
-def decision_final_card(rent_mostrar, cashflow_mensual, sp500_return):
-    if cashflow_mensual < 0:
-        label = "Cuidado"
-        color = "danger"
-        titulo = "La operación exige poner dinero cada mes"
-        texto = (
-            "Aunque la rentabilidad pueda parecer aceptable, el cashflow mensual sale negativo. "
-            "Esto aumenta el riesgo si hay meses sin alquilar, averías, derramas o subida de gastos."
-        )
-    elif rent_mostrar >= max(5, sp500_return - 1):
-        label = "Interesante"
-        color = "success"
-        titulo = "La operación puede merecer análisis profundo"
-        texto = (
-            "La rentabilidad y el cashflow son razonables. Antes de comprar, conviene revisar "
-            "escenario a 10 años, vacancia, gastos futuros y coste de oportunidad frente a una inversión indexada."
-        )
-    elif rent_mostrar >= 3:
-        label = "Dudosa"
-        color = "warning"
-        titulo = "La operación está ajustada"
-        texto = (
-            "Puede tener sentido si la zona es muy buena o esperas revalorización, pero los números "
-            "no son claramente superiores a una inversión más pasiva."
-        )
-    else:
-        label = "Floja"
-        color = "danger"
-        titulo = "La rentabilidad no compensa demasiado"
-        texto = (
-            "Con estos supuestos, revisaría precio de compra, alquiler esperado o gastos. "
-            "También compararía contra una alternativa indexada más simple."
-        )
+def gastos_genericos_compra(precio_compra):
+    """
+    Estimación gratuita genérica.
+    La versión gratis NO debe mostrar ni aplicar el detalle fiscal real por región.
+    """
+    return precio_compra * 0.10
 
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                section_eyebrow("DECISIÓN RÁPIDA"),
-                dbc.Badge(label, color=color, pill=True, class_name="px-3 py-2 mb-3"),
-                html.H3(titulo, className="h4 fw-bold mb-3"),
-                html.P(texto, className="text-muted mb-4"),
-                html.Div(
-                    [
-                        dbc.Button(
-                            "Ver análisis PRO",
-                            href="#pro-content",
-                            color="primary",
-                            className="rounded-pill px-4 me-2 mb-2",
-                        ),
-                        dbc.Button(
-                            "Comparar con bolsa",
-                            href=COMPARADOR_URL,
-                            color="light",
-                            className="rounded-pill px-4 border mb-2",
-                        ),
-                    ]
-                ),
-            ]
-        ),
-        className="border-0 shadow-sm rounded-4 mb-4",
-        style={"background": "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"},
+
+def build_tax_teaser_card(precio_compra, pais, ubicacion, tipo_vivienda):
+    gastos_estimados = gastos_genericos_compra(precio_compra)
+
+    return dbc.Alert(
+        [
+            html.Div("Estimación gratuita de gastos de compra", className="fw-bold mb-2"),
+            html.Div(
+                [
+                    html.Strong("Gastos estimados: "),
+                    fmt_eur(gastos_estimados),
+                ],
+                className="mb-2",
+            ),
+            html.Div(
+                "⚠️ Esta cifra es orientativa. No incluye el cálculo fiscal detallado por comunidad, estado o tipo de vivienda.",
+                className="small text-muted mb-2",
+            ),
+            html.Div(
+                [
+                    "La versión PRO calcula automáticamente ",
+                    html.Strong("ITP, AJD, IVA o ISAI"),
+                    f" según {pais or 'España'} · {ubicacion or 'Madrid'}, y te muestra cómo cambia la rentabilidad real.",
+                ],
+                className="small text-muted mb-3",
+            ),
+            dbc.Button(
+                "Ver impuestos reales en PRO",
+                href=STRIPE_PAYMENT_LINK,
+                target="_self",
+                color="primary",
+                size="sm",
+                className="rounded-pill fw-bold",
+            ),
+        ],
+        color="warning",
+        className="rounded-4 mb-0",
     )
 
 
@@ -272,6 +255,70 @@ def build_tax_preview_card(motor_fiscal, pais, ubicacion, tipo_vivienda):
         ],
         color="primary",
         className="rounded-4 mb-0",
+    )
+
+
+def decision_final_card(rent_mostrar, cashflow_mensual, sp500_return):
+    if cashflow_mensual < 0:
+        label = "Cuidado"
+        color = "danger"
+        titulo = "La operación exige poner dinero cada mes"
+        texto = (
+            "Aunque la rentabilidad pueda parecer aceptable, el cashflow mensual sale negativo. "
+            "Esto aumenta el riesgo si hay meses sin alquilar, averías, derramas o subida de gastos."
+        )
+    elif rent_mostrar >= max(5, sp500_return - 1):
+        label = "Interesante"
+        color = "success"
+        titulo = "La operación puede merecer análisis profundo"
+        texto = (
+            "La rentabilidad y el cashflow son razonables. Antes de comprar, conviene revisar "
+            "impuestos reales por zona, escenario a 10 años, vacancia, gastos futuros y coste de oportunidad."
+        )
+    elif rent_mostrar >= 3:
+        label = "Dudosa"
+        color = "warning"
+        titulo = "La operación está ajustada"
+        texto = (
+            "Puede tener sentido si la zona es muy buena o esperas revalorización, pero los números "
+            "no son claramente superiores a una inversión más pasiva."
+        )
+    else:
+        label = "Floja"
+        color = "danger"
+        titulo = "La rentabilidad no compensa demasiado"
+        texto = (
+            "Con estos supuestos, revisaría precio de compra, alquiler esperado o gastos. "
+            "También compararía contra una alternativa indexada más simple."
+        )
+
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                section_eyebrow("DECISIÓN RÁPIDA"),
+                dbc.Badge(label, color=color, pill=True, class_name="px-3 py-2 mb-3"),
+                html.H3(titulo, className="h4 fw-bold mb-3"),
+                html.P(texto, className="text-muted mb-4"),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Ver análisis PRO",
+                            href="#pro-content",
+                            color="primary",
+                            className="rounded-pill px-4 me-2 mb-2",
+                        ),
+                        dbc.Button(
+                            "Comparar con bolsa",
+                            href=COMPARADOR_URL,
+                            color="light",
+                            className="rounded-pill px-4 border mb-2",
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        className="border-0 shadow-sm rounded-4 mb-4",
+        style={"background": "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"},
     )
 
 
@@ -434,13 +481,13 @@ def pro_card(unlocked=False):
             [
                 section_eyebrow("VERSIÓN PRO"),
                 html.H3(
-                    "Evita comprar un piso con impuestos mal calculados",
+                    "No compres un piso con números incompletos",
                     className="h4 fw-bold mb-3",
                 ),
                 html.P(
-                    "Un error en ITP, AJD, IVA, ISAI o gastos de compra puede cambiar miles de euros "
-                    "la rentabilidad real de una vivienda. La versión PRO calcula automáticamente los "
-                    "impuestos según país y región, y te ayuda a decidir si la operación merece la pena.",
+                    "Los impuestos cambian completamente la rentabilidad. Una diferencia de comunidad autónoma, "
+                    "estado o tipo de vivienda puede suponer miles de euros. La versión PRO calcula automáticamente "
+                    "ITP, AJD, IVA o ISAI según la ubicación y te muestra si la operación merece la pena.",
                     className="text-muted mb-3",
                 ),
                 html.Div(
@@ -448,17 +495,21 @@ def pro_card(unlocked=False):
                         dbc.Badge("Motor fiscal", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("Impuestos por región", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("ITP / AJD / IVA / ISAI", color="light", text_color="dark", class_name="me-2 mb-2"),
-                        dbc.Badge("Proyección 10 años", color="light", text_color="dark", class_name="me-2 mb-2"),
+                        dbc.Badge("Rentabilidad fiscal", color="light", text_color="dark", class_name="me-2 mb-2"),
                         dbc.Badge("Comprar / no comprar", color="light", text_color="dark", class_name="me-2 mb-2"),
                     ],
                     className="mb-4",
                 ),
-                html.P(
-                    "Ideal si estás comparando viviendas y no quieres decidir con gastos puestos a ojo.",
-                    className="small text-muted mb-4",
+                html.Div(
+                    [
+                        html.Div("✔ Cálculo automático de impuestos por zona", className="small text-muted mb-1"),
+                        html.Div("✔ Impacto real en rentabilidad y cashflow", className="small text-muted mb-1"),
+                        html.Div("✔ Proyección a 10 años contra S&P 500", className="small text-muted mb-1"),
+                        html.Div("✔ Payback y recomendación final", className="small text-muted mb-3"),
+                    ]
                 ),
                 dbc.Button(
-                    "Calcular impuestos y rentabilidad PRO por 9€",
+                    "Evitar errores de miles de euros por 9€",
                     href=STRIPE_PAYMENT_LINK,
                     target="_self",
                     color="primary",
@@ -683,6 +734,7 @@ layout = dbc.Container(
     [
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
+
         dbc.Row(
             [
                 dbc.Col(
@@ -750,8 +802,8 @@ layout = dbc.Container(
                                 html.Ul(
                                     [
                                         html.Li("Rentabilidad bruta y neta"),
-                                        html.Li("Impuestos por zona en PRO"),
-                                        html.Li("Cashflow antes y después de hipoteca"),
+                                        html.Li("Estimación gratuita de gastos"),
+                                        html.Li("Impuestos reales por zona en PRO"),
                                         html.Li("Comparativa contra S&P 500"),
                                     ],
                                     className="text-muted mb-0",
@@ -784,7 +836,7 @@ layout = dbc.Container(
                                     "pais_fiscal",
                                     options=[{"label": p, "value": p} for p in get_paises()],
                                     value="España",
-                                    help_text="El motor fiscal PRO ajusta impuestos según el país.",
+                                    help_text="En PRO se usa para calcular impuestos reales por país.",
                                 ),
 
                                 select_input(
@@ -792,7 +844,7 @@ layout = dbc.Container(
                                     "ubicacion_fiscal",
                                     options=[{"label": u, "value": u} for u in get_ubicaciones("España")],
                                     value="Madrid",
-                                    help_text="Se usa para estimar ITP, AJD, ISAI y gastos de compra.",
+                                    help_text="En PRO se usa para estimar ITP, AJD, ISAI y gastos de compra.",
                                 ),
 
                                 select_input(
@@ -1140,6 +1192,7 @@ clientside_callback(
     Output("compare_chart", "figure"),
     Output("insights_wrap", "children"),
     Output("tax_preview_wrap", "children"),
+    Input("premium-access", "data"),
     Input("precio_compra", "value"),
     Input("pais_fiscal", "value"),
     Input("ubicacion_fiscal", "value"),
@@ -1160,6 +1213,7 @@ clientside_callback(
     Input("sp500_return", "value"),
 )
 def update_calculator(
+    premium_access,
     precio_compra,
     pais_fiscal,
     ubicacion_fiscal,
@@ -1179,6 +1233,8 @@ def update_calculator(
     años_hipoteca,
     sp500_return,
 ):
+    unlocked = bool((premium_access or {}).get("unlocked"))
+
     precio_compra = safe_float(precio_compra)
     reforma = safe_float(reforma)
     alquiler_mensual = safe_float(alquiler_mensual)
@@ -1220,7 +1276,24 @@ def update_calculator(
         tipo_marginal_irpf_pct=irpf_pct,
     )
 
-    gastos_compra = motor_fiscal["compra"]["total"]
+    if unlocked:
+        gastos_compra = motor_fiscal["compra"]["total"]
+        tax_card = build_tax_preview_card(
+            motor_fiscal=motor_fiscal,
+            pais=pais_fiscal or "España",
+            ubicacion=ubicacion_fiscal or "Madrid",
+            tipo_vivienda=tipo_vivienda or "segunda_mano",
+        )
+        gastos_label = "Compra + impuestos reales + reforma"
+    else:
+        gastos_compra = gastos_genericos_compra(precio_compra)
+        tax_card = build_tax_teaser_card(
+            precio_compra=precio_compra,
+            pais=pais_fiscal or "España",
+            ubicacion=ubicacion_fiscal or "Madrid",
+            tipo_vivienda=tipo_vivienda or "segunda_mano",
+        )
+        gastos_label = "Compra + gastos estimados + reforma"
 
     base = calc_operacion(
         precio_compra=precio_compra,
@@ -1275,7 +1348,7 @@ def update_calculator(
     metric_desembolso = metric_card(
         "Desembolso inicial",
         fmt_eur(base["inversion_total"]),
-        "Compra + impuestos + reforma",
+        gastos_label,
     )
     metric_cuota = metric_card(
         "Cuota hipotecaria",
@@ -1318,10 +1391,17 @@ def update_calculator(
         ]
     )
 
-    insights = [
-        html.Li(f"Gastos de compra estimados automáticamente: {fmt_eur(gastos_compra)}.", className="mb-2"),
-        html.Li(f"Rentabilidad neta sin deuda: {fmt_pct(base['rent_neta'])}.", className="mb-2"),
-    ]
+    if unlocked:
+        insights = [
+            html.Li(f"Gastos reales de compra calculados por motor fiscal: {fmt_eur(gastos_compra)}.", className="mb-2"),
+            html.Li(f"Rentabilidad neta con fiscalidad aplicada: {fmt_pct(base['rent_neta'])}.", className="mb-2"),
+        ]
+    else:
+        insights = [
+            html.Li(f"Gastos de compra estimados de forma genérica: {fmt_eur(gastos_compra)}.", className="mb-2"),
+            html.Li("El cálculo gratuito no desglosa ITP, AJD, IVA o ISAI por región.", className="mb-2"),
+            html.Li(f"Rentabilidad neta orientativa: {fmt_pct(base['rent_neta'])}.", className="mb-2"),
+        ]
 
     if usar_deuda:
         spread_apalancamiento = base["rent_neta"] - interes_hipoteca
@@ -1370,12 +1450,7 @@ def update_calculator(
             usar_deuda,
         ),
         html.Ul(insights, className="mb-0"),
-        build_tax_preview_card(
-            motor_fiscal=motor_fiscal,
-            pais=pais_fiscal or "España",
-            ubicacion=ubicacion_fiscal or "Madrid",
-            tipo_vivienda=tipo_vivienda or "segunda_mano",
-        ),
+        tax_card,
     )
 
 
