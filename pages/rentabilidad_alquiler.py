@@ -285,6 +285,7 @@ def grafico_breakdown(data, cuota_anual_hipoteca=0):
     fig = go.Figure()
     fig.add_bar(x=categorias, y=valores, text=textos, textposition="outside")
     fig.update_layout(
+        autosize=True,
         height=330,
         margin=dict(l=20, r=20, t=10, b=20),
         showlegend=False,
@@ -292,6 +293,8 @@ def grafico_breakdown(data, cuota_anual_hipoteca=0):
         plot_bgcolor="white",
         yaxis_title="Euros / año",
     )
+    fig.update_xaxes(automargin=True)
+    fig.update_yaxes(automargin=True)
     return fig
 
 
@@ -319,6 +322,7 @@ def grafico_comparativa(
     fig = go.Figure()
     fig.add_bar(x=x, y=y, text=texts, textposition="outside")
     fig.update_layout(
+        autosize=True,
         height=330,
         margin=dict(l=20, r=20, t=10, b=20),
         showlegend=False,
@@ -326,6 +330,8 @@ def grafico_comparativa(
         plot_bgcolor="white",
         yaxis_title="Valor orientativo tras 1 año",
     )
+    fig.update_xaxes(automargin=True)
+    fig.update_yaxes(automargin=True)
     return fig
 
 
@@ -386,6 +392,7 @@ def build_pro_years_chart(years, inmueble_vals, sp500_vals):
     fig.add_scatter(x=years, y=inmueble_vals, mode="lines+markers", name="Inmueble")
     fig.add_scatter(x=years, y=sp500_vals, mode="lines+markers", name="S&P 500")
     fig.update_layout(
+        autosize=True,
         height=360,
         margin=dict(l=20, r=20, t=10, b=20),
         paper_bgcolor="white",
@@ -394,6 +401,8 @@ def build_pro_years_chart(years, inmueble_vals, sp500_vals):
         xaxis_title="Año",
         legend_title="",
     )
+    fig.update_xaxes(automargin=True)
+    fig.update_yaxes(automargin=True)
     return fig
 
 
@@ -455,6 +464,8 @@ def build_pro_table(rows):
         responsive=True,
         class_name="align-middle mb-0",
     )
+
+
 def build_pro_decision_card(inmueble_final, sp500_final, payback_years, beneficio_neto_anual):
     diferencia = inmueble_final - sp500_final
 
@@ -696,6 +707,34 @@ layout = dbc.Container(
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="gtag-pro-open-store"),
 
+        html.Style(
+            """
+            .dash-graph-responsive,
+            .dash-graph-responsive .js-plotly-plot,
+            .dash-graph-responsive .plot-container,
+            .dash-graph-responsive .svg-container {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .dash-graph-responsive {
+                min-height: 340px;
+                overflow-x: hidden;
+            }
+
+            @media (max-width: 768px) {
+                .dash-graph-responsive {
+                    height: 360px !important;
+                    min-height: 360px;
+                }
+
+                .js-plotly-plot {
+                    width: 100% !important;
+                }
+            }
+            """
+        ),
+
         dbc.Row(
             [
                 dbc.Col(
@@ -864,7 +903,12 @@ layout = dbc.Container(
                             dbc.CardBody(
                                 [
                                     section_eyebrow("BREAKDOWN GRATIS"),
-                                    dcc.Graph(id="breakdown_chart", config={"displayModeBar": False}),
+                                    dcc.Graph(
+                                        id="breakdown_chart",
+                                        config={"displayModeBar": False, "responsive": True},
+                                        style={"width": "100%", "height": "360px"},
+                                        className="dash-graph-responsive",
+                                    ),
                                 ]
                             ),
                             className="border-0 shadow-sm rounded-4 mb-4",
@@ -874,7 +918,12 @@ layout = dbc.Container(
                             dbc.CardBody(
                                 [
                                     section_eyebrow("COMPARATIVA GRATIS"),
-                                    dcc.Graph(id="compare_chart", config={"displayModeBar": False}),
+                                    dcc.Graph(
+                                        id="compare_chart",
+                                        config={"displayModeBar": False, "responsive": True},
+                                        style={"width": "100%", "height": "360px"},
+                                        className="dash-graph-responsive",
+                                    ),
                                 ]
                             ),
                             className="border-0 shadow-sm rounded-4",
@@ -1233,9 +1282,8 @@ def update_calculator(
         grafico_comparativa(base["inversion_total"], capital_aportado, base["rent_neta"], rent_sobre_capital, sp500_return, usar_deuda),
         html.Ul(insights, className="mb-0"),
     )
-# =========================================================
-# CALLBACK PRO
-# =========================================================
+
+
 @callback(
     Output("pro-content", "children"),
     Input("premium-access", "data"),
@@ -1412,7 +1460,9 @@ def render_pro_content(
                 dbc.CardBody(
                     dcc.Graph(
                         figure=build_pro_years_chart(years, inmueble_vals, sp500_vals),
-                        config={"displayModeBar": False},
+                        config={"displayModeBar": False, "responsive": True},
+                        style={"width": "100%", "height": "390px"},
+                        className="dash-graph-responsive",
                     )
                 ),
                 className="border-0 shadow-sm rounded-4 mb-4",
