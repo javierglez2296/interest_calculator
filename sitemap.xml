@@ -1,7 +1,32 @@
 @server.route("/sitemap.xml", methods=["GET"])
 def sitemap():
     today = date.today().isoformat()
-    urls = set()
+    urls = []
+
+    exclude_paths = [
+        "/premium-ok",
+        "/404",
+    ]
+
+    money_paths = [
+        "/calculadora",
+        "/fire",
+        "/hipoteca",
+        "/rentabilidad-alquiler",
+        "/comparador",
+    ]
+
+    seo_keywords = [
+        "interes-compuesto",
+        "vivir-con",
+        "hipoteca",
+        "alquilar",
+        "rentabilidad",
+        "invertir",
+        "fondos-indexados",
+        "sp-500",
+        "nasdaq",
+    ]
 
     for page in dash.page_registry.values():
         path = page.get("path")
@@ -12,21 +37,21 @@ def sitemap():
         if "not_found" in str(page.get("module", "")).lower():
             continue
 
-        if "premium-ok" in path:
+        if any(excluded in path for excluded in exclude_paths):
             continue
 
         loc = f"{SITE_URL.rstrip('/')}{path}"
 
         if path == "/":
             priority = "1.0"
-        elif path in ["/calculadora", "/fire", "/hipoteca", "/rentabilidad-alquiler"]:
+        elif path in money_paths:
             priority = "0.9"
-        elif any(x in path for x in ["invertir", "dinero", "hipoteca", "alquiler"]):
+        elif any(keyword in path for keyword in seo_keywords):
             priority = "0.8"
         else:
             priority = "0.6"
 
-        urls.add(f"""
+        urls.append(f"""
   <url>
     <loc>{loc}</loc>
     <lastmod>{today}</lastmod>
@@ -36,7 +61,7 @@ def sitemap():
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{''.join(urls)}
+{''.join(sorted(set(urls)))}
 </urlset>"""
 
     return Response(xml, mimetype="application/xml")
