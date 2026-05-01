@@ -192,7 +192,6 @@ dash.register_page(
     path="/{slug}",
     title="{seo_title}",
     description="{seo_description}",
-    description="{intro[:155]}",
 )
 
 layout = dbc.Container(
