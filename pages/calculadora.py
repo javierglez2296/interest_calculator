@@ -1575,6 +1575,82 @@ layout = dbc.Container(
                             },
                         ),
                         build_disclaimer(title="Más opciones para dar el siguiente paso"),
+                        html.Hr(className="my-5"),
+
+html.Div(
+    [
+        section_eyebrow("Ejemplos prácticos"),
+        html.H2(
+            "Ejemplos populares de interés compuesto",
+            className="fw-bold mb-3",
+            style={"color": "#0f172a"},
+        ),
+        html.P(
+            "Consulta escenarios concretos de inversión mensual y capital inicial para entender mejor el efecto del interés compuesto a largo plazo.",
+            className="mb-4",
+            style={"color": "#475467", "lineHeight": "1.7"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.A(
+                        "Invertir 100€ al mes durante 20 años",
+                        href="/interes-compuesto-con-100euros-al-mes-durante-20-anos",
+                        className="text-decoration-none fw-semibold",
+                    ),
+                    md=6,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    html.A(
+                        "Invertir 300€ al mes durante 30 años",
+                        href="/interes-compuesto-con-300euros-al-mes-durante-30-anos",
+                        className="text-decoration-none fw-semibold",
+                    ),
+                    md=6,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    html.A(
+                        "Invertir 500€ al mes durante 30 años",
+                        href="/interes-compuesto-con-500euros-al-mes-durante-30-anos",
+                        className="text-decoration-none fw-semibold",
+                    ),
+                    md=6,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    html.A(
+                        "Invertir 1000€ al mes durante 20 años",
+                        href="/interes-compuesto-con-1000euros-al-mes-durante-20-anos",
+                        className="text-decoration-none fw-semibold",
+                    ),
+                    md=6,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    html.A(
+                        "10.000€ iniciales durante 30 años",
+                        href="/interes-compuesto-con-10000euros-iniciales-durante-30-anos",
+                        className="text-decoration-none fw-semibold",
+                    ),
+                    md=6,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    html.A(
+                        "50.000€ iniciales durante 20 años",
+                        href="/interes-compuesto-con-50000euros-iniciales-durante-20-anos",
+                        className="text-decoration-none fw-semibold",
+                    ),
+                    md=6,
+                    className="mb-3",
+                ),
+            ]
+        ),
+    ],
+    className="my-5",
+),
                     ],
                     lg=8,
                 ),
