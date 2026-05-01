@@ -1,7 +1,7 @@
 import math
 
 import dash
-from dash import html, dcc, Input, Output, State, callback, dash_table, no_update
+from dash import html, dcc, Input, Output, callback, dash_table, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -700,36 +700,9 @@ def premium_analysis_block(resultados, capital_inicial, aportacion, anios, objet
                 html.H3("Lectura avanzada de tu comparación", className="fw-bold mb-3", style={"color": "#0f172a"}),
                 dbc.Row(
                     [
-                        dbc.Col(
-                            metric_card(
-                                "Coste potencial de comisiones",
-                                formatear_euros_es(fee_drag),
-                                "Diferencia estimada entre bajo coste y alta comisión",
-                                highlight=True,
-                            ),
-                            md=4,
-                            className="mb-3",
-                        ),
-                        dbc.Col(
-                            metric_card(
-                                "Probabilidad objetivo",
-                                prob_text,
-                                prob_subtitle,
-                                highlight=True,
-                            ),
-                            md=4,
-                            className="mb-3",
-                        ),
-                        dbc.Col(
-                            metric_card(
-                                "Brecha mejor/peor",
-                                formatear_euros_es(brecha),
-                                "Coste de elegir mal",
-                                highlight=True,
-                            ),
-                            md=4,
-                            className="mb-3",
-                        ),
+                        dbc.Col(metric_card("Coste potencial de comisiones", formatear_euros_es(fee_drag), "Diferencia estimada entre bajo coste y alta comisión", highlight=True), md=4, className="mb-3"),
+                        dbc.Col(metric_card("Probabilidad objetivo", prob_text, prob_subtitle, highlight=True), md=4, className="mb-3"),
+                        dbc.Col(metric_card("Brecha mejor/peor", formatear_euros_es(brecha), "Coste de elegir mal", highlight=True), md=4, className="mb-3"),
                     ]
                 ),
                 dbc.Alert(
@@ -874,15 +847,21 @@ layout = dbc.Container(
                                 ),
 
                                 dbc.Button(
-                                    "Comparar opciones",
+                                    "Comparación automática activada",
                                     id="btn",
                                     color="primary",
                                     className="w-100 rounded-pill fw-bold mt-2 py-3",
                                     size="lg",
+                                    disabled=True,
+                                ),
+                                html.Div(
+                                    "El gráfico y los resultados se actualizan automáticamente al cambiar cualquier dato.",
+                                    className="mt-3",
+                                    style={"fontSize": "0.88rem", "color": "#667085", "lineHeight": "1.5"},
                                 ),
                                 html.Div(
                                     "Simulación orientativa. No es asesoramiento financiero ni garantiza resultados futuros.",
-                                    className="mt-3",
+                                    className="mt-2",
                                     style={"fontSize": "0.88rem", "color": "#667085", "lineHeight": "1.5"},
                                 ),
                             ]
@@ -1026,7 +1005,7 @@ def render_premium_ui(access_data):
     Output("ranking-resumen", "children"),
     Output("tabla", "children"),
     Output("premium-analysis", "children"),
-    Input("btn", "n_clicks"),
+
     Input("capital-inicial", "value"),
     Input("aportacion", "value"),
     Input("anios", "value"),
@@ -1035,23 +1014,23 @@ def render_premium_ui(access_data):
     Input("riesgo", "value"),
     Input("categoria", "value"),
     Input("premium-access", "data"),
-    State("custom-a-name", "value"),
-    State("custom-a-return", "value"),
-    State("custom-a-fee", "value"),
-    State("custom-a-vol", "value"),
-    State("custom-b-name", "value"),
-    State("custom-b-return", "value"),
-    State("custom-b-fee", "value"),
-    State("custom-b-vol", "value"),
-    State("custom-c-name", "value"),
-    State("custom-c-return", "value"),
-    State("custom-c-fee", "value"),
-    State("custom-c-vol", "value"),
-    State("premium-objetivo", "value"),
-    State("premium-inflacion", "value"),
+
+    Input("custom-a-name", "value"),
+    Input("custom-a-return", "value"),
+    Input("custom-a-fee", "value"),
+    Input("custom-a-vol", "value"),
+    Input("custom-b-name", "value"),
+    Input("custom-b-return", "value"),
+    Input("custom-b-fee", "value"),
+    Input("custom-b-vol", "value"),
+    Input("custom-c-name", "value"),
+    Input("custom-c-return", "value"),
+    Input("custom-c-fee", "value"),
+    Input("custom-c-vol", "value"),
+    Input("premium-objetivo", "value"),
+    Input("premium-inflacion", "value"),
 )
 def calcular(
-    _,
     capital_inicial,
     aportacion,
     anios,
