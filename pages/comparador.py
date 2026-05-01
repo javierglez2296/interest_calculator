@@ -1,10 +1,13 @@
+import math
+
 import dash
-from dash import html, dcc, Input, Output, callback, dash_table
+from dash import html, dcc, Input, Output, State, callback, dash_table, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
 from helpers import parse_number, calcular_interes_compuesto, formatear_euros_es
 from components.disclaimer_afiliados import build_disclaimer
+from utils.premium import is_premium_unlocked, premium_cta_card, premium_active_alert
 
 MYINVESTOR_AFFILIATE_URL = "https://newapp.myinvestor.es/do/signup?promotionalCode=GZKWQ"
 
@@ -13,11 +16,14 @@ dash.register_page(
     path="/comparador",
     title="Comparador de inversiones: fondos, bolsa y carteras | interescompuesto.app",
     name="Comparador",
-    description="Compara fondos indexados, carteras, bolsa y alternativas de inversión según rentabilidad, riesgo, comisiones, inflación y horizonte temporal.",
+    description=(
+        "Compara fondos indexados, carteras y alternativas de inversión según rentabilidad, "
+        "riesgo, comisiones, inflación y horizonte temporal."
+    ),
 )
 
 # =========================================================
-# PRODUCTOS
+# PRODUCTOS BASE
 # =========================================================
 FONDOS = [
     {
@@ -112,17 +118,17 @@ PERFILES = {
     "conservador": {
         "label": "Conservador",
         "riesgos_preferidos": ["bajo"],
-        "mensaje": "prioriza estabilidad, menor volatilidad y dormir tranquilo.",
+        "mensaje": "prioriza estabilidad, menor volatilidad y dormir tranquilo",
     },
     "moderado": {
         "label": "Moderado",
         "riesgos_preferidos": ["bajo", "medio"],
-        "mensaje": "busca equilibrio entre crecimiento y control del riesgo.",
+        "mensaje": "busca equilibrio entre crecimiento y control del riesgo",
     },
     "agresivo": {
         "label": "Agresivo",
         "riesgos_preferidos": ["medio", "alto"],
-        "mensaje": "acepta volatilidad para maximizar crecimiento a largo plazo.",
+        "mensaje": "acepta volatilidad para maximizar crecimiento a largo plazo",
     },
 }
 
@@ -142,17 +148,29 @@ def metric_card(title, value, subtitle=None, highlight=False):
     return dbc.Card(
         dbc.CardBody(
             [
-                html.Div(title, style={"fontSize": "0.85rem", "fontWeight": "800", "color": "#667085"}),
+                html.Div(
+                    title,
+                    style={
+                        "fontSize": "0.85rem",
+                        "fontWeight": "800",
+                        "color": "#667085",
+                        "textTransform": "uppercase",
+                        "letterSpacing": "0.04em",
+                    },
+                ),
                 html.Div(
                     value,
                     className="fw-bold my-2",
                     style={
-                        "fontSize": "clamp(1.35rem, 2.3vw, 1.95rem)",
+                        "fontSize": "clamp(1.25rem, 2.3vw, 1.95rem)",
                         "lineHeight": "1.1",
                         "color": "#198754" if highlight else "#101828",
                     },
                 ),
-                html.Div(subtitle, style={"fontSize": "0.9rem", "color": "#667085"}) if subtitle else None,
+                html.Div(
+                    subtitle,
+                    style={"fontSize": "0.9rem", "color": "#667085", "lineHeight": "1.45"},
+                ) if subtitle else None,
             ]
         ),
         className="border-0 rounded-4 h-100",
@@ -165,19 +183,14 @@ def input_block(label, component, hint=None):
         [
             dbc.Label(label, className="fw-semibold mb-2", style={"color": "#1f2937"}),
             component,
-            html.Div(hint, className="mt-2", style={"fontSize": "0.88rem", "color": "#667085"}) if hint else None,
+            html.Div(
+                hint,
+                className="mt-2",
+                style={"fontSize": "0.88rem", "color": "#667085", "lineHeight": "1.45"},
+            ) if hint else None,
         ],
         className="mb-3",
     )
-
-
-def risk_badge(riesgo):
-    color_map = {"bajo": "success", "medio": "warning", "alto": "danger"}
-    return dbc.Badge(riesgo.capitalize(), color=color_map.get(riesgo, "secondary"), pill=True, class_name="px-3 py-2 fw-semibold")
-
-
-def category_badge(text):
-    return dbc.Badge(text, color="light", class_name="me-2 px-3 py-2 rounded-pill text-dark border")
 
 
 def make_input(input_id, value, input_type="text"):
@@ -186,14 +199,60 @@ def make_input(input_id, value, input_type="text"):
         value=value,
         type=input_type,
         className="py-3 rounded-4",
-        style={"background": "#f8fafc", "border": "1px solid rgba(15,23,42,.08)", "fontWeight": "600"},
+        style={
+            "background": "#f8fafc",
+            "border": "1px solid rgba(15,23,42,.08)",
+            "fontWeight": "600",
+        },
     )
 
 
-def recomendacion_inteligente(mejor, perfil, diferencia, horizonte, ventaja_real):
-    perfil_txt = PERFILES.get(perfil, PERFILES["moderado"])["mensaje"]
+def risk_badge(riesgo):
+    color_map = {"bajo": "success", "medio": "warning", "alto": "danger"}
+    return dbc.Badge(
+        riesgo.capitalize(),
+        color=color_map.get(riesgo, "secondary"),
+        pill=True,
+        class_name="px-3 py-2 fw-semibold",
+    )
 
-    if mejor["riesgo"] in PERFILES.get(perfil, PERFILES["moderado"])["riesgos_preferidos"]:
+
+def category_badge(text):
+    return dbc.Badge(
+        text,
+        color="light",
+        class_name="me-2 px-3 py-2 rounded-pill text-dark border",
+    )
+
+
+def empty_figure(message="Introduce datos para comparar"):
+    fig = go.Figure()
+    fig.update_layout(
+        template="plotly_white",
+        height=460,
+        margin=dict(l=10, r=10, t=20, b=10),
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        annotations=[
+            dict(
+                text=message,
+                x=0.5,
+                y=0.5,
+                xref="paper",
+                yref="paper",
+                showarrow=False,
+                font=dict(size=16, color="#667085"),
+            )
+        ],
+    )
+    return fig
+
+
+def recomendacion_inteligente(mejor, perfil, diferencia, horizonte, ventaja_real):
+    perfil_data = PERFILES.get(perfil, PERFILES["moderado"])
+    perfil_txt = perfil_data["mensaje"]
+
+    if mejor["riesgo"] in perfil_data["riesgos_preferidos"]:
         encaje = "encaja bien con el perfil seleccionado"
     else:
         encaje = "ofrece buen resultado, aunque su nivel de riesgo puede no encajar del todo con el perfil elegido"
@@ -203,7 +262,7 @@ def recomendacion_inteligente(mejor, perfil, diferencia, horizonte, ventaja_real
     elif horizonte >= 10:
         plazo = "El plazo es razonable, aunque conviene no depender de resultados perfectos."
     else:
-        plazo = "El plazo es corto: aquí el riesgo y las comisiones pesan más."
+        plazo = "El plazo es corto: aquí el riesgo, las comisiones y el momento de entrada pesan más."
 
     return (
         f"Para un perfil que {perfil_txt}, {mejor['nombre']} {encaje}. "
@@ -224,7 +283,11 @@ def recommendation_card(mejor, aportado_total, perfil, diferencia, horizonte, ve
                 html.H2(mejor["nombre"], className="h3 fw-bold mb-2", style={"color": "#0f172a"}),
                 html.P(texto, className="mb-3", style={"color": "#475467", "lineHeight": "1.7"}),
                 html.Div([category_badge(mejor["categoria"]), risk_badge(mejor["riesgo"])], className="mb-3"),
-                html.Div(formatear_euros_es(mejor["valor"]), className="fw-bold mb-1", style={"fontSize": "2.2rem", "color": "#198754"}),
+                html.Div(
+                    formatear_euros_es(mejor["valor"]),
+                    className="fw-bold mb-1",
+                    style={"fontSize": "2.2rem", "color": "#198754"},
+                ),
                 html.Div(f"Ganancia estimada: {formatear_euros_es(ganancia)}", className="text-muted mb-4"),
                 dbc.Row(
                     [
@@ -254,7 +317,10 @@ def recommendation_card(mejor, aportado_total, perfil, diferencia, horizonte, ve
             ]
         ),
         className="border-0 rounded-4 mb-4",
-        style={"boxShadow": "0 18px 45px rgba(16,24,40,.08)", "background": "linear-gradient(135deg,#fff 0%,#f8fbff 100%)"},
+        style={
+            "boxShadow": "0 18px 45px rgba(16,24,40,.08)",
+            "background": "linear-gradient(135deg,#fff 0%,#f8fbff 100%)",
+        },
     )
 
 
@@ -294,8 +360,18 @@ def result_card(item, rank, aportado_total):
                     [
                         dbc.Col(
                             [
-                                html.Div(f"#{rank}", className="fw-bold", style={"fontSize": "1.8rem", "color": "#198754" if rank == 1 else "#344054"}),
-                                html.Div("Ranking", style={"fontSize": ".85rem", "color": "#667085", "fontWeight": "700"}),
+                                html.Div(
+                                    f"#{rank}",
+                                    className="fw-bold",
+                                    style={
+                                        "fontSize": "1.8rem",
+                                        "color": "#198754" if rank == 1 else "#344054",
+                                    },
+                                ),
+                                html.Div(
+                                    "Ranking",
+                                    style={"fontSize": ".85rem", "color": "#667085", "fontWeight": "700"},
+                                ),
                             ],
                             xs=3,
                             md=2,
@@ -306,11 +382,46 @@ def result_card(item, rank, aportado_total):
                                 html.Div([category_badge(item["categoria"]), risk_badge(item["riesgo"])], className="mb-3"),
                                 dbc.Row(
                                     [
-                                        dbc.Col([html.Div("Valor final", className="text-muted small fw-bold"), html.Div(formatear_euros_es(item["valor"]), className="fw-bold")], md=3, className="mb-2"),
-                                        dbc.Col([html.Div("Valor real", className="text-muted small fw-bold"), html.Div(formatear_euros_es(item["valor_real"]), className="fw-bold")], md=3, className="mb-2"),
-                                        dbc.Col([html.Div("Ganancia", className="text-muted small fw-bold"), html.Div(formatear_euros_es(ganancia), className="fw-bold text-success")], md=2, className="mb-2"),
-                                        dbc.Col([html.Div("Rent. neta", className="text-muted small fw-bold"), html.Div(f"{rent_neta * 100:.2f}%", className="fw-bold")], md=2, className="mb-2"),
-                                        dbc.Col([html.Div("Comisión", className="text-muted small fw-bold"), html.Div(f"{item['comision'] * 100:.2f}%", className="fw-bold text-danger")], md=2, className="mb-2"),
+                                        dbc.Col(
+                                            [
+                                                html.Div("Valor final", className="text-muted small fw-bold"),
+                                                html.Div(formatear_euros_es(item["valor"]), className="fw-bold"),
+                                            ],
+                                            md=3,
+                                            className="mb-2",
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.Div("Valor real", className="text-muted small fw-bold"),
+                                                html.Div(formatear_euros_es(item["valor_real"]), className="fw-bold"),
+                                            ],
+                                            md=3,
+                                            className="mb-2",
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.Div("Ganancia", className="text-muted small fw-bold"),
+                                                html.Div(formatear_euros_es(ganancia), className="fw-bold text-success"),
+                                            ],
+                                            md=2,
+                                            className="mb-2",
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.Div("Rent. neta", className="text-muted small fw-bold"),
+                                                html.Div(f"{rent_neta * 100:.2f}%", className="fw-bold"),
+                                            ],
+                                            md=2,
+                                            className="mb-2",
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.Div("Comisión", className="text-muted small fw-bold"),
+                                                html.Div(f"{item['comision'] * 100:.2f}%", className="fw-bold text-danger"),
+                                            ],
+                                            md=2,
+                                            className="mb-2",
+                                        ),
                                     ],
                                     className="g-3",
                                 ),
@@ -351,6 +462,9 @@ def build_ranking_table(resultados):
             }
         )
 
+    if not data:
+        return html.Div()
+
     return dbc.Card(
         dbc.CardBody(
             [
@@ -360,9 +474,21 @@ def build_ranking_table(resultados):
                     columns=[{"name": k, "id": k} for k in data[0].keys()],
                     sort_action="native",
                     style_table={"overflowX": "auto"},
-                    style_header={"fontWeight": "800", "border": "none", "backgroundColor": "#f8fbff"},
-                    style_cell={"textAlign": "left", "padding": "12px", "border": "none", "fontFamily": "inherit", "fontSize": "14px"},
-                    style_data_conditional=[{"if": {"row_index": 0}, "fontWeight": "800", "backgroundColor": "#f7fcf9"}],
+                    style_header={
+                        "fontWeight": "800",
+                        "border": "none",
+                        "backgroundColor": "#f8fbff",
+                    },
+                    style_cell={
+                        "textAlign": "left",
+                        "padding": "12px",
+                        "border": "none",
+                        "fontFamily": "inherit",
+                        "fontSize": "14px",
+                    },
+                    style_data_conditional=[
+                        {"if": {"row_index": 0}, "fontWeight": "800", "backgroundColor": "#f7fcf9"},
+                    ],
                 ),
             ]
         ),
@@ -395,6 +521,230 @@ def seo_links_block():
 
 
 # =========================================================
+# PREMIUM HELPERS
+# =========================================================
+def calculate_fee_drag(capital_inicial, aportacion, anios, rentabilidad, comision_baja, comision_alta, inflacion):
+    low_fee = calcular_interes_compuesto(
+        capital_inicial=capital_inicial,
+        aportacion_mensual=aportacion,
+        años=anios,
+        rentabilidad_anual=rentabilidad,
+        inflacion=inflacion,
+        comision=comision_baja,
+    )
+    high_fee = calcular_interes_compuesto(
+        capital_inicial=capital_inicial,
+        aportacion_mensual=aportacion,
+        años=anios,
+        rentabilidad_anual=rentabilidad,
+        inflacion=inflacion,
+        comision=comision_alta,
+    )
+
+    low_value = low_fee[-1]["total"] if low_fee else capital_inicial
+    high_value = high_fee[-1]["total"] if high_fee else capital_inicial
+    return max(low_value - high_value, 0)
+
+
+def simplified_goal_probability(final_value, objetivo, volatilidad, anios):
+    if not objetivo or objetivo <= 0:
+        return None
+
+    if final_value <= 0:
+        return 0.0
+
+    ratio = final_value / objetivo
+    horizon_factor = min(max(anios / 30, 0.15), 1.0)
+    risk_penalty = min(volatilidad * 0.9, 0.25)
+
+    probability = 0.50 + (ratio - 1) * 0.35 + horizon_factor * 0.15 - risk_penalty
+    return min(max(probability, 0.05), 0.95)
+
+
+def premium_locked_block():
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                section_kicker("Premium"),
+                html.H3("Desbloquea el análisis avanzado del comparador", className="fw-bold mb-3", style={"color": "#0f172a"}),
+                html.P(
+                    "La comparación básica te dice qué opción gana. El modo premium te ayuda a entender por qué gana, cuánto te cuestan las comisiones y si puedes alcanzar un objetivo concreto.",
+                    style={"color": "#475467", "lineHeight": "1.7"},
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(html.Div("✓ Comparar hasta 3 carteras personalizadas", className="fw-semibold mb-2"), md=6),
+                        dbc.Col(html.Div("✓ Impacto real de comisiones", className="fw-semibold mb-2"), md=6),
+                        dbc.Col(html.Div("✓ Probabilidad orientativa de alcanzar objetivo", className="fw-semibold mb-2"), md=6),
+                        dbc.Col(html.Div("✓ Análisis por perfil e inflación", className="fw-semibold mb-2"), md=6),
+                    ],
+                    className="mb-3",
+                ),
+                premium_cta_card(),
+            ]
+        ),
+        className="border-0 rounded-4 mb-4",
+        style={"boxShadow": "0 18px 45px rgba(16,24,40,.08)", "background": "linear-gradient(135deg,#fff 0%,#fffaf0 100%)"},
+    )
+
+
+def premium_controls_block():
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                section_kicker("Premium desbloqueado"),
+                premium_active_alert(),
+                html.H3("Carteras personalizadas", className="fw-bold mb-3", style={"color": "#0f172a"}),
+                html.P(
+                    "Crea hasta 3 carteras propias para compararlas contra los productos base.",
+                    style={"color": "#475467", "lineHeight": "1.7"},
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H5("Cartera A", className="fw-bold"),
+                                input_block("Nombre", make_input("custom-a-name", "Mi cartera indexada")),
+                                input_block("Rentabilidad anual (%)", make_input("custom-a-return", "7")),
+                                input_block("Comisión anual (%)", make_input("custom-a-fee", "0.25")),
+                                input_block("Volatilidad anual (%)", make_input("custom-a-vol", "15")),
+                            ],
+                            md=4,
+                        ),
+                        dbc.Col(
+                            [
+                                html.H5("Cartera B", className="fw-bold"),
+                                input_block("Nombre", make_input("custom-b-name", "Cartera conservadora")),
+                                input_block("Rentabilidad anual (%)", make_input("custom-b-return", "4.5")),
+                                input_block("Comisión anual (%)", make_input("custom-b-fee", "0.40")),
+                                input_block("Volatilidad anual (%)", make_input("custom-b-vol", "8")),
+                            ],
+                            md=4,
+                        ),
+                        dbc.Col(
+                            [
+                                html.H5("Cartera C", className="fw-bold"),
+                                input_block("Nombre", make_input("custom-c-name", "Cartera agresiva")),
+                                input_block("Rentabilidad anual (%)", make_input("custom-c-return", "8.5")),
+                                input_block("Comisión anual (%)", make_input("custom-c-fee", "0.20")),
+                                input_block("Volatilidad anual (%)", make_input("custom-c-vol", "20")),
+                            ],
+                            md=4,
+                        ),
+                    ]
+                ),
+                html.Hr(className="my-4"),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            input_block(
+                                "Objetivo de patrimonio (€)",
+                                make_input("premium-objetivo", "500000"),
+                                "Para estimar de forma orientativa la probabilidad de alcanzarlo.",
+                            ),
+                            md=6,
+                        ),
+                        dbc.Col(
+                            input_block(
+                                "Inflación personalizada (%)",
+                                make_input("premium-inflacion", "2"),
+                                "Sustituye la inflación del escenario para el análisis premium.",
+                            ),
+                            md=6,
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        className="border-0 rounded-4 mb-4",
+        style={"boxShadow": "0 18px 45px rgba(16,24,40,.08)", "background": "#ffffff"},
+    )
+
+
+def premium_analysis_block(resultados, capital_inicial, aportacion, anios, objetivo, inflacion):
+    if not resultados:
+        return html.Div()
+
+    mejor = resultados[0]
+    fee_drag = calculate_fee_drag(
+        capital_inicial=capital_inicial,
+        aportacion=aportacion,
+        anios=anios,
+        rentabilidad=mejor["rentabilidad"],
+        comision_baja=0.0015,
+        comision_alta=0.0120,
+        inflacion=inflacion,
+    )
+
+    prob = simplified_goal_probability(
+        final_value=mejor["valor"],
+        objetivo=objetivo,
+        volatilidad=mejor.get("volatilidad", 0.15),
+        anios=anios,
+    )
+
+    if prob is None:
+        prob_text = "—"
+        prob_subtitle = "Introduce un objetivo"
+    else:
+        prob_text = f"{prob * 100:.1f}%"
+        prob_subtitle = f"Objetivo: {formatear_euros_es(objetivo)}"
+
+    worst = resultados[-1]
+    brecha = mejor["valor"] - worst["valor"]
+
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                section_kicker("Análisis premium"),
+                html.H3("Lectura avanzada de tu comparación", className="fw-bold mb-3", style={"color": "#0f172a"}),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            metric_card(
+                                "Coste potencial de comisiones",
+                                formatear_euros_es(fee_drag),
+                                "Diferencia estimada entre bajo coste y alta comisión",
+                                highlight=True,
+                            ),
+                            md=4,
+                            className="mb-3",
+                        ),
+                        dbc.Col(
+                            metric_card(
+                                "Probabilidad objetivo",
+                                prob_text,
+                                prob_subtitle,
+                                highlight=True,
+                            ),
+                            md=4,
+                            className="mb-3",
+                        ),
+                        dbc.Col(
+                            metric_card(
+                                "Brecha mejor/peor",
+                                formatear_euros_es(brecha),
+                                "Coste de elegir mal",
+                                highlight=True,
+                            ),
+                            md=4,
+                            className="mb-3",
+                        ),
+                    ]
+                ),
+                dbc.Alert(
+                    "Premium no intenta adivinar el futuro: te ayuda a ver mejor los riesgos, costes y diferencias que no se aprecian en una comparación simple.",
+                    color="success",
+                    className="rounded-4 border-0 mt-3 mb-0",
+                ),
+            ]
+        ),
+        className="border-0 rounded-4 mb-4",
+        style={"boxShadow": "0 18px 45px rgba(16,24,40,.08)", "background": "linear-gradient(135deg,#ffffff 0%,#f7fcf9 100%)"},
+    )
+
+
+# =========================================================
 # LAYOUT
 # =========================================================
 layout = dbc.Container(
@@ -408,23 +758,54 @@ layout = dbc.Container(
                             html.H1(
                                 "Compara fondos, carteras y alternativas para decidir dónde invertir",
                                 className="fw-bold mb-3",
-                                style={"fontSize": "clamp(2rem,4vw,3.4rem)", "lineHeight": "1.05", "color": "#0f172a"},
+                                style={
+                                    "fontSize": "clamp(2rem,4vw,3.4rem)",
+                                    "lineHeight": "1.05",
+                                    "color": "#0f172a",
+                                },
                             ),
                             html.P(
                                 "No mires solo la rentabilidad. Compara comisiones, inflación, riesgo, valor real y coste de oportunidad para tomar una decisión más completa.",
                                 className="mb-4",
-                                style={"fontSize": "1.08rem", "color": "#475467", "maxWidth": "900px", "lineHeight": "1.7"},
+                                style={
+                                    "fontSize": "1.08rem",
+                                    "color": "#475467",
+                                    "maxWidth": "900px",
+                                    "lineHeight": "1.7",
+                                },
                             ),
                             dbc.Row(
                                 [
-                                    dbc.Col(dbc.Button("Comparar ahora", href="#comparador-form", color="primary", className="rounded-pill fw-bold px-4 py-3 w-100"), md=4, className="mb-2"),
-                                    dbc.Col(dbc.Button("Calcular interés compuesto", href="/calculadora", color="secondary", outline=True, className="rounded-pill fw-bold px-4 py-3 w-100"), md=4, className="mb-2"),
+                                    dbc.Col(
+                                        dbc.Button(
+                                            "Comparar ahora",
+                                            href="#comparador-form",
+                                            color="primary",
+                                            className="rounded-pill fw-bold px-4 py-3 w-100",
+                                        ),
+                                        md=4,
+                                        className="mb-2",
+                                    ),
+                                    dbc.Col(
+                                        dbc.Button(
+                                            "Calcular interés compuesto",
+                                            href="/calculadora",
+                                            color="secondary",
+                                            outline=True,
+                                            className="rounded-pill fw-bold px-4 py-3 w-100",
+                                        ),
+                                        md=4,
+                                        className="mb-2",
+                                    ),
                                 ]
                             ),
                         ]
                     ),
                     className="border-0 rounded-4 mt-4 mb-4",
-                    style={"background": "linear-gradient(135deg,#ffffff 0%,#f8fbff 55%,#f7fcf9 100%)", "boxShadow": "0 18px 50px rgba(16,24,40,.08)"},
+                    style={
+                        "background": "linear-gradient(135deg,#ffffff 0%,#f8fbff 55%,#f7fcf9 100%)",
+                        "boxShadow": "0 18px 50px rgba(16,24,40,.08)",
+                    },
                 )
             )
         ),
@@ -484,13 +865,21 @@ layout = dbc.Container(
                                     "Categoría",
                                     dbc.Select(
                                         id="categoria",
-                                        options=[{"label": "Todas", "value": "all"}] + [{"label": cat, "value": cat} for cat in CATEGORIAS],
+                                        options=[{"label": "Todas", "value": "all"}] + [
+                                            {"label": cat, "value": cat} for cat in CATEGORIAS
+                                        ],
                                         value="all",
                                         className="py-3 rounded-4",
                                     ),
                                 ),
 
-                                dbc.Button("Comparar opciones", id="btn", color="primary", className="w-100 rounded-pill fw-bold mt-2 py-3", size="lg"),
+                                dbc.Button(
+                                    "Comparar opciones",
+                                    id="btn",
+                                    color="primary",
+                                    className="w-100 rounded-pill fw-bold mt-2 py-3",
+                                    size="lg",
+                                ),
                                 html.Div(
                                     "Simulación orientativa. No es asesoramiento financiero ni garantiza resultados futuros.",
                                     className="mt-3",
@@ -499,7 +888,11 @@ layout = dbc.Container(
                             ]
                         ),
                         className="border-0 rounded-4",
-                        style={"boxShadow": "0 18px 45px rgba(16,24,40,.08)", "position": "sticky", "top": "90px"},
+                        style={
+                            "boxShadow": "0 18px 45px rgba(16,24,40,.08)",
+                            "position": "sticky",
+                            "top": "90px",
+                        },
                     ),
                     lg=4,
                     className="mb-4",
@@ -524,8 +917,12 @@ layout = dbc.Container(
                             dbc.CardBody(
                                 [
                                     section_kicker("Evolución comparada"),
-                                    html.H3("Cómo evoluciona tu dinero en cada opción", className="fw-bold mb-3", style={"color": "#0f172a"}),
-                                    dcc.Graph(id="grafico", config={"displayModeBar": False}),
+                                    html.H3(
+                                        "Cómo evoluciona tu dinero en cada opción",
+                                        className="fw-bold mb-3",
+                                        style={"color": "#0f172a"},
+                                    ),
+                                    dcc.Graph(id="grafico", figure=empty_figure(), config={"displayModeBar": False}),
                                 ]
                             ),
                             className="border-0 rounded-4 mb-4",
@@ -534,6 +931,11 @@ layout = dbc.Container(
 
                         html.Div(id="ranking-resumen"),
                         html.Div(id="tabla"),
+
+                        html.Div(id="premium-access-info"),
+                        html.Div(id="premium-controls"),
+                        html.Div(id="premium-analysis"),
+
                         seo_links_block(),
 
                         dbc.Card(
@@ -547,14 +949,36 @@ layout = dbc.Container(
                                     ),
                                     dbc.Row(
                                         [
-                                            dbc.Col(dbc.Button("Simular mi caso exacto", href="/calculadora", color="primary", className="w-100 rounded-pill fw-bold py-3"), md=6, className="mb-2"),
-                                            dbc.Col(dbc.Button("Empezar a invertir", href=MYINVESTOR_AFFILIATE_URL, target="_blank", color="success", className="w-100 rounded-pill fw-bold py-3"), md=6, className="mb-2"),
+                                            dbc.Col(
+                                                dbc.Button(
+                                                    "Simular mi caso exacto",
+                                                    href="/calculadora",
+                                                    color="primary",
+                                                    className="w-100 rounded-pill fw-bold py-3",
+                                                ),
+                                                md=6,
+                                                className="mb-2",
+                                            ),
+                                            dbc.Col(
+                                                dbc.Button(
+                                                    "Empezar a invertir",
+                                                    href=MYINVESTOR_AFFILIATE_URL,
+                                                    target="_blank",
+                                                    color="success",
+                                                    className="w-100 rounded-pill fw-bold py-3",
+                                                ),
+                                                md=6,
+                                                className="mb-2",
+                                            ),
                                         ]
                                     ),
                                 ]
                             ),
                             className="border-0 rounded-4 mb-4",
-                            style={"boxShadow": "0 18px 45px rgba(16,24,40,.08)", "background": "linear-gradient(135deg,#fff 0%,#f7fcf9 100%)"},
+                            style={
+                                "boxShadow": "0 18px 45px rgba(16,24,40,.08)",
+                                "background": "linear-gradient(135deg,#fff 0%,#f7fcf9 100%)",
+                            },
                         ),
 
                         build_disclaimer(title="Opciones para pasar de comparar a invertir"),
@@ -572,7 +996,24 @@ layout = dbc.Container(
 
 
 # =========================================================
-# CALLBACK
+# CALLBACK PREMIUM UI
+# =========================================================
+@callback(
+    Output("premium-access-info", "children"),
+    Output("premium-controls", "children"),
+    Input("premium-access", "data"),
+)
+def render_premium_ui(access_data):
+    unlocked = is_premium_unlocked(access_data)
+
+    if not unlocked:
+        return premium_locked_block(), html.Div()
+
+    return html.Div(), premium_controls_block()
+
+
+# =========================================================
+# CALLBACK PRINCIPAL
 # =========================================================
 @callback(
     Output("recomendador", "children"),
@@ -584,6 +1025,7 @@ layout = dbc.Container(
     Output("grafico", "figure"),
     Output("ranking-resumen", "children"),
     Output("tabla", "children"),
+    Output("premium-analysis", "children"),
     Input("btn", "n_clicks"),
     Input("capital-inicial", "value"),
     Input("aportacion", "value"),
@@ -592,8 +1034,49 @@ layout = dbc.Container(
     Input("perfil", "value"),
     Input("riesgo", "value"),
     Input("categoria", "value"),
+    Input("premium-access", "data"),
+    State("custom-a-name", "value"),
+    State("custom-a-return", "value"),
+    State("custom-a-fee", "value"),
+    State("custom-a-vol", "value"),
+    State("custom-b-name", "value"),
+    State("custom-b-return", "value"),
+    State("custom-b-fee", "value"),
+    State("custom-b-vol", "value"),
+    State("custom-c-name", "value"),
+    State("custom-c-return", "value"),
+    State("custom-c-fee", "value"),
+    State("custom-c-vol", "value"),
+    State("premium-objetivo", "value"),
+    State("premium-inflacion", "value"),
 )
-def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, categoria):
+def calcular(
+    _,
+    capital_inicial,
+    aportacion,
+    anios,
+    escenario,
+    perfil,
+    riesgo,
+    categoria,
+    access_data,
+    custom_a_name,
+    custom_a_return,
+    custom_a_fee,
+    custom_a_vol,
+    custom_b_name,
+    custom_b_return,
+    custom_b_fee,
+    custom_b_vol,
+    custom_c_name,
+    custom_c_return,
+    custom_c_fee,
+    custom_c_vol,
+    premium_objetivo,
+    premium_inflacion,
+):
+    unlocked = is_premium_unlocked(access_data)
+
     capital_inicial = max(parse_number(capital_inicial), 0)
     aportacion = max(parse_number(aportacion), 0)
 
@@ -628,17 +1111,59 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
             fig,
             "",
             "",
+            html.Div(),
         )
 
     escenario_data = ESCENARIOS.get(escenario, ESCENARIOS["base"])
     inflacion = escenario_data["inflacion"]
     ajuste = escenario_data["ajuste"]
 
+    if unlocked:
+        premium_inflacion_num = parse_number(premium_inflacion)
+        if premium_inflacion_num >= 0:
+            inflacion = premium_inflacion_num / 100
+
     fondos_filtrados = [
         f for f in FONDOS
         if (riesgo == "all" or f["riesgo"] == riesgo)
         and (categoria == "all" or f["categoria"] == categoria)
     ]
+
+    if unlocked:
+        custom_funds = [
+            {
+                "nombre": custom_a_name or "Cartera A",
+                "rentabilidad_base": parse_number(custom_a_return) / 100,
+                "volatilidad": parse_number(custom_a_vol) / 100,
+                "comision": parse_number(custom_a_fee) / 100,
+                "riesgo": "medio",
+                "categoria": "Personalizada",
+                "ideal_para": "cartera personalizada creada por el usuario para comparar con alternativas base",
+            },
+            {
+                "nombre": custom_b_name or "Cartera B",
+                "rentabilidad_base": parse_number(custom_b_return) / 100,
+                "volatilidad": parse_number(custom_b_vol) / 100,
+                "comision": parse_number(custom_b_fee) / 100,
+                "riesgo": "bajo",
+                "categoria": "Personalizada",
+                "ideal_para": "cartera personalizada creada por el usuario para comparar con alternativas base",
+            },
+            {
+                "nombre": custom_c_name or "Cartera C",
+                "rentabilidad_base": parse_number(custom_c_return) / 100,
+                "volatilidad": parse_number(custom_c_vol) / 100,
+                "comision": parse_number(custom_c_fee) / 100,
+                "riesgo": "alto",
+                "categoria": "Personalizada",
+                "ideal_para": "cartera personalizada creada por el usuario para comparar con alternativas base",
+            },
+        ]
+
+        fondos_filtrados.extend(
+            f for f in custom_funds
+            if f["rentabilidad_base"] > -0.50 and f["comision"] >= 0
+        )
 
     if not fondos_filtrados:
         return (
@@ -651,6 +1176,7 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
             fig,
             "",
             "",
+            html.Div(),
         )
 
     resultados = []
@@ -658,6 +1184,7 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
 
     for f in fondos_filtrados:
         rentabilidad = max(f["rentabilidad_base"] + ajuste, -0.50)
+        comision = max(f["comision"], 0)
 
         evolucion = calcular_interes_compuesto(
             capital_inicial=capital_inicial,
@@ -665,7 +1192,7 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
             años=anios,
             rentabilidad_anual=rentabilidad,
             inflacion=inflacion,
-            comision=f["comision"],
+            comision=comision,
         )
 
         valor = evolucion[-1]["total"] if evolucion else capital_inicial
@@ -675,6 +1202,7 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
             {
                 **f,
                 "rentabilidad": rentabilidad,
+                "comision": comision,
                 "valor": valor,
                 "valor_real": valor_real,
             }
@@ -733,6 +1261,18 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
     ranking = build_ranking_table(resultados)
     filas = [result_card(item, idx + 1, aportado_total) for idx, item in enumerate(resultados)]
 
+    premium_analysis = html.Div()
+    if unlocked:
+        objetivo_num = parse_number(premium_objetivo)
+        premium_analysis = premium_analysis_block(
+            resultados=resultados,
+            capital_inicial=capital_inicial,
+            aportacion=aportacion,
+            anios=anios,
+            objetivo=objetivo_num,
+            inflacion=inflacion,
+        )
+
     return (
         recomendador,
         metric_card("Mejor opción", formatear_euros_es(mejor["valor"]), mejor["nombre"], True),
@@ -743,4 +1283,5 @@ def calcular(_, capital_inicial, aportacion, anios, escenario, perfil, riesgo, c
         fig,
         ranking,
         filas,
+        premium_analysis,
     )
