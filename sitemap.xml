@@ -1,7 +1,11 @@
+from flask import Response
+from datetime import date
+import dash
+
 @server.route("/sitemap.xml", methods=["GET"])
 def sitemap():
     today = date.today().isoformat()
-    urls = []
+    urls = set()
 
     exclude_paths = [
         "/premium-ok",
@@ -34,14 +38,16 @@ def sitemap():
         if not path:
             continue
 
-        if "not_found" in str(page.get("module", "")).lower():
+        # Excluir páginas no deseadas
+        if any(excluded in path for excluded in exclude_paths):
             continue
 
-        if any(excluded in path for excluded in exclude_paths):
+        if "not_found" in str(page.get("module", "")).lower():
             continue
 
         loc = f"{SITE_URL.rstrip('/')}{path}"
 
+        # Prioridades SEO
         if path == "/":
             priority = "1.0"
         elif path in money_paths:
@@ -51,8 +57,7 @@ def sitemap():
         else:
             priority = "0.6"
 
-        urls.append(f"""
-  <url>
+        urls.add(f"""  <url>
     <loc>{loc}</loc>
     <lastmod>{today}</lastmod>
     <changefreq>weekly</changefreq>
@@ -61,7 +66,7 @@ def sitemap():
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{''.join(sorted(set(urls)))}
+{''.join(sorted(urls))}
 </urlset>"""
 
     return Response(xml, mimetype="application/xml")
