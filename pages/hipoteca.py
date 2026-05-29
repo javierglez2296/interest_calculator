@@ -1,7 +1,8 @@
 import dash
-from dash import html, dcc, register_page, callback, Input, Output
+from dash import html, dcc, register_page, callback, Input, Output, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
+from urllib.parse import parse_qs
 
 register_page(
     __name__,
@@ -1075,6 +1076,8 @@ def build_pro_recommendation(ratio_esfuerzo, ahorro_intereses, meses_ahorrados):
 # =========================================================
 layout = dbc.Container(
     [
+        dcc.Location(id="url-hipoteca", refresh=False),
+
         dbc.Row(
             [
                 dbc.Col(
@@ -1481,6 +1484,54 @@ layout = dbc.Container(
     fluid=True,
     class_name="py-3 py-lg-4",
 )
+
+
+
+
+@callback(
+    Output("hip-precio", "value"),
+    Output("hip-anos", "value"),
+    Output("hip-interes", "value"),
+    Output("hip-entrada", "value"),
+    Output("hip-gastos", "value"),
+    Input("url-hipoteca", "search"),
+    prevent_initial_call=False,
+)
+def precargar_hipoteca_desde_url(search):
+    """
+    Permite precargar la calculadora desde enlaces SEO como:
+    /hipoteca?capital=150000&plazo=30&interes=3
+    /hipoteca?capital=150000&plazo=30&interes=3&entrada=20&gastos=10
+
+    Mapeo:
+    - capital -> hip-precio
+    - plazo   -> hip-anos
+    - interes -> hip-interes
+    - entrada -> hip-entrada
+    - gastos  -> hip-gastos
+    """
+    if not search:
+        return no_update, no_update, no_update, no_update, no_update
+
+    params = parse_qs(search.lstrip("?"))
+
+    def get_number(name, cast=float):
+        raw = params.get(name, [None])[0]
+        if raw in (None, ""):
+            return no_update
+        try:
+            value = cast(str(raw).replace(",", "."))
+            return value
+        except Exception:
+            return no_update
+
+    capital = get_number("capital", int)
+    plazo = get_number("plazo", int)
+    interes = get_number("interes", float)
+    entrada = get_number("entrada", float)
+    gastos = get_number("gastos", float)
+
+    return capital, plazo, interes, entrada, gastos
 
 
 # =========================================================
