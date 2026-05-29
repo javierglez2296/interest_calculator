@@ -1,72 +1,149 @@
+@server.route("/sitemap.xml", methods=["GET"])
+def sitemap():
 from flask import Response
 from datetime import date
 import dash
 
-@server.route("/sitemap.xml", methods=["GET"])
-def sitemap():
-    today = date.today().isoformat()
-    urls = set()
+```
+today = date.today().isoformat()
+urls = set()
 
-    exclude_paths = [
-        "/premium-ok",
-        "/404",
-    ]
+exclude_paths = [
+    "/premium-ok",
+    "/404",
+]
 
-    money_paths = [
-        "/calculadora",
-        "/fire",
-        "/hipoteca",
-        "/rentabilidad-alquiler",
-        "/comparador",
-    ]
+money_paths = [
+    "/calculadora",
+    "/fire",
+    "/hipoteca",
+    "/rentabilidad-alquiler",
+    "/comparador",
+]
 
-    seo_keywords = [
-        "interes-compuesto",
-        "vivir-con",
-        "hipoteca",
-        "alquilar",
-        "rentabilidad",
-        "invertir",
-        "fondos-indexados",
-        "sp-500",
-        "nasdaq",
-    ]
+seo_keywords = [
+    "interes-compuesto",
+    "vivir-con",
+    "hipoteca",
+    "alquilar",
+    "rentabilidad",
+    "invertir",
+    "fondos-indexados",
+    "sp-500",
+    "nasdaq",
+]
 
-    for page in dash.page_registry.values():
-        path = page.get("path")
+manual_seo_paths = []
 
-        if not path:
-            continue
+# =====================================================
+# HIPOTECAS SEO
+# =====================================================
 
-        # Excluir páginas no deseadas
-        if any(excluded in path for excluded in exclude_paths):
-            continue
+for importe in [
+    100000,
+    120000,
+    150000,
+    180000,
+    200000,
+    250000,
+    300000,
+    350000,
+    400000,
+    500000,
+]:
+    manual_seo_paths.append(
+        f"/hipoteca-{importe}-euros"
+    )
 
-        if "not_found" in str(page.get("module", "")).lower():
-            continue
+# =====================================================
+# INVERTIR X EUROS AL MES
+# =====================================================
 
-        loc = f"{SITE_URL.rstrip('/')}{path}"
+for aportacion in [
+    100,
+    200,
+    300,
+    500,
+    1000,
+    1500,
+    2000,
+    3000,
+]:
+    manual_seo_paths.append(
+        f"/invertir-{aportacion}-euros-al-mes"
+    )
 
-        # Prioridades SEO
-        if path == "/":
-            priority = "1.0"
-        elif path in money_paths:
-            priority = "0.9"
-        elif any(keyword in path for keyword in seo_keywords):
-            priority = "0.8"
-        else:
-            priority = "0.6"
+def add_url(path, priority):
+    loc = f"{SITE_URL.rstrip('/')}{path}"
 
-        urls.add(f"""  <url>
-    <loc>{loc}</loc>
-    <lastmod>{today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>{priority}</priority>
-  </url>""")
+    urls.add(
+        f"""  <url>
+<loc>{loc}</loc>
+<lastmod>{today}</lastmod>
+<changefreq>weekly</changefreq>
+<priority>{priority}</priority>
+```
 
-    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+</url>"""
+)
+
+```
+# =====================================================
+# PÁGINAS DASH
+# =====================================================
+
+for page in dash.page_registry.values():
+    path = page.get("path")
+
+    if not path:
+        continue
+
+    if any(excluded in path for excluded in exclude_paths):
+        continue
+
+    if "not_found" in str(
+        page.get("module", "")
+    ).lower():
+        continue
+
+    # Ignorar plantillas dinámicas
+    if "<" in path or ">" in path:
+        continue
+
+    if path == "/":
+        priority = "1.0"
+
+    elif path in money_paths:
+        priority = "0.9"
+
+    elif any(
+        keyword in path
+        for keyword in seo_keywords
+    ):
+        priority = "0.8"
+
+    else:
+        priority = "0.6"
+
+    add_url(path, priority)
+
+# =====================================================
+# URLS SEO DINÁMICAS
+# =====================================================
+
+for path in manual_seo_paths:
+    add_url(path, "0.8")
+
+xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+```
+
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {''.join(sorted(urls))}
 </urlset>"""
 
-    return Response(xml, mimetype="application/xml")
+```
+return Response(
+    xml,
+    mimetype="application/xml",
+)
+```
